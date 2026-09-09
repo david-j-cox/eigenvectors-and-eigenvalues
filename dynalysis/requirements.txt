@@ -1,0 +1,7 @@
+# Analysis dependencies. Deliberately minimal: everything here is either doing
+# linear algebra or holding a table.
+numpy>=1.26
+pandas>=2.0
+scikit-learn>=1.3
+scipy>=1.11
+matplotlib>=3.7

@@ -1,0 +1,4 @@
+bin_clicks,transitions_per_participant,median_skill_A_i,frac_beating_persistence,median_spectral_radius,median_eigvec_stability,median_early_late_cosine,frac_switch_rate_noise
+5,188.5,0.378,0.95,0.612,0.962,0.487,0.65
+10,92.5,0.291,0.917,0.656,0.957,0.507,0.574
+20,44.5,0.222,0.857,0.705,0.934,0.464,0.42

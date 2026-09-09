@@ -1,0 +1,176 @@
+/* ============================================================
+   Task styling.
+
+   The background carries the context, so it is the one colour that
+   must be exact: the hex values here are the same constants the
+   event log records, and they are read from config rather than
+   duplicated as CSS literals wherever that is possible.
+
+   Each context colour is paired with a texture so the
+   discrimination does not rest on hue alone.
+   ============================================================ */
+
+:root {
+  --ink: #16181d;
+  --paper: #f7f7f5;
+  --panel: rgba(255, 255, 255, 0.16);
+  --panel-active: rgba(255, 255, 255, 0.3);
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font: 16px/1.5 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.centered {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+}
+
+.prose h1 { font-size: 1.6rem; margin-bottom: 1rem; }
+.prose li { margin-bottom: 0.5rem; }
+
+button {
+  font: inherit;
+  padding: 0.7rem 1.3rem;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+}
+
+button.primary {
+  background: var(--ink);
+  color: #fff;
+  border-color: var(--ink);
+}
+
+.row { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+
+.code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 1.1rem;
+  padding: 0.15rem 0.4rem;
+  background: rgba(0, 0, 0, 0.07);
+  border-radius: 4px;
+}
+
+.warning {
+  padding: 0.75rem 1rem;
+  border-left: 4px solid #b4531f;
+  background: rgba(180, 83, 31, 0.08);
+}
+
+.swatches { display: flex; gap: 0.6rem; margin: 1.5rem 0; }
+.swatch { width: 3rem; height: 2rem; border-radius: 4px; }
+
+/* ---------------------------------------------------------- task --- */
+
+.task {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  /* The background is set inline from the logged hex value, so a screenshot
+     and the event file can never disagree about which context was shown. */
+  transition: background 220ms ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.hud {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  color: #fff;
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.tag {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 999px;
+}
+
+.panels {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+.panel {
+  background: var(--panel);
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-radius: 14px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  /* No transition on the active state: any animation here would add a delay
+     between the response and its consequence that varies with frame timing,
+     and inter-response time is a measured variable. */
+}
+
+.panel:active { background: var(--panel-active); }
+
+.hint {
+  font-size: 2rem;
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 600;
+}
+
+.flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.flash.on { animation: flash 180ms ease-out; }
+
+@keyframes flash {
+  from { opacity: 0.8; }
+  to { opacity: 0; }
+}
+
+.progress { height: 6px; background: rgba(0, 0, 0, 0.18); }
+.bar { height: 100%; background: rgba(255, 255, 255, 0.75); transition: width 200ms; }
+
+/* Texture pairs with each colour so the contexts remain distinguishable
+   without relying on hue. */
+.pattern-stripes::before,
+.pattern-dots::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.14;
+}
+
+.pattern-stripes::before {
+  background: repeating-linear-gradient(
+    45deg, #fff 0 12px, transparent 12px 24px
+  );
+}
+
+.pattern-dots::before {
+  background-image: radial-gradient(#fff 2px, transparent 2px);
+  background-size: 22px 22px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .task { transition: none; }
+  .flash.on { animation: none; opacity: 0; }
+}
