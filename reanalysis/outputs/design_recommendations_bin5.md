@@ -21,7 +21,7 @@ Two independent estimates of the **same** operator, at each sample size. Any obs
 
 **Floor at that sample size:** 0.417 (5th percentile 0.046).
 
-The observed value exceeds the floor, so there is replication signal in the existing data beyond estimation noise.
+The observed value sits +0.090 from the floor. A margin this small is not evidence of a reproducible context-specific mode: at this sample size two estimates of the same operator and two estimates of genuinely different operators are barely separable, as the discrimination table below shows. This is a sample-size limitation rather than a negative result, and it is the specific problem the new design has to solve.
 
 ## 2. Can the test tell same from different?
 

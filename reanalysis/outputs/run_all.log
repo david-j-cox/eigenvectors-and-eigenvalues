@@ -74,3 +74,47 @@ Wrote 60 individual profiles to /Users/davidjcox/Documents/ResearchRepos/artific
   [8/20] mmh0uacr2t1xyl  rho=0.493
   [9/20] mmh28cu8c2h59x  rho=0.454
   [10/20] mmh0l48dxf0unl  rho=0.691
+  [11/20] mmh0lku3somrj2  rho=0.525
+  [12/20] mmh0x9u4xp8fu3  rho=0.544
+  [13/20] mmh0r154q42czx  rho=0.507
+  [14/20] mmgkzukxhc834b  rho=0.341
+  [15/20] mmh0tro0xy62is  rho=0.423
+  [16/20] mmh0lgopisagl1  rho=0.460
+  [17/20] mmgp4bc8msbt9i  rho=0.665
+  [18/20] mmh0r34ra4dkeq  rho=0.449
+  [19/20] mmgpiq4cdgzv0g  rho=0.929
+  [20/20] mmh0l2c7qmhy45  rho=0.436
+
+--- replication floor ---
+ n_transitions  same_operator_cosine_median  same_operator_cosine_p05  same_operator_cosine_p95  same_operator_angle_median  cosine_to_truth_median  frac_recovering_truth_at_0.9  rho_abs_error_median  rho_bias  frac_rho_within_0.05
+            10                        0.417                     0.046                     0.911                      45.381                   0.397                         0.057                 0.132     0.131                 0.193
+            15                        0.488                     0.049                     0.933                      42.619                   0.470                         0.102                 0.104     0.060                 0.260
+            20                        0.490                     0.053                     0.928                      42.232                   0.516                         0.140                 0.092     0.019                 0.273
+            30                        0.500                     0.057                     0.953                      40.290                   0.656                         0.217                 0.083    -0.025                 0.300
+            40                        0.548                     0.058                     0.961                      38.147                   0.675                         0.268                 0.085    -0.047                 0.292
+            60                        0.651                     0.066                     0.974                      36.134                   0.805                         0.377                 0.080    -0.065                 0.313
+            80                        0.715                     0.080                     0.978                      31.785                   0.862                         0.437                 0.091    -0.077                 0.305
+           120                        0.834                     0.104                     0.986                      26.475                   0.924                         0.567                 0.085    -0.085                 0.328
+
+--- discrimination ---
+ n_transitions  same_cosine_median  diff_cosine_median   auc
+            10               0.436               0.434 0.516
+            15               0.457               0.432 0.525
+            20               0.472               0.433 0.534
+            30               0.496               0.419 0.572
+            40               0.542               0.427 0.596
+            60               0.638               0.425 0.648
+            80               0.709               0.411 0.679
+           120               0.799               0.373 0.748
+
+--- recovery ---
+ n_pre_transitions  recovery_forecast_skill_median  frac_skill_positive  half_life_abs_error_median
+                10                           0.580                0.923                       0.524
+                15                           0.654                0.972                       0.305
+                20                           0.693                0.975                       0.252
+                30                           0.715                0.977                       0.233
+                40                           0.736                0.982                       0.228
+                60                           0.737                0.982                       0.218
+                80                           0.755                0.983                       0.225
+               120                           0.760                0.980                       0.214
+=== done ===

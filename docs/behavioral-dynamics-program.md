@@ -37,7 +37,7 @@ From `reanalysis/outputs/summary.md`, across 60 participants with a median of
   0.55 to 0.77, with an oscillatory dominant pair in 37% of participants.
 - The dominant eigenvector loads on reward rate for 73% of participants.
 - Dominant eigenvectors are bootstrap-stable: median resampled agreement 0.96,
-  with 75% of participants above 0.90.
+  with 78% of participants above 0.90.
 
 Two corrections matter and both are implemented:
 
