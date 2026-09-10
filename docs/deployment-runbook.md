@@ -159,10 +159,13 @@ range the simulated responders assumed.
 
 ## Appendix: driving Prolific from the API
 
-`scripts/prolific.sh` wraps the endpoints needed here. Using it instead of the
-dashboard resolves the ordering problem section 2 leaves: creating the draft
-returns the completion code, so Vercel can be configured and deployed before
-anything is visible to participants.
+`scripts/prolific.sh` wraps the endpoints needed here.
+
+There is no ordering problem to work around: the completion code is one you
+choose and send in the `completion_codes` array, not one Prolific generates. Put
+the same string in `VITE_COMPLETION_CODE` and the two agree by construction. The
+only real dependency runs the other way -- the study needs the deployed Vercel
+URL, so Supabase and Vercel come first.
 
 **Store the token once.** Copy it from Prolific (**Settings -> API tokens**),
 then run:
@@ -178,26 +181,36 @@ than as an argument, keeping it out of the process list.
 
 ```bash
 ./scripts/prolific.sh whoami                      # confirm the token works
-./scripts/prolific.sh balance                     # workspace funds
+./scripts/prolific.sh balance                     # available_balance gates publishing
 
-# 1. Edit scripts/study.pilot.json: the Vercel URL, the completion code you
-#    choose, and the reward. Then:
+# 1. Put scripts/study.pilot.json's completion code in VITE_COMPLETION_CODE,
+#    and its deployed URL into external_study_url. Then:
 ./scripts/prolific.sh create scripts/study.pilot.json
 
-# 2. Put that completion code in VITE_COMPLETION_CODE, deploy, and run
-#    section 4's own-run check against the live URL.
+# 2. Run section 4's own-run check against the live URL.
 
 ./scripts/prolific.sh cost <study-id>             # what publishing would charge
 ./scripts/prolific.sh publish <study-id>          # spends money; prompts first
 ./scripts/prolific.sh submissions <study-id>
 ```
 
+`available_balance` is in cents and can be negative. Publishing fails until it
+covers the study, and the study total is the reward times the places plus
+Prolific's fee, which this account's user record puts at 33.3%.
+
 The study is created `UNPUBLISHED` and stays invisible to participants until
 `publish`. That is the only irreversible call, so it re-reads the study, prints
 what is about to go live, and requires the id typed back before proceeding.
 
-**Reward.** `reward` is in cents of the workspace currency.
-[Prolific's minimum is £6/$8 per hour and its recommendation £9/$12](https://researcher-help.prolific.com/en/articles/445266-how-much-should-i-pay-participants).
-The template's 700 over an estimated 35 minutes is £12/$12 per hour, above the
-recommendation in either currency. `cost` shows the total including Prolific's
-fee before anything is charged.
+**Reward.** `reward` is in cents of the workspace currency, and the rate
+participants see is that figure divided by `estimated_completion_time` --
+[minimum £6/$8 per hour, recommended £9/$12](https://researcher-help.prolific.com/en/articles/445266-how-much-should-i-pay-participants).
+The template's 500 over 30 minutes is $10.00 per hour.
+
+There is no performance bonus, and the estimate is therefore the whole of what
+sets the rate. The points the task awards are feedback only: nothing converts
+them to money. The same was true of the previous study, where "bonus" referred
+to the Phase 4 bonus *pulses* -- a schedule manipulation, recorded in
+`bonus_target` as the favoured alternative -- and not to a payment. Adding a
+real bonus would change the compensation participants consent to, so it is a
+protocol question before it is a code one.
