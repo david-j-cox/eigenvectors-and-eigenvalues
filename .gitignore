@@ -8,3 +8,5 @@ dist/
 .env.local
 service-account-key.json
 experiment/tsconfig.tsbuildinfo
+reanalysis/participant_id_map.json
+chatgpt_convo.rtfd/
