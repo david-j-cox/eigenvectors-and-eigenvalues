@@ -10,17 +10,29 @@ The task itself needs no changes. What follows is entirely configuration.
 
 ## 1. Supabase
 
-Create a project, then run both migrations in the SQL editor, in order:
+Create a project, then run all three migrations in order:
 
 ```
 experiment/supabase/migrations/001_create_tables.sql
 experiment/supabase/migrations/002_enable_rls.sql
+experiment/supabase/migrations/003_write_via_functions.sql
 ```
 
-`002` is not optional. Until it runs the tables have no row-level security, and
-the key that ships in the participant's page can read as well as write.
+None is optional, and `003` least of all. `002` alone produces a database that
+accepts nothing: Postgres consults the SELECT policy when it resolves
+`INSERT ... ON CONFLICT`, so a role with no SELECT policy cannot write even a
+brand-new row. `003` drops those policies, revokes the tables from `anon`
+entirely, and grants EXECUTE on two SECURITY DEFINER functions instead. The key
+in the page can call `log_events` and `save_session` and can reach nothing else.
 
-From **Settings -> API** take two keys, and keep them straight:
+Applying them with `psql` is faster than the SQL editor:
+
+```bash
+psql "postgresql://postgres:<db-password>@db.<ref>.supabase.co:5432/postgres" \
+  -v ON_ERROR_STOP=1 -f experiment/supabase/migrations/001_create_tables.sql
+```
+
+From **Settings -> API Keys** take two keys, and keep them straight:
 
 | Key | Where it goes | What it can do |
 |---|---|---|
@@ -109,6 +121,20 @@ https://<your-app>.vercel.app/?PROLIFIC_PID=researcher-check&test=1
 `test=1` marks the session record `is_test_session`, and the export drops those
 by default. Without it your own run is indistinguishable from participant 1.
 
+Before that, run the automated check. It exercises the real transport against
+the real database -- writing a session, writing a batch, resending that batch to
+prove a retry does not duplicate, and confirming the published key cannot read
+either table:
+
+```bash
+cd experiment
+VITE_SUPABASE_URL=... VITE_SUPABASE_ANON_KEY=... npx tsx scripts/verify_supabase.ts
+```
+
+Run it after any change to the schema, the policies, or the transport. The unit
+suite cannot cover this: it runs against an in-memory transport, and it stayed
+green through a database configuration that rejected every write.
+
 You need not finish all 4,260 responses. A minute of responding is enough to
 confirm the pipeline, then check that rows arrived:
 
@@ -154,6 +180,7 @@ range the simulated responders assumed.
 | Participants report the code is rejected | `VITE_COMPLETION_CODE` differs from Prolific, or was changed without redeploying |
 | Export returns nothing | all sessions still `in_progress`; nobody reached the end screen |
 | Sessions overwrite each other | two people on one browser without a distinct `PROLIFIC_PID` |
+| Writes rejected as an RLS violation | migration `003` not applied |
 
 ---
 

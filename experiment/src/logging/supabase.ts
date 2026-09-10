@@ -1,15 +1,22 @@
 // ============================================================
 // Supabase transport.
 //
-// Writes are inserts-or-updates keyed on (session_id, trial_index)
-// so that a retried batch is idempotent.
+// Writes go through two database functions rather than through the
+// tables. The key in the page cannot reach the tables at all: it
+// holds EXECUTE on log_events and save_session and nothing else.
 //
-// No call here chains .select(). That is load-bearing rather than
-// stylistic: supabase-js sends Prefer: return=minimal when nothing
-// is selected, which lets the anon key write without any select
-// policy on the table. Adding .select() would require granting
-// reads to a key that ships in the page, and with it the ability
-// to download every participant's data.
+// Writing to the tables directly does not work, and the reason is
+// worth recording. An anon role with INSERT and UPDATE policies but
+// no SELECT policy cannot run `INSERT ... ON CONFLICT`, because
+// Postgres consults the SELECT policy when it looks for the
+// conflicting row -- so the statement is rejected even when the row
+// is new and nothing conflicts. Granting the SELECT policy that
+// would fix it would also let any participant read every other
+// participant's data. See migration 003.
+//
+// log_events returns the number of rows actually inserted, which is
+// less than the batch size when a retry re-sends rows already
+// stored. That is the expected quiet case, not an error.
 // ============================================================
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
@@ -20,14 +27,14 @@ import type { EventRow } from './schema';
 export interface SupabaseConfig {
   url: string;
   anonKey: string;
-  eventsTable?: string;
-  sessionsTable?: string;
+  logEventsFn?: string;
+  saveSessionFn?: string;
 }
 
 export class SupabaseTransport implements Transport {
   private readonly client: SupabaseClient;
-  private readonly eventsTable: string;
-  private readonly sessionsTable: string;
+  private readonly logEventsFn: string;
+  private readonly saveSessionFn: string;
 
   constructor(cfg: SupabaseConfig) {
     if (!cfg.url || !cfg.anonKey) {
@@ -36,23 +43,19 @@ export class SupabaseTransport implements Transport {
     this.client = createClient(cfg.url, cfg.anonKey, {
       auth: { persistSession: false },
     });
-    this.eventsTable = cfg.eventsTable ?? 'dynamics_events';
-    this.sessionsTable = cfg.sessionsTable ?? 'dynamics_sessions';
+    this.logEventsFn = cfg.logEventsFn ?? 'log_events';
+    this.saveSessionFn = cfg.saveSessionFn ?? 'save_session';
   }
 
   async upsertEvents(rows: EventRow[]): Promise<void> {
     if (rows.length === 0) return;
-    const { error } = await this.client
-      .from(this.eventsTable)
-      .upsert(rows, { onConflict: 'session_id,trial_index' });
-    if (error) throw new Error(`event upsert failed: ${error.message}`);
+    const { error } = await this.client.rpc(this.logEventsFn, { p_rows: rows });
+    if (error) throw new Error(`event write failed: ${error.message}`);
   }
 
   async upsertSession(record: Record<string, unknown>): Promise<void> {
-    const { error } = await this.client
-      .from(this.sessionsTable)
-      .upsert(record, { onConflict: 'session_id' });
-    if (error) throw new Error(`session upsert failed: ${error.message}`);
+    const { error } = await this.client.rpc(this.saveSessionFn, { p_record: record });
+    if (error) throw new Error(`session write failed: ${error.message}`);
   }
 }
 

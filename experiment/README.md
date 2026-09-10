@@ -48,7 +48,7 @@ different-colour comparison be matched on elapsed time; see
 | `src/engine/session.ts` | The procedure; no DOM dependency, so it can be simulated |
 | `src/engine/simulate.ts` | Simulated responders, calibrated to human switching statistics |
 | `src/engine/human_calibration.json` | Per-participant switch probabilities and response timing, measured from the previous study's 60 participants |
-| `src/logging/` | Event schema, checkpointed logger, Supabase transport |
+| `src/logging/` | Event schema, checkpointed logger, Supabase transport (writes via RPC) |
 | `src/ui/` | Screens and the browser wiring |
 
 Adding a perturbation type means adding one case to `effectiveSchedule`. Nothing
@@ -64,6 +64,7 @@ npx tsx scripts/pilot_check.ts --n 20      # simulate sessions, export real sche
 npx tsx scripts/pilot_check.ts --n 20 --no-depletion
 
 npm run preflight                          # check deployment env vars
+npx tsx scripts/verify_supabase.ts         # live check against the real database
 npm run build:prod                         # preflight, then build
 ```
 

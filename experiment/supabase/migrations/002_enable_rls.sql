@@ -1,4 +1,15 @@
 -- ============================================================
+-- SUPERSEDED BY 003. The policies this migration creates cannot
+-- store a row: Postgres consults the SELECT policy when resolving
+-- `INSERT ... ON CONFLICT`, so with no SELECT policy every write
+-- the task makes is rejected, including writes of brand-new rows.
+-- The reasoning below about `Prefer: return=minimal` is wrong --
+-- it addresses reading results back, not the conflict lookup.
+-- Kept for history; 003 drops these policies and moves writes into
+-- SECURITY DEFINER functions. Run all three in order.
+-- ============================================================
+
+-- ============================================================
 -- Row-level security.
 --
 -- The browser holds only the anon key, so its policies decide what

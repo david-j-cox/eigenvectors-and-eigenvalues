@@ -9,13 +9,21 @@
 // production build and turns each of those into a failed deploy.
 // ============================================================
 
+import { loadEnv } from 'vite';
+
 interface Problem {
   variable: string;
   detail: string;
 }
 
 const problems: Problem[] = [];
-const env = process.env;
+
+// Resolved through Vite's own loader rather than from process.env, so this
+// reads exactly what the build will inline: the .env files for a local build,
+// and the platform's environment on Vercel. Checking process.env alone would
+// fail a correctly configured local build and, worse, would let the check
+// disagree with the bundle it is supposed to be vouching for.
+const env = loadEnv('production', process.cwd(), 'VITE_');
 
 function requireVar(name: string): string | null {
   const value = env[name]?.trim();
