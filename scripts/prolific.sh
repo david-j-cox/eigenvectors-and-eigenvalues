@@ -14,7 +14,10 @@
 #
 # Usage:
 #   ./prolific.sh whoami                 # confirm the token works
-#   ./prolific.sh balance                # workspace funds
+#   ./prolific.sh balance                # funds; available_balance gates publishing
+#   ./prolific.sh workspaces             # workspace ids
+#   ./prolific.sh projects <ws-id>       # project ids within a workspace
+#   ./prolific.sh studies                # existing studies
 #   ./prolific.sh create study.json      # create an UNPUBLISHED draft
 #   ./prolific.sh get <study-id>
 #   ./prolific.sh cost <study-id>        # what publishing would charge
@@ -83,7 +86,16 @@ require_token
 
 case "$cmd" in
   whoami)      run GET /users/me/ ;;
-  balance)     run GET /users/me/balance/ ;;
+  # There is no /balance/ endpoint; funds live on the user record, and the
+  # figure that governs whether a study can publish is available_balance.
+  # Both are in cents, and available_balance can be negative.
+  balance)     run GET /users/me/ | jq '{currency_code, balance, available_balance,
+                                         fees_percentage}' ;;
+  workspaces)  run GET /workspaces/ | jq '[.results[] | {id, title}]' ;;
+  projects)
+    [ -n "${1:-}" ] || { echo "usage: prolific.sh projects <workspace-id>" >&2; exit 1; }
+    run GET "/workspaces/$1/projects/" | jq '[.results[] | {id, title}]' ;;
+  studies)     run GET /studies/ | jq '[.results[] | {id, name, status}]' ;;
   get)         run GET "/studies/$1/" ;;
   cost)        run GET "/studies/$1/cost/" ;;
   submissions) run GET "/studies/?study=$1" ;;
