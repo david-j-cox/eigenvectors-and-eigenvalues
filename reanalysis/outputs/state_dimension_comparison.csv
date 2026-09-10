@@ -6,6 +6,13 @@ variant,n_params,n_transitions,same_cosine_median,diff_cosine_median,auc
 2D_choice_reward,4,40,0.899,0.628,0.567
 2D_choice_reward,4,60,0.938,0.581,0.604
 2D_choice_reward,4,80,0.955,0.581,0.674
+2D_choice_switch,4,10,0.763,0.714,0.514
+2D_choice_switch,4,15,0.762,0.71,0.522
+2D_choice_switch,4,20,0.764,0.682,0.543
+2D_choice_switch,4,30,0.825,0.714,0.614
+2D_choice_switch,4,40,0.847,0.675,0.618
+2D_choice_switch,4,60,0.882,0.656,0.681
+2D_choice_switch,4,80,0.921,0.708,0.703
 3D_no_ici,9,10,0.624,0.515,0.547
 3D_no_ici,9,15,0.654,0.508,0.567
 3D_no_ici,9,20,0.66,0.501,0.62
@@ -13,6 +20,13 @@ variant,n_params,n_transitions,same_cosine_median,diff_cosine_median,auc
 3D_no_ici,9,40,0.863,0.477,0.744
 3D_no_ici,9,60,0.899,0.461,0.823
 3D_no_ici,9,80,0.906,0.454,0.857
+3D_no_reward,9,10,0.74,0.693,0.496
+3D_no_reward,9,15,0.66,0.677,0.524
+3D_no_reward,9,20,0.675,0.64,0.51
+3D_no_reward,9,30,0.671,0.587,0.553
+3D_no_reward,9,40,0.676,0.586,0.565
+3D_no_reward,9,60,0.703,0.53,0.605
+3D_no_reward,9,80,0.76,0.479,0.621
 3D_no_switch,9,10,0.775,0.724,0.499
 3D_no_switch,9,15,0.75,0.696,0.516
 3D_no_switch,9,20,0.696,0.657,0.529

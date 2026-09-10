@@ -43,7 +43,7 @@ different-colour comparison be matched on elapsed time; see
 | Path | Role |
 |---|---|
 | `src/engine/plan.ts` | Builds the whole schedule deterministically from a seed |
-| `src/engine/schedule.ts` | Concurrent VI, changeover delay, optional depletion |
+| `src/engine/schedule.ts` | Both schedules: depleting patches (default) and concurrent VI, plus the changeover delay |
 | `src/engine/perturbation.ts` | Perturbations as schedule overrides, expressed as data |
 | `src/engine/session.ts` | The procedure; no DOM dependency, so it can be simulated |
 | `src/engine/simulate.ts` | Simulated responders, calibrated to human switching statistics |
@@ -57,7 +57,7 @@ in block sequencing or response handling knows that perturbations exist.
 ## Commands
 
 ```bash
-npm test                                   # 100 tests
+npm test                                   # 107 tests
 npm run dev
 npm run build
 npx tsx scripts/pilot_check.ts --n 20      # simulate sessions, export real schema

@@ -298,13 +298,6 @@ anything whose cost scales with changeovers.
 
 ### The open question the pilot must settle
 
-Reward rate at ten-response bins carries 60-76% sampling noise under a stationary
-interval schedule, and no schedule parameter within this family fixes it:
-Bernoulli noise is maximised near p = 0.5, so enriching does not help, and the
-attenuation correction is numerically unstable at this noise level. With
-human-calibrated switching the ratio is worse than with an idealised responder,
-because more changeovers mean less obtained reinforcement.
-
 The state vector is `[P(A), reward rate, switch rate]`, chosen by discrimination
 on the **previous study's real data**: dropping mean log ICI helps, because it
 loads similarly on the dominant mode in every context and dilutes the differences
@@ -329,9 +322,18 @@ The distinction that matters:
   participants*, so they describe the estimator and are usable.
 - **Grounded.** The changeover-delay and reinforcement-density results depend on
   switching frequency and response timing, both taken from human data.
+- **Grounded.** Whether a coordinate is *measurable* -- whether it has true
+  between-bin variance above its sampling noise. This depends on the schedule
+  and on allocation, both of which the simulation models, and it is what
+  decided the schedule.
 - **Not grounded.** Which coordinates carry an organism's context-specific
-  dynamics. That is the empirical question this study exists to answer, and no
+  *dynamics*. That is the empirical question this study exists to answer, and no
   simulation can answer it in advance.
+
+The distinction between the last two is what let the schedule question be
+settled while the state question stays open. "Does reward rate vary enough to
+measure" is answerable in advance; "does reward rate carry this organism's
+context-specific mode" is not.
 
 ## Analysis
 
@@ -366,10 +368,12 @@ within participant and matched on elapsed time by the two-reversal design.
 
 ## Status
 
-Built and tested: task engine, session plan, perturbation engine, event schema,
-checkpointed logging with idempotent upserts, Supabase transport and migrations,
-the browser task, the Phase 0 reanalysis, the design simulations, and the pilot
-diagnostic loop. 81 automated tests.
+Built and tested: task engine with both schedule modes, session plan,
+perturbation engine, event schema, checkpointed logging with idempotent upserts,
+Supabase transport and migrations, the browser task, the Phase 0 reanalysis, the
+design simulations, and the pilot diagnostic loop. 107 automated tests.
+
+Every pilot acceptance check now passes on simulated sessions.
 
 Not yet done: a human pilot. Every number in this document about the new task
 comes from simulated responders. Their switching and timing are calibrated to

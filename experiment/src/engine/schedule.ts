@@ -197,3 +197,102 @@ export function collect(
     vi: { ...vi, baited: false, lastReinforcerAtMs: nowMs },
   };
 }
+
+// ============================================================
+// Depleting response-probability schedule.
+//
+// The previous study's mechanism, and the reason its eigenanalysis
+// worked. Each alternative carries a latent value in [0, 1] that
+// IS the reinforcement probability for a response to it. Harvesting
+// subtracts from it; time restores it. The context sets the
+// recovery rates, which is how "A-rich" is expressed here.
+//
+// Why this exists alongside the VI mode: under an interval schedule
+// the obtained reinforcement rate is rate-limited by the schedule
+// and barely moves, because a pending setup waits however long the
+// participant is away. Measured on simulated sessions, the true
+// between-bin SD of reward rate is 0.047 under concurrent VI
+// against 0.280 in the previous study -- and adding depletion to
+// the VI made it worse, not better, because the pending-setup
+// buffer absorbs exactly what depletion is trying to create.
+//
+// That matters because reward rate is not an optional coordinate.
+// On the previous study's real data, dropping it takes the state
+// from AUC 0.86 to 0.62, the largest loss of any single
+// coordinate. A schedule that flattens it removes most of what
+// distinguishes one context's dynamics from another.
+// ============================================================
+
+/** Latent value of one alternative; this value is its reinforcement probability. */
+export interface PatchState {
+  /** Current reinforcement probability, in [0, 1]. */
+  value: number;
+  /** Value regained per second away from, or working, this alternative. */
+  recoveryPerS: number;
+  /** Value lost each time this alternative is harvested. */
+  depletionPerResponse: number;
+}
+
+export function createPatchState(
+  recoveryPerS: number,
+  depletionPerResponse: number,
+  startingValue: number,
+): PatchState {
+  return { value: startingValue, recoveryPerS, depletionPerResponse };
+}
+
+/**
+ * Recover both alternatives over the interval since the previous response.
+ *
+ * Both recover, not just the neglected one: the chosen alternative is depleted
+ * separately, after its reinforcement probability has been read. Recovering
+ * only the unchosen one would make time away doubly valuable and exaggerate the
+ * pull back toward a neglected alternative.
+ */
+export function recoverPatches(
+  a: PatchState,
+  b: PatchState,
+  dtSeconds: number,
+): { a: PatchState; b: PatchState } {
+  const grow = (p: PatchState): PatchState => ({
+    ...p,
+    value: Math.min(1, p.value + p.recoveryPerS * Math.max(0, dtSeconds)),
+  });
+  return { a: grow(a), b: grow(b) };
+}
+
+/**
+ * Read the reinforcement probability for this response, then deplete.
+ *
+ * The probability is read BEFORE depletion, so a response is reinforced at the
+ * value the alternative held when it was made rather than at the value its own
+ * harvest produced.
+ */
+export function harvestPatch(
+  patch: PatchState,
+  rng: () => number,
+  codBlocking: boolean,
+): { delivered: boolean; withheldByCod: boolean; probability: number; patch: PatchState } {
+  const probability = patch.value;
+  const depleted: PatchState = {
+    ...patch,
+    value: Math.max(0, patch.value - patch.depletionPerResponse),
+  };
+
+  if (codBlocking) {
+    // The changeover delay withholds the reinforcer but the alternative is
+    // still worked, so it depletes either way.
+    return { delivered: false, withheldByCod: true, probability, patch: depleted };
+  }
+  return {
+    delivered: rng() < probability,
+    withheldByCod: false,
+    probability,
+    patch: depleted,
+  };
+}
+
+/** Effective interval, in ms, equivalent to a probability -- for logging only. */
+export function probabilityAsIntervalMs(p: number, meanIciMs: number): number {
+  return p > 0 ? meanIciMs / p : EXTINCTION_MS;
+}

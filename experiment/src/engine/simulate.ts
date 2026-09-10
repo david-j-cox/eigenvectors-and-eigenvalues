@@ -14,7 +14,7 @@ import { buildSessionPlan } from './plan';
 import { createRng } from '../utils/rng';
 import { ENGINE, DEFAULT_DESIGN } from '../config/task';
 import type { DesignConfig } from '../config/task';
-import type { ResponseOutcome, Side } from './types';
+import type { EngineConfig, ResponseOutcome, Side } from './types';
 
 export interface SimAgent {
   /** Choose a side given the reinforcement history so far. */
@@ -221,9 +221,11 @@ export function simulateSession(
   agent: SimAgent = new MeliorationAgent(),
   meanIciMs = 500,
   design: DesignConfig = DEFAULT_DESIGN,
+  engineOverride: Partial<EngineConfig> = {},
 ): SimResult {
   const plan = buildSessionPlan(seed, design);
-  const session = new Session(plan, ENGINE);
+  const cfg: EngineConfig = { ...ENGINE, ...engineOverride };
+  const session = new Session(plan, cfg);
   const rng = createRng(`${seed}::sim`);
 
   const outcomes: ResponseOutcome[] = [];
@@ -242,7 +244,7 @@ export function simulateSession(
       : () => -meanIciMs * Math.log(1 - rng());
 
   while (!session.snapshot().finished && guard++ < maxSteps) {
-    now += Math.max(ENGINE.responseCooldownMs, iciOf());
+    now += Math.max(cfg.responseCooldownMs, iciOf());
     const side = agent.choose(last, rng);
     const outcome = session.respond(side, now);
     if (outcome) {

@@ -34,10 +34,19 @@ from run_reanalysis import DEFAULT_EVENTS, md_table   # noqa: E402
 
 N_GRID = (10, 15, 20, 30, 40, 60, 80)
 
+# Variants with and without the obtained-reward coordinate.
+#
+# Under an interval schedule obtained reinforcement is rate-limited by the
+# schedule rather than by behaviour, so that coordinate carries almost no
+# between-bin variance in the new task. The question these variants answer is
+# whether it was earning its place even in the previous task, where it did vary,
+# or whether a purely behavioural state does as well.
 VARIANTS = {
     "4D_full": ["choice_prop_A", "reward_rate", "switch_rate", "mean_log_ici"],
     "3D_no_switch": ["choice_prop_A", "reward_rate", "mean_log_ici"],
     "3D_no_ici": ["choice_prop_A", "reward_rate", "switch_rate"],
+    "3D_no_reward": ["choice_prop_A", "switch_rate", "mean_log_ici"],
+    "2D_choice_switch": ["choice_prop_A", "switch_rate"],
     "2D_choice_reward": ["choice_prop_A", "reward_rate"],
 }
 

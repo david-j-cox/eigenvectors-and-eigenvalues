@@ -65,15 +65,6 @@ describe('full simulated sessions', () => {
     }
   });
 
-  it('logs the schedule actually in force, matching the plan outside perturbations', () => {
-    for (const o of result.outcomes) {
-      if (o.perturbationActive) continue;
-      const block = result.plan.blocks[o.blockIndex];
-      expect(o.viAMs).toBe(block.viAMs);
-      expect(o.viBMs).toBe(block.viBMs);
-    }
-  });
-
   it('applies each perturbation for exactly its programmed duration', () => {
     for (const p of result.plan.perturbations) {
       const active = result.outcomes.filter((o) => o.perturbationId === p.id);
@@ -89,30 +80,6 @@ describe('full simulated sessions', () => {
     const ext = result.outcomes.filter((o) => o.perturbationType === 'extinction');
     expect(ext.length).toBeGreaterThan(0);
     expect(ext.every((o) => o.rewardOutcome === 0)).toBe(true);
-  });
-
-  it('swaps the schedules during a contingency reversal', () => {
-    for (const p of result.plan.perturbations) {
-      if (p.type !== 'contingency_reversal') continue;
-      const block = result.plan.blocks[p.blockIndex];
-      const during = result.outcomes.filter((o) => o.perturbationId === p.id);
-      expect(during.every((o) => o.viAMs === block.viBMs)).toBe(true);
-      expect(during.every((o) => o.viBMs === block.viAMs)).toBe(true);
-    }
-  });
-
-  it('restores the block schedule once a perturbation ends', () => {
-    for (const p of result.plan.perturbations) {
-      const block = result.plan.blocks[p.blockIndex];
-      const after = result.outcomes.find(
-        (o) =>
-          o.blockIndex === p.blockIndex &&
-          o.trialInBlock === p.onsetResponseInBlock + p.durationResponses,
-      );
-      expect(after).toBeDefined();
-      expect(after!.perturbationActive).toBe(false);
-      expect(after!.viAMs).toBe(block.viAMs);
-    }
   });
 
   it('keeps cumulative points consistent with per-response earnings', () => {
@@ -197,5 +164,143 @@ describe('full simulated sessions', () => {
       simulateSession('sim-seed-1', new MatchingAgent(0.9), 500),
     );
     expect(calibrated).toBeGreaterThan(degenerate);
+  });
+});
+
+describe('concurrent VI mode', () => {
+  // The alternative schedule, kept because it is the behaviour-analytic
+  // standard even though the depleting-patch mode is the default here.
+  const vi = simulateSession(
+    'vi-seed', new CalibratedHumanAgent(3), 500, undefined, { scheduleMode: 'vi' },
+  );
+
+  it('logs the programmed intervals, matching the plan outside perturbations', () => {
+    for (const o of vi.outcomes) {
+      if (o.perturbationActive) continue;
+      const block = vi.plan.blocks[o.blockIndex];
+      expect(o.viAMs).toBe(block.viAMs);
+      expect(o.viBMs).toBe(block.viBMs);
+    }
+  });
+
+  it('swaps the intervals during a contingency reversal', () => {
+    for (const p of vi.plan.perturbations) {
+      if (p.type !== 'contingency_reversal') continue;
+      const block = vi.plan.blocks[p.blockIndex];
+      const during = vi.outcomes.filter((o) => o.perturbationId === p.id);
+      expect(during.every((o) => o.viAMs === block.viBMs)).toBe(true);
+      expect(during.every((o) => o.viBMs === block.viAMs)).toBe(true);
+    }
+  });
+
+  it('restores the block schedule once a perturbation ends', () => {
+    for (const p of vi.plan.perturbations) {
+      const block = vi.plan.blocks[p.blockIndex];
+      const after = vi.outcomes.find(
+        (o) =>
+          o.blockIndex === p.blockIndex &&
+          o.trialInBlock === p.onsetResponseInBlock + p.durationResponses,
+      );
+      expect(after).toBeDefined();
+      expect(after!.perturbationActive).toBe(false);
+      expect(after!.viAMs).toBe(block.viAMs);
+    }
+  });
+
+  it('delivers no reinforcement during extinction', () => {
+    const ext = vi.outcomes.filter((o) => o.perturbationType === 'extinction');
+    expect(ext.length).toBeGreaterThan(0);
+    expect(ext.every((o) => o.rewardOutcome === 0)).toBe(true);
+  });
+});
+
+describe('depleting-patch mode', () => {
+  // The default mode. Its own session, so this block does not depend on a
+  // constant declared inside another describe.
+  const result = simulateSession('patch-seed', new CalibratedHumanAgent(3));
+
+  it('keeps latent values inside [0, 1]', () => {
+    for (const o of result.outcomes) {
+      expect(o.richnessA).toBeGreaterThanOrEqual(0);
+      expect(o.richnessA).toBeLessThanOrEqual(1);
+      expect(o.richnessB).toBeGreaterThanOrEqual(0);
+      expect(o.richnessB).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('depletes the harvested alternative and restores the neglected one', () => {
+    // Within a run on one side, that side's latent value should fall while the
+    // other recovers. This is the mechanism the whole schedule choice rests on.
+    const runs: Array<[number, number]> = [];
+    for (let i = 1; i < result.outcomes.length; i++) {
+      const prev = result.outcomes[i - 1];
+      const cur = result.outcomes[i];
+      if (cur.blockIndex !== prev.blockIndex || cur.switched) continue;
+      if (cur.chosenOption !== 'A') continue;
+      runs.push([cur.richnessA - prev.richnessA, cur.richnessB - prev.richnessB]);
+    }
+    expect(runs.length).toBeGreaterThan(100);
+    const meanChosen = runs.reduce((s, r) => s + r[0], 0) / runs.length;
+    const meanOther = runs.reduce((s, r) => s + r[1], 0) / runs.length;
+    expect(meanChosen).toBeLessThan(0);
+    expect(meanOther).toBeGreaterThan(0);
+  });
+
+  it('gives the richer alternative a higher latent value on average', () => {
+    const inCell = (contingency: string) =>
+      result.outcomes.filter(
+        (o) =>
+          result.plan.blocks[o.blockIndex].contingency === contingency &&
+          !o.perturbationActive,
+      );
+    const mean = (os: typeof result.outcomes, f: (o: (typeof os)[0]) => number) =>
+      os.reduce((s, o) => s + f(o), 0) / os.length;
+
+    const aRich = inCell('A_rich');
+    expect(mean(aRich, (o) => o.richnessA)).toBeGreaterThan(
+      mean(aRich, (o) => o.richnessB),
+    );
+  });
+
+  it('restores recovery after a perturbation ends, so the system can recover', () => {
+    // Extinction zeroes both latent values and suspends recovery. If that
+    // suspension outlived the perturbation the alternatives would stay dead for
+    // the rest of the block, and the recovery the perturbation exists to
+    // measure could never occur.
+    for (const p of result.plan.perturbations) {
+      if (p.type !== 'extinction') continue;
+      const offset = p.onsetResponseInBlock + p.durationResponses;
+      const after = result.outcomes.filter(
+        (o) =>
+          o.blockIndex === p.blockIndex &&
+          o.trialInBlock >= offset &&
+          o.trialInBlock < offset + 25,
+      );
+      expect(after.length).toBeGreaterThan(5);
+      const recovered = Math.max(...after.map((o) => Math.max(o.richnessA, o.richnessB)));
+      expect(recovered).toBeGreaterThan(0.2);
+    }
+  });
+
+  it('delivers reinforcement again after extinction ends', () => {
+    const postExtinction = result.outcomes.filter(
+      (o) =>
+        o.trialsSincePerturbationOffset !== null &&
+        o.trialsSincePerturbationOffset >= 5 &&
+        o.trialsSincePerturbationOffset < 40 &&
+        !o.perturbationActive,
+    );
+    expect(postExtinction.length).toBeGreaterThan(20);
+    expect(postExtinction.some((o) => o.rewardOutcome === 1)).toBe(true);
+  });
+
+  it('drives latent values to zero during extinction', () => {
+    const ext = result.outcomes.filter((o) => o.perturbationType === 'extinction');
+    expect(ext.length).toBeGreaterThan(0);
+    expect(ext.every((o) => o.rewardOutcome === 0)).toBe(true);
+    // The last response of an extinction period must find both alternatives
+    // fully depleted, not merely unreinforced by chance.
+    const late = ext.filter((o) => (o.trialsSincePerturbationOnset ?? 0) >= 3);
+    expect(late.every((o) => o.richnessA === 0 && o.richnessB === 0)).toBe(true);
   });
 });

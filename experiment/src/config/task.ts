@@ -36,22 +36,43 @@ export const COLORS: Record<string, ColorSpec> = {
 export const NEUTRAL_COLOR: ColorSpec = COLORS.neutral;
 
 /**
- * Concurrent VI pairs.
+ * The three contingencies.
  *
- * The three contingencies are matched on *total* programmed reinforcement rate
- * (1/viA + 1/viB = 0.625 reinforcers/s in every case) and differ only in how
- * that rate is distributed. Without this constraint a "symmetric" context is
- * also a leaner context, and any difference in its dynamics could be a
- * response to reduced richness rather than to changed distribution.
+ * Both schedule modes are parameterised, and both hold total programmed
+ * reinforcement constant across the three contexts: the VI rates sum to
+ * 1.25/s in every case, and the recovery rates sum to 0.34/s. Without that
+ * constraint a "symmetric" context is also a leaner one, and any difference in
+ * its dynamics could be a response to reduced richness rather than to changed
+ * distribution.
+ *
+ * The recovery rates are the previous study's phase 1-3 values, so a context
+ * here is the same manipulation that study used, and operators estimated from
+ * the two datasets are directly comparable.
  */
 export const CONTINGENCIES: Record<string, ContingencySpec> = {
-  A_rich: { id: 'A_rich', viAMs: 1000, viBMs: 4000, label: 'A-rich (VI 1s / VI 4s)' },
-  B_rich: { id: 'B_rich', viAMs: 4000, viBMs: 1000, label: 'B-rich (VI 4s / VI 1s)' },
+  A_rich: {
+    id: 'A_rich',
+    viAMs: 1000,
+    viBMs: 4000,
+    recoveryAPerS: 0.24,
+    recoveryBPerS: 0.10,
+    label: 'A-rich',
+  },
+  B_rich: {
+    id: 'B_rich',
+    viAMs: 4000,
+    viBMs: 1000,
+    recoveryAPerS: 0.10,
+    recoveryBPerS: 0.24,
+    label: 'B-rich',
+  },
   symmetric: {
     id: 'symmetric',
     viAMs: 1600,
     viBMs: 1600,
-    label: 'Symmetric (VI 1.6s / VI 1.6s)',
+    recoveryAPerS: 0.17,
+    recoveryBPerS: 0.17,
+    label: 'Symmetric',
   },
 };
 

@@ -41,7 +41,7 @@ Outputs land in `reanalysis/outputs/`, with `summary.md` and
 ```bash
 cd experiment
 npm install
-npm test          # 100 tests
+npm test          # 107 tests
 npm run dev       # http://localhost:5173
 ```
 
@@ -74,7 +74,10 @@ Point both scripts at real pilot data with `--events` when it exists.
 
 ## What is decided and what is not
 
-Decided by measurement, not convention: the state bin (10 responses, since 5 is
+Decided by measurement, not convention: the **schedule** (depleting patches, not
+concurrent VI — an interval schedule is rate-limiting, which leaves the
+reward-rate coordinate 86% sampling noise, and dropping that coordinate costs
+more than dropping any other), the state bin (10 responses, since 5 is
 worse despite yielding more transitions), the changeover delay (500 ms and one
 response, since a 2 s time-only delay exceeds an entire average human run and
 leaves 65-73% of responses ineligible), patch depletion (implemented, off,
@@ -97,8 +100,5 @@ responder's context-specific dynamics are whatever its author gave it, so the
 selection criterion mostly measures the agent. The current choice —
 `[P(A), reward rate, switch rate]` — comes from the previous study's real data.
 Rerun `analysis/run_state_selection.py` on real pilot data before fixing it.
-
-Also unresolved: reward rate carries 60-76% sampling noise at ten-response bins,
-and no schedule parameter in this family fixes it.
 
 Nothing in this repository has been run with a human participant.

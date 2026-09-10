@@ -30,8 +30,16 @@ export interface ColorSpec {
 
 export interface ContingencySpec {
   id: ContingencyId;
+  /** Concurrent-VI parameters, used when scheduleMode is 'vi'. */
   viAMs: number;
   viBMs: number;
+  /**
+   * Depleting-patch parameters, used when scheduleMode is
+   * 'depleting_probability'. Recovery rate is what the context manipulates:
+   * an A-rich context restores option A faster than option B.
+   */
+  recoveryAPerS: number;
+  recoveryBPerS: number;
   label: string;
 }
 
@@ -172,6 +180,41 @@ export interface EngineConfig {
   viMinMultiple: number;
   viMaxMultiple: number;
   depletion: DepletionConfig;
+  /**
+   * Which reinforcement schedule the task arranges.
+   *
+   * 'depleting_probability' reproduces the previous study's mechanism and is
+   * the default; see the note on ScheduleMode.
+   */
+  scheduleMode: ScheduleMode;
+  patch: PatchConfig;
+}
+
+/**
+ * 'vi' arranges concurrent variable-interval schedules with a changeover
+ * delay -- the behaviour-analytic standard, and the schedule under which
+ * accumulating setups on the neglected alternative make exclusive preference
+ * costly.
+ *
+ * 'depleting_probability' arranges the previous study's depleting patches,
+ * where each alternative's latent value is its reinforcement probability.
+ *
+ * The choice is not stylistic. An interval schedule is rate-limiting: obtained
+ * reinforcement is set by the programmed rate and barely moves, so the
+ * reward-rate coordinate of the state vector has a true between-bin SD of 0.047
+ * against 0.280 in the previous study. Dropping that coordinate is not an
+ * option either -- on the previous study's real data it is worth more than any
+ * other single coordinate. So the schedule that sustains switching by one
+ * mechanism destroys the measurement the analysis depends on, and the schedule
+ * that produced the original result preserves it.
+ */
+export type ScheduleMode = 'vi' | 'depleting_probability';
+
+export interface PatchConfig {
+  /** Value lost each time an alternative is harvested. */
+  depletionPerResponse: number;
+  /** Latent value both alternatives start each block at. */
+  startingValue: number;
 }
 
 /**
@@ -204,6 +247,16 @@ export const DEFAULT_ENGINE_CONFIG: EngineConfig = {
   pointsPerReinforcer: 1,
   viMinMultiple: 0.1,
   viMaxMultiple: 3.0,
+  scheduleMode: 'depleting_probability',
+  patch: {
+    // The previous study's values: 0.12 lost per response against recovery
+    // rates near 0.2/s, so an alternative is worked down in roughly eight
+    // responses and restored in about five seconds. That ratio is what made
+    // reward rate move faster than choice could track, which is what gave the
+    // coordinate its variance.
+    depletionPerResponse: 0.12,
+    startingValue: 0.7,
+  },
   depletion: {
     // Off by default. Depletion was implemented and then measured against a
     // stationary schedule using responders calibrated to the previous study's

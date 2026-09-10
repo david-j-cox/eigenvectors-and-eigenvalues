@@ -12,9 +12,13 @@ import { createRng, deriveSeed } from '../utils/rng';
 import {
   applyDepletion,
   collect,
+  createPatchState,
   createCodState,
   createViState,
+  harvestPatch,
   isCodActive,
+  probabilityAsIntervalMs,
+  recoverPatches,
   retargetVi,
   startCod,
   tickCod,
@@ -34,6 +38,8 @@ import type {
   Side,
   ViState,
 } from './types';
+import type { PatchState } from './schedule';
+import { CONTINGENCIES } from '../config/task';
 
 export interface SessionSnapshot {
   blockIndex: number;
@@ -59,6 +65,8 @@ export class Session {
 
   private viA: ViState;
   private viB: ViState;
+  private patchA: PatchState;
+  private patchB: PatchState;
   private cod: CodState = createCodState();
 
   private previousOption: Side | null = null;
@@ -80,6 +88,13 @@ export class Session {
     const first = plan.blocks[0];
     this.viA = createViState(first.viAMs, startMs, this.rng, cfg);
     this.viB = createViState(first.viBMs, startMs, this.rng, cfg);
+    const spec = CONTINGENCIES[first.contingency];
+    this.patchA = createPatchState(
+      spec.recoveryAPerS, cfg.patch.depletionPerResponse, cfg.patch.startingValue,
+    );
+    this.patchB = createPatchState(
+      spec.recoveryBPerS, cfg.patch.depletionPerResponse, cfg.patch.startingValue,
+    );
     this.blockStartedAtMs = startMs;
   }
 
@@ -131,30 +146,12 @@ export class Session {
       this.trialInBlock,
       preferred,
     );
-    this.viA = retargetVi(this.viA, eff.viAMs, nowMs, this.rng, this.cfg);
-    this.viB = retargetVi(this.viB, eff.viBMs, nowMs, this.rng, this.cfg);
 
-    // Depletion and recovery are applied for the interval since the previous
-    // response, before baiting, so this response is scored against the
-    // richness that time away has already restored.
     const dtSeconds =
       this.lastResponseAtMs === -Infinity
         ? 0
         : (nowMs - this.lastResponseAtMs) / 1000;
     const chosenIsA = side === 'A';
-    const depleted = applyDepletion(
-      chosenIsA ? this.viA : this.viB,
-      chosenIsA ? this.viB : this.viA,
-      dtSeconds,
-      this.cfg,
-    );
-    this.viA = chosenIsA ? depleted.chosen : depleted.other;
-    this.viB = chosenIsA ? depleted.other : depleted.chosen;
-
-    // Bait before collecting, so a reinforcer that came due during the
-    // inter-response interval is available to this response.
-    this.viA = updateBaiting(this.viA, nowMs, this.rng, this.cfg);
-    this.viB = updateBaiting(this.viB, nowMs, this.rng, this.cfg);
 
     const switched = this.previousOption !== null && this.previousOption !== side;
     if (switched) {
@@ -164,12 +161,54 @@ export class Session {
     // The changeover response itself counts toward the response requirement.
     this.cod = tickCod(this.cod);
 
-    const target = side === 'A' ? this.viA : this.viB;
-    const result = collect(target, nowMs, codBlocking);
-    if (side === 'A') this.viA = result.vi;
-    else this.viB = result.vi;
+    let delivered: boolean;
+    let withheldByCod: boolean;
 
-    const points = result.delivered ? this.cfg.pointsPerReinforcer : 0;
+    if (this.cfg.scheduleMode === 'depleting_probability') {
+      // Both alternatives recover over the interval since the previous
+      // response; the chosen one is then read and depleted.
+      const recovered = recoverPatches(this.patchA, this.patchB, dtSeconds);
+      this.patchA = recovered.a;
+      this.patchB = recovered.b;
+      this.applyPerturbationToPatches(eff);
+
+      const harvest = harvestPatch(
+        chosenIsA ? this.patchA : this.patchB,
+        this.rng,
+        codBlocking,
+      );
+      if (chosenIsA) this.patchA = harvest.patch;
+      else this.patchB = harvest.patch;
+
+      delivered = harvest.delivered;
+      withheldByCod = harvest.withheldByCod;
+    } else {
+      this.viA = retargetVi(this.viA, eff.viAMs, nowMs, this.rng, this.cfg);
+      this.viB = retargetVi(this.viB, eff.viBMs, nowMs, this.rng, this.cfg);
+
+      const depleted = applyDepletion(
+        chosenIsA ? this.viA : this.viB,
+        chosenIsA ? this.viB : this.viA,
+        dtSeconds,
+        this.cfg,
+      );
+      this.viA = chosenIsA ? depleted.chosen : depleted.other;
+      this.viB = chosenIsA ? depleted.other : depleted.chosen;
+
+      // Bait before collecting, so a reinforcer that came due during the
+      // inter-response interval is available to this response.
+      this.viA = updateBaiting(this.viA, nowMs, this.rng, this.cfg);
+      this.viB = updateBaiting(this.viB, nowMs, this.rng, this.cfg);
+
+      const target = side === 'A' ? this.viA : this.viB;
+      const result = collect(target, nowMs, codBlocking);
+      if (side === 'A') this.viA = result.vi;
+      else this.viB = result.vi;
+      delivered = result.delivered;
+      withheldByCod = result.withheldByCod;
+    }
+
+    const points = delivered ? this.cfg.pointsPerReinforcer : 0;
     this.cumulativePoints += points;
 
     this.runLength = switched || this.previousOption === null ? 1 : this.runLength + 1;
@@ -185,7 +224,7 @@ export class Session {
       switched,
       runLength: this.runLength,
 
-      rewardOutcome: result.delivered ? 1 : 0,
+      rewardOutcome: delivered ? 1 : 0,
       pointsEarned: points,
       cumulativePoints: this.cumulativePoints,
 
@@ -193,13 +232,28 @@ export class Session {
       iciMs: ici,
       elapsedMs: nowMs,
 
-      viAMs: eff.viAMs,
-      viBMs: eff.viBMs,
-      richnessA: this.viA.richness,
-      richnessB: this.viB.richness,
+      // Under the patch schedule these carry the latent values as equivalent
+      // intervals, so a single pair of columns describes the arranged
+      // reinforcement in either mode and the analysis need not branch.
+      viAMs:
+        this.cfg.scheduleMode === 'depleting_probability'
+          ? probabilityAsIntervalMs(this.patchA.value, 350)
+          : eff.viAMs,
+      viBMs:
+        this.cfg.scheduleMode === 'depleting_probability'
+          ? probabilityAsIntervalMs(this.patchB.value, 350)
+          : eff.viBMs,
+      richnessA:
+        this.cfg.scheduleMode === 'depleting_probability'
+          ? this.patchA.value
+          : this.viA.richness,
+      richnessB:
+        this.cfg.scheduleMode === 'depleting_probability'
+          ? this.patchB.value
+          : this.viB.richness,
 
       codActive: codBlocking,
-      reinforcerWithheldByCod: result.withheldByCod,
+      reinforcerWithheldByCod: withheldByCod,
 
       perturbationActive: eff.perturbation !== null,
       perturbationId: eff.perturbation?.id ?? null,
@@ -251,6 +305,56 @@ export class Session {
     }
     this.viA = createViState(next.viAMs, nowMs, this.rng, this.cfg);
     this.viB = createViState(next.viBMs, nowMs, this.rng, this.cfg);
+    const spec = CONTINGENCIES[next.contingency];
+    this.patchA = createPatchState(
+      spec.recoveryAPerS, this.cfg.patch.depletionPerResponse, this.cfg.patch.startingValue,
+    );
+    this.patchB = createPatchState(
+      spec.recoveryBPerS, this.cfg.patch.depletionPerResponse, this.cfg.patch.startingValue,
+    );
+  }
+
+  /**
+   * Express a perturbation in patch terms.
+   *
+   * Extinction sets both latent values to zero and holds them there by removing
+   * recovery; a contingency reversal swaps the two recovery rates. The
+   * perturbation engine still describes everything as a schedule override -- this
+   * only translates that override into the currency this mode uses.
+   */
+  private applyPerturbationToPatches(eff: {
+    viAMs: number;
+    viBMs: number;
+    perturbation: unknown;
+  }): void {
+    const block = this.currentBlock();
+    if (!block) return;
+    const spec = CONTINGENCIES[block.contingency];
+
+    // Reset to the block's own rates on every response, before applying any
+    // override. Without this an override is permanent: extinction would set
+    // recovery to zero and nothing would ever restore it, so the alternatives
+    // would stay dead for the remainder of the block and the recovery the
+    // perturbation exists to measure could never happen.
+    let recoveryA = spec.recoveryAPerS;
+    let recoveryB = spec.recoveryBPerS;
+
+    if (eff.perturbation) {
+      if (!Number.isFinite(eff.viAMs) && !Number.isFinite(eff.viBMs)) {
+        // Extinction: both alternatives are emptied and held there.
+        this.patchA = { ...this.patchA, value: 0, recoveryPerS: 0 };
+        this.patchB = { ...this.patchB, value: 0, recoveryPerS: 0 };
+        return;
+      }
+      // A reversal swaps which alternative restores faster.
+      if (eff.viAMs === block.viBMs && eff.viBMs === block.viAMs) {
+        recoveryA = spec.recoveryBPerS;
+        recoveryB = spec.recoveryAPerS;
+      }
+    }
+
+    this.patchA = { ...this.patchA, recoveryPerS: recoveryA };
+    this.patchB = { ...this.patchB, recoveryPerS: recoveryB };
   }
 
   /** Elapsed time in the current block, for the UI only. */
