@@ -41,7 +41,7 @@ Outputs land in `reanalysis/outputs/`, with `summary.md` and
 ```bash
 cd experiment
 npm install
-npm test          # 81 tests
+npm test          # 90 tests
 npm run dev       # http://localhost:5173
 ```
 
@@ -75,14 +75,27 @@ Point both scripts at real pilot data with `--events` when it exists.
 ## What is decided and what is not
 
 Decided by measurement, not convention: the state bin (10 responses, since 5 is
-worse despite yielding more transitions), the changeover delay (750 ms and one
-response, since a longer time-only delay halves obtained reinforcement), patch
-depletion (implemented, off, because it made every criterion worse), the number
-of exposures per cell, and the two-reversal structure.
+worse despite yielding more transitions), the changeover delay (500 ms and one
+response, since a 2 s time-only delay exceeds an entire average human run and
+leaves 72% of responses ineligible), patch depletion (implemented, off, because
+it reduced reinforcement at every strength without restoring the reward-rate
+dynamics it was meant to), five exposures per cell, and the two-reversal
+structure.
 
-Not decided: the state vector. The discrimination criterion gives different
-answers on the previous study's data and on simulated sessions of the new task,
-and the simulated answer is contingent on the simulated responder. Rerun
-`run_state_selection.py` on real pilot data before fixing it.
+The simulated responders those decisions rest on are calibrated to the previous
+study's 60 participants — their conditional switch probabilities and their
+inter-response-time distributions, drawn one real person at a time rather than
+averaged. That is what makes claims about changeover delays and reinforcement
+density meaningful, since both turn on how often someone switches and how fast
+they respond.
+
+**Not decided: the state vector**, and no simulation can decide it. A simulated
+responder's context-specific dynamics are whatever its author gave it, so the
+selection criterion mostly measures the agent. The current choice —
+`[P(A), reward rate, switch rate]` — comes from the previous study's real data.
+Rerun `analysis/run_state_selection.py` on real pilot data before fixing it.
+
+Also unresolved: reward rate carries 60-76% sampling noise at ten-response bins,
+and no schedule parameter in this family fixes it.
 
 Nothing in this repository has been run with a human participant.

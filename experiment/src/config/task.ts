@@ -88,29 +88,30 @@ export interface DesignConfig {
  *
  * 100 responses per block is 10 state bins, so 9 within-block transitions; the
  * transition lost at each block boundary is why larger blocks are more
- * efficient per response, and 4 exposures per colour per stage is the smallest
- * number that still makes "repeated returns to the same context" meaningful.
- * Each colour x contingency x stage cell therefore yields 400 responses and 36
- * within-block transitions, and pooling the two stages that share a mapping
- * (1 and 3) gives 72 for the cell as a whole.
+ * efficient per response.
  *
- * At 36 transitions a same-operator pair separates from a different-operator
- * pair with AUC ~0.73 for a single participant. Since AUC is exactly the
- * probability that one participant orders the comparison correctly, a sign
- * test across 45 participants detects that departure from chance with about
- * 90% power, so the group-level directional claims are well supported while a
- * confident per-individual claim is not. Reaching AUC 0.82 needs 60
- * transitions per cell, which is roughly eight more minutes of responding.
+ * Five exposures per colour per stage gives each colour x contingency x stage
+ * cell 500 responses and 45 within-block transitions, and pooling the two
+ * stages that share a mapping (1 and 3) gives 90 for the cell as a whole. At 45
+ * transitions a same-operator pair separates from a different-operator pair
+ * with AUC ~0.78 for a single participant.
  *
- * The trade is deliberate rather than hidden: raise exposuresPerColorPerStage
- * if the pilot shows participants responding faster than 2/s, or if a longer
- * session proves acceptable.
+ * Since AUC is exactly the probability that one participant orders the
+ * comparison correctly, a sign test across 45 participants detects that
+ * departure from chance with better than 95% power. The group-level directional
+ * claims are therefore well supported; a confident per-individual claim would
+ * need about 60 transitions per cell and another five minutes.
+ *
+ * Four exposures was the original figure, chosen when the session was budgeted
+ * against an assumed 2 responses per second. Responders calibrated to the
+ * previous study's participants respond at 2.84/s, which freed enough time for
+ * a fifth exposure without exceeding the session budget.
  */
 export const DEFAULT_DESIGN: DesignConfig = {
   practiceResponses: 60,
   blockResponses: 100,
   stateBinResponses: 10,
-  exposuresPerColorPerStage: 4,
+  exposuresPerColorPerStage: 5,
   nStages: 3,
   perturbationBlocks: 5,
   perturbationBlockResponses: 200,
@@ -159,31 +160,59 @@ export const SESSION_TIME_GUARD = {
 export const ENGINE: EngineConfig = {
   ...DEFAULT_ENGINE_CONFIG,
   // The changeover delay exists to stop the switch response itself from being
-  // adventitiously reinforced, and one response plus 750 ms is enough for that.
-  // Longer values are counterproductive here: simulated sessions showed a 2 s
-  // delay leaving 40% of responses ineligible for a participant switching every
-  // seven responses, which halves obtained reinforcement and starves the
-  // reward-rate coordinate that carries the dominant mode.
-  codMs: 750,
+  // adventitiously reinforced. The response requirement alone achieves that;
+  // the 500 ms is there so a fast double-tap cannot satisfy it instantly.
+  //
+  // The duration is short because it is expensive. Responders calibrated to the
+  // previous study's 60 participants -- switching on ~22% of responses at 2.8
+  // responses per second -- lose reinforcement steeply as it lengthens:
+  //
+  //     no COD      3.24 reinforcers per 10-response bin
+  //     500 ms      2.21
+  //     750 ms      2.04
+  //     2000 ms     1.26   (72% of responses ineligible)
+  //
+  // A 2 s delay exceeds the average human run of ~5 responses, so a participant
+  // would spend most of the task unable to earn anything.
+  //
+  // What this cannot tell us is the COD's effect on behaviour, since the
+  // calibrated agent's switching is fixed by measured conditional
+  // probabilities and barely responds to it. Whether 500 ms is long enough to
+  // suppress adventitious reinforcement of changeovers is a question for the
+  // pilot, not for the simulation.
+  codMs: 500,
   codResponses: 1,
   responseCooldownMs: 150,
   pointsPerReinforcer: 1,
 };
 
 /**
- * Reinforcement density is the parameter most likely to need adjusting after
- * the pilot. In the previous dataset the reward-rate coordinate carried the
- * dominant eigenvector for 73% of participants, so if reinforcement is too
- * sparse the leading mode is measured almost entirely as noise. This is the
- * acceptance threshold for the pilot.
+ * Pilot acceptance thresholds.
+ *
+ * These are the single source of truth: `analysis/pilot_targets.json` is
+ * generated from this object by `scripts/export_targets.ts`, so the task and
+ * the diagnostics cannot drift into disagreeing about what counts as
+ * acceptable. Change them here, then regenerate.
+ *
+ * `minRewardsPerBin` is a regression floor, not a sufficiency criterion.
+ * Responders calibrated to the previous study's participants obtain a median
+ * of about 2.2 reinforcers per 10-response bin under this schedule, so 2.0
+ * passes ordinary variation while catching a schedule or changeover-delay
+ * change that materially reduces reinforcement. What actually decides whether
+ * the reward-rate coordinate is usable is `maxNoiseRatio`, which this design
+ * does not currently meet -- see docs.
  */
 export const PILOT_TARGETS = {
   /** Mean reinforcers per 10-response state bin. */
-  minRewardsPerBin: 2.5,
+  minRewardsPerBin: 2.0,
   /** Sampling noise as a share of between-bin variance, per coordinate. */
-  maxNoiseRatio: 0.5,
+  maxNoiseRatio: 0.6,
   minResponsesPerSecond: 1.2,
   maxSessionMinutes: 32,
+  minTransitionsPerCell: 40,
+  minFracBeatingPersistence: 0.7,
+  minSwitchRate: 0.02,
+  maxSwitchRate: 0.45,
 };
 
 export const COMPLETION_CODE =

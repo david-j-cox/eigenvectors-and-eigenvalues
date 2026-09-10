@@ -17,6 +17,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -28,33 +29,56 @@ sys.path.insert(0, str(HERE.parent))
 
 from dynalysis import adapt, eigen as E, operators as O, states as S  # noqa: E402
 
-# The primary state, provisional until pilot data replace the simulated
-# sessions it was chosen on.
+# The primary state.
 #
-# The criterion is discrimination, not per-coordinate noise: a coordinate earns
-# its place by improving the separation between two estimates of the same
-# operator and two estimates of different ones. On the previous study's data
-# that criterion picked [P(A), reward rate, switch rate]; on simulated sessions
-# of the new task it picks [P(A), reward rate], largely because a smaller
-# operator needs fewer transitions and the extra coordinates add noise without
-# adding context-discriminative variance.
+# Chosen on the previous study's real data, where the discrimination criterion
+# picks these three coordinates: dropping mean log ICI helps, because it loads
+# similarly on the dominant mode in every context and dilutes the differences
+# under test, while dropping switch rate hurts most despite it being the
+# noisiest coordinate.
 #
-# Those two answers disagree, and the simulated one is contingent on a
-# responder whose choices depend only on local reinforcement rates -- exactly
-# the variables the winning state contains. Treat this as the default to start
-# from and rerun `run_state_selection.py` on real pilot data before fixing it.
-PRIMARY_STATE = ["choice_prop_A", "reward_rate"]
+# An earlier version of this file used [P(A), reward rate], chosen on simulated
+# sessions. That was a mistake. Simulated responders cannot settle this
+# question: a responder whose switching comes from fixed conditional
+# probabilities has almost no context-specific dynamics to detect, so the
+# criterion scores every candidate state near chance and mostly measures how
+# many parameters each one has. The question of which coordinates carry an
+# organism's context-specific dynamics is the empirical question this study
+# exists to answer, and it can only be settled on behaviour.
+#
+# Rerun `run_state_selection.py` on real pilot data before treating this as
+# fixed.
+PRIMARY_STATE = ["choice_prop_A", "reward_rate", "switch_rate"]
 
-TARGETS = {
-    "min_transitions_per_cell": 30,
-    "max_noise_ratio": 0.60,
-    "min_frac_beating_persistence": 0.70,
-    "min_responses_per_s": 1.2,
-    "max_session_minutes": 32.0,
-    "min_switch_rate": 0.02,
-    "max_switch_rate": 0.45,
-    "min_rewards_per_bin": 1.5,
-}
+def _load_targets() -> dict:
+    """Read the acceptance thresholds the task exports.
+
+    They live in the task's config and are written here by
+    `experiment/scripts/export_targets.ts`. Keeping a second copy in this file
+    is how the task and the diagnostics come to disagree about what an
+    acceptable pilot looks like, which is worse than either threshold being
+    wrong.
+    """
+    path = HERE / "pilot_targets.json"
+    if not path.exists():
+        raise FileNotFoundError(
+            f"{path} is missing. Run `npx tsx scripts/export_targets.ts` from "
+            "experiment/ to generate it."
+        )
+    t = json.loads(path.read_text())["targets"]
+    return {
+        "min_transitions_per_cell": t["minTransitionsPerCell"],
+        "max_noise_ratio": t["maxNoiseRatio"],
+        "min_frac_beating_persistence": t["minFracBeatingPersistence"],
+        "min_responses_per_s": t["minResponsesPerSecond"],
+        "max_session_minutes": t["maxSessionMinutes"],
+        "min_switch_rate": t["minSwitchRate"],
+        "max_switch_rate": t["maxSwitchRate"],
+        "min_rewards_per_bin": t["minRewardsPerBin"],
+    }
+
+
+TARGETS = _load_targets()
 
 
 # Metadata columns share the _t / _next suffix with state coordinates, so they

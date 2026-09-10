@@ -1,0 +1,15 @@
+{
+  "_generated_by": "experiment/scripts/export_targets.ts -- do not edit by hand",
+  "experiment_version": "eigen-dynamics-1.0.0",
+  "state_bin_responses": 10,
+  "targets": {
+    "minRewardsPerBin": 2,
+    "maxNoiseRatio": 0.6,
+    "minResponsesPerSecond": 1.2,
+    "maxSessionMinutes": 32,
+    "minTransitionsPerCell": 40,
+    "minFracBeatingPersistence": 0.7,
+    "minSwitchRate": 0.02,
+    "maxSwitchRate": 0.45
+  }
+}

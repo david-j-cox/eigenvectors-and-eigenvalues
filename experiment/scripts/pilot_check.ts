@@ -14,7 +14,12 @@
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
-import { MatchingAgent, MeliorationAgent, RandomAgent, simulateSession } from '../src/engine/simulate';
+import {
+  CalibratedHumanAgent,
+  MatchingAgent,
+  RandomAgent,
+  simulateSession,
+} from '../src/engine/simulate';
 import { toCsv, toEventRow } from '../src/logging/schema';
 import type { EventRow } from '../src/logging/schema';
 import { EXPERIMENT_VERSION, DEFAULT_DESIGN, ENGINE } from '../src/config/task';
@@ -45,17 +50,17 @@ for (let i = 0; i < nSessions; i++) {
   const seed = `sim-participant-${String(i + 1).padStart(3, '0')}`;
   // Mix agent types and response rates so the diagnostics are not tuned to one
   // idealized responder.
-  // Mostly melioration agents with varied parameters, plus one degenerate
-  // responder of each kind so the diagnostics see the worst cases too.
+  // Each simulated participant borrows one real participant's switching
+  // statistics and response timing. Two degenerate responders are mixed in so
+  // the diagnostics also see behaviour no human would produce.
   const agent =
-    i % 10 === 0
+    i % 12 === 11
       ? new RandomAgent()
-      : i % 10 === 5
+      : i % 12 === 5
         ? new MatchingAgent(0.9)
-        : new MeliorationAgent(0.1 + 0.1 * ((i % 3) / 3), 5 + 2 * ((i % 4) / 4), 0.04 + 0.04 * ((i % 5) / 5), 1.8 + 0.8 * ((i % 3) / 3));
-  const ici = meanIci * (0.7 + 0.6 * ((i % 7) / 7));
+        : new CalibratedHumanAgent(i);
 
-  const { outcomes, durationMs, plan } = simulateSession(seed, agent, ici);
+  const { outcomes, durationMs, plan } = simulateSession(seed, agent, meanIci);
   const startedAt = Date.now();
 
   for (const o of outcomes) {

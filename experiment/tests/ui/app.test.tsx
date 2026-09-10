@@ -34,15 +34,47 @@ describe('App', () => {
     clock += ENGINE.responseCooldownMs + 10;
   };
 
+  /** Tick the acknowledgement and agree, as a participant must. */
+  const consent = () => {
+    fireEvent.click(screen.getByRole('checkbox'));
+    fireEvent.click(screen.getByRole('button', { name: /i agree/i }));
+  };
+
   it('starts on consent and does not begin the task until it is given', () => {
     render(<App />);
     expect(screen.getByRole('heading', { name: /consent/i })).toBeDefined();
     expect(screen.queryByLabelText(/left option/i)).toBeNull();
   });
 
-  it('reaches the task through consent and instructions', () => {
+  it('keeps the approved consent text and its required acknowledgement', () => {
+    render(<App />);
+    // These elements are what make the screen a consent form rather than a
+    // splash page; losing any of them silently would be an ethics problem, not
+    // a cosmetic one.
+    expect(screen.getByText(/David J. Cox/)).toBeDefined();
+    expect(screen.getByText(/dcox@endicott.edu/)).toBeDefined();
+    expect(screen.getByText(/entirely voluntary/i)).toBeDefined();
+    expect(screen.getByText(/no known risks/i)).toBeDefined();
+    expect(screen.getByText(/De-identified data/i)).toBeDefined();
+
+    const agree = screen.getByRole('button', { name: /i agree/i });
+    expect(agree).toHaveProperty('disabled', true);
+  });
+
+  it('will not let a participant proceed without ticking the acknowledgement', () => {
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: /i agree/i }));
+    // Still on consent: a disabled button must not advance the flow.
+    expect(screen.getByRole('heading', { name: /consent/i })).toBeDefined();
+
+    fireEvent.click(screen.getByRole('checkbox'));
+    fireEvent.click(screen.getByRole('button', { name: /i agree/i }));
+    expect(screen.getByRole('heading', { name: /how to play/i })).toBeDefined();
+  });
+
+  it('reaches the task through consent and instructions', () => {
+    render(<App />);
+    consent();
     fireEvent.click(screen.getByRole('button', { name: /^start$/i }));
     expect(screen.getByLabelText(/left option/i)).toBeDefined();
     expect(screen.getByLabelText(/right option/i)).toBeDefined();
@@ -50,14 +82,14 @@ describe('App', () => {
 
   it('lets a participant decline without entering the task', () => {
     render(<App />);
-    fireEvent.click(screen.getByRole('button', { name: /do not agree/i }));
+    fireEvent.click(screen.getByRole('button', { name: /no thanks/i }));
     expect(screen.getByRole('heading', { name: /thank you/i })).toBeDefined();
     expect(screen.queryByLabelText(/left option/i)).toBeNull();
   });
 
   it('records responses from both clicks and the F and J keys', () => {
     const { container } = render(<App />);
-    fireEvent.click(screen.getByRole('button', { name: /i agree/i }));
+    consent();
     fireEvent.click(screen.getByRole('button', { name: /^start$/i }));
 
     const trials = () =>
@@ -80,7 +112,7 @@ describe('App', () => {
 
   it('discards responses that arrive inside the cooldown', () => {
     const { container } = render(<App />);
-    fireEvent.click(screen.getByRole('button', { name: /i agree/i }));
+    consent();
     fireEvent.click(screen.getByRole('button', { name: /^start$/i }));
     const trials = () =>
       Number((container.querySelector('main.task') as HTMLElement).dataset.trial);
@@ -104,7 +136,7 @@ describe('App', () => {
 
   it('shows the practice context before any experimental colour', () => {
     const { container } = render(<App />);
-    fireEvent.click(screen.getByRole('button', { name: /i agree/i }));
+    consent();
     fireEvent.click(screen.getByRole('button', { name: /^start$/i }));
 
     const main = container.querySelector('main.task') as HTMLElement;

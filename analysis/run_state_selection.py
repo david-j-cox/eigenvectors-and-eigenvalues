@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Choose the state vector for the new task, using the same criterion that chose
-it for the previous one.
+Choose the state vector, using the same criterion that chose it for the
+previous study.
 
 The criterion is discrimination: how well the dominant eigenvector separates
 two estimates of the same operator from two estimates of genuinely different
@@ -9,7 +9,21 @@ ones. A coordinate earns its place by making that separation better, not by
 being individually low-noise -- the least noisy coordinate in the previous
 dataset was also the one whose removal helped most.
 
-Run against simulated sessions before collection, then against pilot data.
+IMPORTANT: run this on REAL data. On simulated sessions it is close to
+meaningless, and running it there produced a wrong answer once already.
+
+A simulated responder's context-specific dynamics are whatever its author gave
+it. The agent calibrated to human switching statistics has almost none -- its
+changeover probabilities are fixed constants, so its transition operator barely
+differs between contexts -- and every candidate state scores near chance
+against it. A hand-tuned melioration agent scored much higher, but only because
+its own adaptation rule was context-dependent by construction. Neither number
+is about the state vector; both are about the agent.
+
+What simulation legitimately sizes is the estimator: how many transitions are
+needed before two estimates of a KNOWN operator can be told apart. That lives
+in `reanalysis/run_design_sim.py` and simulates from operators fitted to real
+participants, which is why its answers are usable and these are not.
 
 Usage:
     python run_state_selection.py [--events PATH] [--bin 10] [--quick]

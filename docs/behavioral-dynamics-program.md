@@ -102,16 +102,31 @@ into one continuous procedure in which every block serves more than one analysis
 
 ### Structure
 
+| Stage | Green | Blue |
+|---|---|---|
+| 1 | A-rich | B-rich |
+| 2 | B-rich | A-rich |
+| 3 | A-rich | B-rich |
+
+The colour-to-contingency assignment is randomised per participant, so half see
+the table above and half see it transposed. The perturbation part uses a third
+colour (red) held at one contingency throughout, so its pre-perturbation
+baseline is never a reversed cell. Colours alternate strictly within and across
+stages, so no context ever repeats on consecutive blocks. Run
+`experiment/scripts/print_schedule.ts` for a participant's full sequence.
+
 ```
 Practice (60 responses, neutral background)
-Stage 1: green -> A-rich, blue -> B-rich    (8 blocks x 100 responses)
-Stage 2: green -> B-rich, blue -> A-rich    (8 blocks x 100 responses)
-Stage 3: green -> A-rich, blue -> B-rich    (8 blocks x 100 responses)
-Perturbation part: red, one contingency     (5 blocks x 200 responses, 8 perturbations)
+Stage 1: 10 blocks x 100 responses, alternating green and blue
+Stage 2: 10 blocks x 100 responses, mapping reversed
+Stage 3: 10 blocks x 100 responses, mapping restored
+Perturbation part: 5 blocks x 200 responses, red, 8 perturbations
 ```
 
-Total 3,460 responses, about 26 minutes of responding at the rate the previous
-study observed.
+Total 4,060 responses, about 24 minutes of responding at the 2.84 responses per
+second real participants produced in the previous study. Each colour x
+contingency x stage cell gets five exposures, 500 responses, and 45 within-block
+transitions.
 
 ### Why two reversals rather than one
 
@@ -153,41 +168,114 @@ difference in its dynamics could be a response to reduced richness rather than t
 changed distribution. The build specification's 0.80/0.20 against 0.50/0.50
 contingencies do not hold it.
 
-### Two parameters that simulated sessions changed
+### How the simulated responders are made credible
 
-Both were found by running whole sessions through the real event schema and the
-real analysis (`experiment/scripts/pilot_check.ts` into
-`analysis/run_pilot_diagnostics.py`), not by argument.
+Two design parameters were decided by running whole sessions through the real
+event schema and the real analysis. Whether those decisions mean anything
+depends entirely on whether the simulated responder switches and responds like a
+participant, so it is not hand-tuned.
 
-- **The changeover delay is 750 ms *and* one response, not 2 s.** A purely
+`experiment/src/engine/human_calibration.json` holds per-participant parameters
+measured from the previous study's 60 humans:
+
+| Statistic | Human median [IQR] |
+|---|---|
+| switch rate | 0.201 [0.115, 0.305] |
+| p(switch \| reinforced) | 0.144 |
+| p(switch \| not reinforced) | 0.289 |
+| mean run length | 4.96 responses |
+| response rate | 2.86/s (median ICI 0.349 s) |
+
+Each simulated participant draws one real person's conditional switch
+probabilities and their log-normal inter-response-time distribution, rather than
+an average, so the sample keeps the real heterogeneity.
+`tests/engine/calibration.test.ts` checks that simulated sessions reproduce
+those statistics.
+
+Two limits, both material. First, only the switching and the timing are
+borrowed; the tilt that makes the agent prefer the richer alternative is not
+calibrated. Second, those participants worked a *depleting-patch* schedule where
+a patch empties in about eight responses and switching is near-compulsory. A
+stationary concurrent VI should produce longer runs, so this agent changes over
+at least as often as a real participant plausibly would. That makes it a
+**conservative** test of anything whose cost scales with changeovers, which is
+the right direction of error for the changeover delay.
+
+### Two parameters this decided
+
+- **The changeover delay is 500 ms *and* one response, not 2 s.** A purely
   time-based COD makes obtained reinforcement a hidden function of how fast a
-  participant happens to click. At two responses per second a 2 s delay left 40%
-  of responses ineligible for a responder switching every seven responses, which
-  halved obtained reinforcement.
+  participant clicks, and a human run averages 4.96 responses at 0.349 s each --
+  1.7 s. A 2 s delay therefore exceeds an entire average run. With calibrated
+  responders:
+
+  | COD | Reinforcers per 10-response bin | Responses ineligible |
+  |---|---|---|
+  | none | 3.24 | 0% |
+  | 500 ms + 1 response | 2.21 | 28% |
+  | 750 ms + 1 response | 2.04 | 45% |
+  | 2000 ms + 1 response | 1.26 | 72% |
+
+  The 2 s value the earlier design used would have left participants unable to
+  earn anything for most of the task. What this cannot settle is the COD's
+  effect on *behaviour*: the calibrated agent's switching comes from fixed
+  probabilities and barely responds to it, so whether 500 ms is long enough to
+  suppress adventitious reinforcement of changeovers is a pilot question.
+
 - **Patch depletion is implemented but off.** The previous study's dominant
   eigenvector loaded on reward rate largely because depleting patches made reward
-  rate genuinely dynamic, so carrying depletion over seemed likely to help. It
-  did not: at every strength tested it lowered obtained reinforcement *and*
-  raised the reward-rate noise ratio, because a melioration-like responder simply
-  leaves a depleting alternative and thereby stabilises its own obtained rate.
+  rate genuinely dynamic, so carrying depletion over seemed likely to help. With
+  calibrated responders it did not, at any strength:
 
-### The open calibration question
+  | Depletion per response | Reinforcers per 10-response bin |
+  |---|---|
+  | none | 1.96 |
+  | 0.06 | 1.58 |
+  | 0.25 | 1.17 |
+  | 0.40 | 1.00 |
 
-Reward rate at ten-response bins carries roughly 60% sampling noise under a
-stationary interval schedule, and no schedule parameter within this family fixes
-it: Bernoulli noise is maximised near p = 0.5, so enriching the schedule does not
-help, and the attenuation correction is numerically unstable at this noise level.
+  The reason is behavioural: a responder that leaves an alternative when it stops
+  paying stabilises its own obtained rate, so depletion removes reinforcement
+  without producing the swings in reward rate it was meant to restore. In the
+  previous study the patches emptied faster than choice could track, which is
+  what produced those swings.
 
-The state vector is therefore chosen by discrimination rather than by
-per-coordinate noise, using `analysis/run_state_selection.py`. On the previous
-study's data that criterion picks `[P(A), reward rate, switch rate]`; on
-simulated sessions of the new task it picks `[P(A), reward rate]`, largely
-because a smaller operator needs fewer transitions.
+### The open question the pilot must settle
 
-Those answers disagree, and the simulated one is contingent on a responder whose
-choices depend only on the variables the winning state contains. **The state must
-be re-selected on real pilot data before it is fixed.** This is the single most
-important thing the pilot decides.
+Reward rate at ten-response bins carries 60-76% sampling noise under a stationary
+interval schedule, and no schedule parameter within this family fixes it:
+Bernoulli noise is maximised near p = 0.5, so enriching does not help, and the
+attenuation correction is numerically unstable at this noise level. With
+human-calibrated switching the ratio is worse than with an idealised responder,
+because more changeovers mean less obtained reinforcement.
+
+The state vector is `[P(A), reward rate, switch rate]`, chosen by discrimination
+on the **previous study's real data**: dropping mean log ICI helps, because it
+loads similarly on the dominant mode in every context and dilutes the differences
+under test, while dropping switch rate hurts most despite it being the noisiest
+coordinate.
+
+An earlier version of this document recommended `[P(A), reward rate]` on the
+strength of simulated sessions. That was wrong, and the reason is worth stating,
+because it bounds what any of this simulation is good for. **A simulated
+responder's context-specific dynamics are whatever its author gave it.** The
+human-calibrated agent has almost none -- its changeover probabilities are fixed
+constants, so its transition operator barely differs between contexts -- and
+every candidate state scores near chance against it (AUC 0.55-0.60 at the design
+sample size). The hand-tuned melioration agent scored 0.86, but only because its
+own adaptation rule was context-dependent by construction. Neither number is
+about the state vector.
+
+The distinction that matters:
+
+- **Grounded.** The replication floor and the required sample size
+  (`reanalysis/run_design_sim.py`) simulate from operators *fitted to real
+  participants*, so they describe the estimator and are usable.
+- **Grounded.** The changeover-delay and reinforcement-density results depend on
+  switching frequency and response timing, both taken from human data.
+- **Not grounded.** Which coordinates carry an organism's context-specific
+  dynamics. That is the empirical question this study exists to answer, and no
+  simulation can answer it in advance.
 
 ## Analysis
 
@@ -228,5 +316,7 @@ the browser task, the Phase 0 reanalysis, the design simulations, and the pilot
 diagnostic loop. 81 automated tests.
 
 Not yet done: a human pilot. Every number in this document about the new task
-comes from simulated responders, and the design has one open question — the state
-vector — that only real behaviour can settle.
+comes from simulated responders. Their switching and timing are calibrated to
+real participants, which is what makes the changeover-delay and reinforcement
+results usable; their *dynamics* are not and cannot be, which is why the state
+vector stays open until real behaviour settles it.

@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { Session } from '../../src/engine/session';
 import { buildSessionPlan } from '../../src/engine/plan';
-import { MatchingAgent, RandomAgent, simulateSession } from '../../src/engine/simulate';
-import { DEFAULT_DESIGN, ENGINE } from '../../src/config/task';
+import {
+  CalibratedHumanAgent,
+  MatchingAgent,
+  RandomAgent,
+  simulateSession,
+} from '../../src/engine/simulate';
+import { DEFAULT_DESIGN, ENGINE, PILOT_TARGETS } from '../../src/config/task';
 
 describe('Session response handling', () => {
   it('rejects responses inside the cooldown so blocks stay response-exact', () => {
@@ -35,7 +40,11 @@ describe('Session response handling', () => {
 });
 
 describe('full simulated sessions', () => {
-  const result = simulateSession('sim-seed-1', new MatchingAgent(), 500);
+  // A responder carrying one real participant's switching statistics and
+  // response timing. The behavioural assertions below are only meaningful
+  // against a responder that could plausibly be a participant; MatchingAgent
+  // and RandomAgent appear further down as deliberately degenerate cases.
+  const result = simulateSession('sim-seed-1', new CalibratedHumanAgent(3));
 
   it('completes every planned response exactly once', () => {
     const planned = result.plan.blocks.reduce((s, b) => s + b.targetResponses, 0);
@@ -115,10 +124,20 @@ describe('full simulated sessions', () => {
   });
 
   it('produces reinforcement dense enough for the reward-rate coordinate', () => {
-    const unperturbed = result.outcomes.filter((o) => !o.perturbationActive);
-    const rate = unperturbed.filter((o) => o.rewardOutcome === 1).length / unperturbed.length;
-    // The pilot target is 2.5 reinforcers per 10-response bin.
-    expect(rate * DEFAULT_DESIGN.stateBinResponses).toBeGreaterThan(2.0);
+    // Checked across a sample rather than on one responder: reinforcement
+    // density varies with how a participant allocates, so a single simulated
+    // participant sitting below the target says nothing about the schedule.
+    const perBin: number[] = [];
+    for (let i = 0; i < 12; i++) {
+      const run = simulateSession(`density-${i}`, new CalibratedHumanAgent(i));
+      const usable = run.outcomes.filter((o) => !o.perturbationActive);
+      perBin.push(
+        (usable.filter((o) => o.rewardOutcome === 1).length / usable.length) *
+          DEFAULT_DESIGN.stateBinResponses,
+      );
+    }
+    const median = [...perBin].sort((a, b) => a - b)[6];
+    expect(median).toBeGreaterThan(PILOT_TARGETS.minRewardsPerBin);
   });
 
   it('produces choice allocation that tracks the arranged contingency', () => {
@@ -143,15 +162,40 @@ describe('full simulated sessions', () => {
   });
 
   it('is reproducible from the seed', () => {
-    const again = simulateSession('sim-seed-1', new MatchingAgent(), 500);
+    const again = simulateSession('sim-seed-1', new CalibratedHumanAgent(3));
     expect(again.outcomes.map((o) => o.rewardOutcome)).toEqual(
       result.outcomes.map((o) => o.rewardOutcome),
     );
   });
 
-  it('holds up under a random responder too', () => {
-    const random = simulateSession('sim-seed-2', new RandomAgent(), 500);
-    const planned = random.plan.blocks.reduce((s, b) => s + b.targetResponses, 0);
-    expect(random.outcomes).toHaveLength(planned);
+  it('holds up under degenerate responders too', () => {
+    // Neither of these tracks the accumulating setups on the neglected
+    // alternative, so neither allocates sensibly. The procedure must still run
+    // to completion and log every response.
+    for (const agent of [new RandomAgent(), new MatchingAgent(0.9)]) {
+      const run = simulateSession('sim-seed-2', agent, 500);
+      const planned = run.plan.blocks.reduce((s, b) => s + b.targetResponses, 0);
+      expect(run.outcomes).toHaveLength(planned);
+    }
+  });
+
+  it('tracks the contingency more strongly than a responder that ignores setups', () => {
+    const allocationGap = (run: ReturnType<typeof simulateSession>) => {
+      const share = (contingency: string) => {
+        const os = run.outcomes.filter(
+          (o) =>
+            run.plan.blocks[o.blockIndex].contingency === contingency &&
+            !o.perturbationActive,
+        );
+        return os.filter((o) => o.chosenOption === 'A').length / os.length;
+      };
+      return share('A_rich') - share('B_rich');
+    };
+
+    const calibrated = allocationGap(result);
+    const degenerate = allocationGap(
+      simulateSession('sim-seed-1', new MatchingAgent(0.9), 500),
+    );
+    expect(calibrated).toBeGreaterThan(degenerate);
   });
 });

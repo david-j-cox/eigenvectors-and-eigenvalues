@@ -12,6 +12,7 @@
     "noEmit": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
     "isolatedModules": true,
     "baseUrl": ".",
     "paths": { "@/*": ["src/*"] }

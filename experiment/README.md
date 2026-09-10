@@ -11,11 +11,19 @@ downstream estimate is a per-response state transition and a time-defined block
 yields an unpredictable number of them.
 
 ```
-practice          60 responses,  neutral background
-stage 1     8  x 100 responses,  green -> A-rich, blue -> B-rich
-stage 2     8  x 100 responses,  green -> B-rich, blue -> A-rich
-stage 3     8  x 100 responses,  green -> A-rich, blue -> B-rich
-perturbation 5 x 200 responses,  red, 8 perturbations
+practice           60 responses,  neutral background
+stage 1     10  x 100 responses,  green -> A-rich, blue -> B-rich
+stage 2     10  x 100 responses,  green -> B-rich, blue -> A-rich
+stage 3     10  x 100 responses,  green -> A-rich, blue -> B-rich
+perturbation 5  x 200 responses,  red, 8 perturbations
+```
+
+4,060 responses, about 24 minutes of responding. Colours alternate strictly, so
+no context repeats on consecutive blocks, and the colour-to-contingency
+assignment is randomised per participant.
+
+```bash
+npx tsx scripts/print_schedule.ts participant-001   # a participant's full sequence
 ```
 
 The colour-to-contingency mapping is randomised per participant and stored in the
@@ -31,7 +39,8 @@ different-colour comparison be matched on elapsed time; see
 | `src/engine/schedule.ts` | Concurrent VI, changeover delay, optional depletion |
 | `src/engine/perturbation.ts` | Perturbations as schedule overrides, expressed as data |
 | `src/engine/session.ts` | The procedure; no DOM dependency, so it can be simulated |
-| `src/engine/simulate.ts` | Simulated responders for the pilot loop and tests |
+| `src/engine/simulate.ts` | Simulated responders, calibrated to human switching statistics |
+| `src/engine/human_calibration.json` | Per-participant switch probabilities and response timing, measured from the previous study's 60 participants |
 | `src/logging/` | Event schema, checkpointed logger, Supabase transport |
 | `src/ui/` | Screens and the browser wiring |
 
@@ -41,7 +50,7 @@ in block sequencing or response handling knows that perturbations exist.
 ## Commands
 
 ```bash
-npm test                                   # 81 tests
+npm test                                   # 90 tests
 npm run dev
 npm run build
 npx tsx scripts/pilot_check.ts --n 20      # simulate sessions, export real schema

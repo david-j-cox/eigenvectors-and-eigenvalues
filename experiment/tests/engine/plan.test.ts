@@ -147,10 +147,10 @@ describe('buildSessionPlan', () => {
     const perBlock = DEFAULT_DESIGN.blockResponses / bin - 1;
     const perCellPerStage = perBlock * DEFAULT_DESIGN.exposuresPerColorPerStage;
 
-    // 36 transitions is the AUC ~0.73 operating point the design was sized to.
-    expect(perCellPerStage).toBe(36);
+    // 45 transitions is the AUC ~0.78 operating point the design was sized to.
+    expect(perCellPerStage).toBe(45);
     // Stages 1 and 3 share a mapping, so a cell pooled across them doubles.
-    expect(perCellPerStage * 2).toBe(72);
+    expect(perCellPerStage * 2).toBe(90);
   });
 
   it('stays inside the session response budget', () => {
@@ -164,8 +164,9 @@ describe('buildSessionPlan', () => {
           DEFAULT_DESIGN.blockResponses +
         DEFAULT_DESIGN.perturbationBlocks * DEFAULT_DESIGN.perturbationBlockResponses,
     );
-    // At the 2 responses/s observed in the previous study this is about 29
-    // minutes of responding, which is the ceiling the session was sized to.
-    expect(total / 2 / 60).toBeLessThan(30);
+    // At the 2.84 responses/s that responders calibrated to the previous
+    // study's participants produce, this is about 24 minutes of responding.
+    // The ceiling the session was sized to is 30.
+    expect(total / 2.84 / 60).toBeLessThan(30);
   });
 });

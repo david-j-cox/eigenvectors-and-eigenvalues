@@ -8,6 +8,7 @@
 // a real participant ever sees the task.
 // ============================================================
 
+import calibration from './human_calibration.json';
 import { Session } from './session';
 import { buildSessionPlan } from './plan';
 import { createRng } from '../utils/rng';
@@ -80,6 +81,79 @@ export class MeliorationAgent implements SimAgent {
 }
 
 /**
+ * A responder whose switching statistics are taken from real participants.
+ *
+ * Each simulated participant draws one real person's measured
+ * p(switch | reinforced) and p(switch | not reinforced), together with their
+ * inter-response-time distribution, from
+ * `human_calibration.json` -- 60 participants from the previous study. Those
+ * two conditional probabilities are the whole of the behaviour being borrowed:
+ * they fix how often the agent changes over and how strongly reinforcement
+ * holds it in place, which are exactly the quantities a changeover delay acts
+ * on. Sampling a whole person rather than averaging keeps the heterogeneity,
+ * so the simulated sample spans the real range instead of clustering on a
+ * median responder nobody resembles.
+ *
+ * `rateSensitivity` is the one part not measured: it tilts switching toward the
+ * richer alternative so the agent tracks the contingency at all. It is not
+ * calibrated and should not be read as a claim about how humans weight local
+ * rates.
+ *
+ * The important limitation: those participants worked a depleting-patch
+ * schedule, where a patch is exhausted in a handful of responses and switching
+ * is close to compulsory. A stationary concurrent VI should produce longer
+ * runs. So this agent switches at least as often as a participant in the new
+ * task plausibly would, which makes it a conservative test of anything whose
+ * cost scales with changeovers -- the changeover delay above all.
+ */
+export class CalibratedHumanAgent implements SimAgent {
+  private readonly pSwitchAfterReward: number;
+  private readonly pSwitchAfterNone: number;
+  readonly logIciMean: number;
+  readonly logIciSd: number;
+
+  private localRate = { A: 0.25, B: 0.25 };
+  private last: Side = 'A';
+  private lastRewarded = false;
+
+  constructor(participantIndex: number, private readonly rateSensitivity = 3) {
+    const people = calibration.participants;
+    const p = people[participantIndex % people.length];
+    this.pSwitchAfterReward = p.p_switch_after_reward;
+    this.pSwitchAfterNone = p.p_switch_after_none;
+    this.logIciMean = p.log_ici_mean;
+    this.logIciSd = p.log_ici_sd;
+  }
+
+  /** Inter-response time in ms, drawn from this participant's own distribution. */
+  sampleIciMs(rng: () => number): number {
+    // Box-Muller, so the lognormal shape of real inter-response times is kept
+    // rather than replaced by an exponential that would understate the spread.
+    const u1 = Math.max(rng(), 1e-12);
+    const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * rng());
+    return Math.exp(this.logIciMean + this.logIciSd * z) * 1000;
+  }
+
+  choose(lastOutcome: ResponseOutcome | null, rng: () => number): Side {
+    if (lastOutcome) {
+      const side = lastOutcome.chosenOption;
+      this.localRate[side] += 0.15 * (lastOutcome.rewardOutcome - this.localRate[side]);
+      this.last = side;
+      this.lastRewarded = lastOutcome.rewardOutcome === 1;
+    }
+
+    const other: Side = this.last === 'A' ? 'B' : 'A';
+    const base = this.lastRewarded ? this.pSwitchAfterReward : this.pSwitchAfterNone;
+    const tilt = Math.exp(
+      this.rateSensitivity * (this.localRate[other] - this.localRate[this.last]),
+    );
+    const pSwitch = Math.min(0.95, base * tilt);
+
+    return rng() < pSwitch ? other : this.last;
+  }
+}
+
+/**
  * Allocates in proportion to cumulative reinforcement with a fixed stay bias.
  *
  * Kept as a deliberately poor responder: it does not respond to the lean
@@ -140,8 +214,17 @@ export function simulateSession(
   let guard = 0;
   const maxSteps = 200000;
 
+  // A calibrated agent carries a real participant's inter-response-time
+  // distribution; anything else falls back to the caller's exponential. Response
+  // timing is not cosmetic here: the changeover delay is partly a duration, so
+  // how fast the agent responds decides how many responses it covers.
+  const iciOf =
+    agent instanceof CalibratedHumanAgent
+      ? () => agent.sampleIciMs(rng)
+      : () => -meanIciMs * Math.log(1 - rng());
+
   while (!session.snapshot().finished && guard++ < maxSteps) {
-    now += Math.max(ENGINE.responseCooldownMs, -meanIciMs * Math.log(1 - rng()));
+    now += Math.max(ENGINE.responseCooldownMs, iciOf());
     const side = agent.choose(last, rng);
     const outcome = session.respond(side, now);
     if (outcome) {

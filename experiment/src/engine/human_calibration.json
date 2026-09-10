@@ -1,0 +1,389 @@
+{
+  "source": "measuring-behavior-trajectories/analysis/data/01_raw_data/events.csv",
+  "n_participants": 60,
+  "note": "Per-participant behavioural parameters measured from the previous study's 60 human participants. The task there was a depleting-patch probabilistic schedule, not concurrent VI, so these are an anchor rather than a prediction; see docs.",
+  "participants": [
+    {
+      "p_switch_after_reward": 0.0456,
+      "p_switch_after_none": 0.171,
+      "log_ici_mean": -1.1013,
+      "log_ici_sd": 0.192
+    },
+    {
+      "p_switch_after_reward": 0.06,
+      "p_switch_after_none": 0.4923,
+      "log_ici_mean": -0.5398,
+      "log_ici_sd": 0.3181
+    },
+    {
+      "p_switch_after_reward": 0.2073,
+      "p_switch_after_none": 0.5086,
+      "log_ici_mean": -0.9136,
+      "log_ici_sd": 0.411
+    },
+    {
+      "p_switch_after_reward": 0.267,
+      "p_switch_after_none": 0.2853,
+      "log_ici_mean": -1.1746,
+      "log_ici_sd": 0.2655
+    },
+    {
+      "p_switch_after_reward": 0.3736,
+      "p_switch_after_none": 0.2634,
+      "log_ici_mean": -1.0519,
+      "log_ici_sd": 0.324
+    },
+    {
+      "p_switch_after_reward": 0.0684,
+      "p_switch_after_none": 0.5357,
+      "log_ici_mean": -0.3325,
+      "log_ici_sd": 0.5076
+    },
+    {
+      "p_switch_after_reward": 0.1108,
+      "p_switch_after_none": 0.113,
+      "log_ici_mean": -1.2493,
+      "log_ici_sd": 0.3315
+    },
+    {
+      "p_switch_after_reward": 0.18,
+      "p_switch_after_none": 0.28,
+      "log_ici_mean": -1.0421,
+      "log_ici_sd": 0.2632
+    },
+    {
+      "p_switch_after_reward": 0.1845,
+      "p_switch_after_none": 0.3669,
+      "log_ici_mean": -1.138,
+      "log_ici_sd": 0.3716
+    },
+    {
+      "p_switch_after_reward": 0.0426,
+      "p_switch_after_none": 0.1866,
+      "log_ici_mean": -0.9704,
+      "log_ici_sd": 0.3529
+    },
+    {
+      "p_switch_after_reward": 0.0255,
+      "p_switch_after_none": 0.1389,
+      "log_ici_mean": -1.0696,
+      "log_ici_sd": 0.2256
+    },
+    {
+      "p_switch_after_reward": 0.0991,
+      "p_switch_after_none": 0.1276,
+      "log_ici_mean": -1.2028,
+      "log_ici_sd": 0.4863
+    },
+    {
+      "p_switch_after_reward": 0.3169,
+      "p_switch_after_none": 0.1708,
+      "log_ici_mean": -1.0048,
+      "log_ici_sd": 0.4865
+    },
+    {
+      "p_switch_after_reward": 0.043,
+      "p_switch_after_none": 0.1529,
+      "log_ici_mean": -1.1014,
+      "log_ici_sd": 0.3996
+    },
+    {
+      "p_switch_after_reward": 0.3474,
+      "p_switch_after_none": 0.4683,
+      "log_ici_mean": -1.152,
+      "log_ici_sd": 0.2667
+    },
+    {
+      "p_switch_after_reward": 0.1141,
+      "p_switch_after_none": 0.2918,
+      "log_ici_mean": -1.2002,
+      "log_ici_sd": 0.2435
+    },
+    {
+      "p_switch_after_reward": 0.218,
+      "p_switch_after_none": 0.2844,
+      "log_ici_mean": -1.1131,
+      "log_ici_sd": 0.3075
+    },
+    {
+      "p_switch_after_reward": 0.0811,
+      "p_switch_after_none": 0.1503,
+      "log_ici_mean": -1.1122,
+      "log_ici_sd": 0.3601
+    },
+    {
+      "p_switch_after_reward": 0.4528,
+      "p_switch_after_none": 0.4413,
+      "log_ici_mean": -1.0309,
+      "log_ici_sd": 0.2998
+    },
+    {
+      "p_switch_after_reward": 0.2969,
+      "p_switch_after_none": 0.1827,
+      "log_ici_mean": -0.7989,
+      "log_ici_sd": 0.5474
+    },
+    {
+      "p_switch_after_reward": 0.228,
+      "p_switch_after_none": 0.3248,
+      "log_ici_mean": -1.1042,
+      "log_ici_sd": 0.2977
+    },
+    {
+      "p_switch_after_reward": 0.6934,
+      "p_switch_after_none": 0.4867,
+      "log_ici_mean": -0.9408,
+      "log_ici_sd": 0.2928
+    },
+    {
+      "p_switch_after_reward": 0.0728,
+      "p_switch_after_none": 0.1897,
+      "log_ici_mean": -1.0799,
+      "log_ici_sd": 0.3192
+    },
+    {
+      "p_switch_after_reward": 0.1632,
+      "p_switch_after_none": 0.2493,
+      "log_ici_mean": -0.9691,
+      "log_ici_sd": 0.2823
+    },
+    {
+      "p_switch_after_reward": 0.3184,
+      "p_switch_after_none": 0.5443,
+      "log_ici_mean": -1.0693,
+      "log_ici_sd": 0.2953
+    },
+    {
+      "p_switch_after_reward": 0.0068,
+      "p_switch_after_none": 0.4151,
+      "log_ici_mean": -0.4304,
+      "log_ici_sd": 0.5707
+    },
+    {
+      "p_switch_after_reward": 0.0824,
+      "p_switch_after_none": 0.1906,
+      "log_ici_mean": -1.089,
+      "log_ici_sd": 0.192
+    },
+    {
+      "p_switch_after_reward": 0.5263,
+      "p_switch_after_none": 0.4194,
+      "log_ici_mean": -1.0649,
+      "log_ici_sd": 0.2726
+    },
+    {
+      "p_switch_after_reward": 0.4678,
+      "p_switch_after_none": 0.7037,
+      "log_ici_mean": -0.3675,
+      "log_ici_sd": 0.2977
+    },
+    {
+      "p_switch_after_reward": 0.0897,
+      "p_switch_after_none": 0.1732,
+      "log_ici_mean": -1.2344,
+      "log_ici_sd": 0.0566
+    },
+    {
+      "p_switch_after_reward": 0.0672,
+      "p_switch_after_none": 0.1326,
+      "log_ici_mean": -1.057,
+      "log_ici_sd": 0.2578
+    },
+    {
+      "p_switch_after_reward": 0.0795,
+      "p_switch_after_none": 0.1488,
+      "log_ici_mean": -1.0219,
+      "log_ici_sd": 0.33
+    },
+    {
+      "p_switch_after_reward": 0.0528,
+      "p_switch_after_none": 0.128,
+      "log_ici_mean": -1.1872,
+      "log_ici_sd": 0.2827
+    },
+    {
+      "p_switch_after_reward": 0.1593,
+      "p_switch_after_none": 0.3362,
+      "log_ici_mean": -0.964,
+      "log_ici_sd": 0.3085
+    },
+    {
+      "p_switch_after_reward": 0.0487,
+      "p_switch_after_none": 0.1188,
+      "log_ici_mean": -1.3081,
+      "log_ici_sd": 0.3226
+    },
+    {
+      "p_switch_after_reward": 0.2792,
+      "p_switch_after_none": 0.6503,
+      "log_ici_mean": -0.8104,
+      "log_ici_sd": 0.4222
+    },
+    {
+      "p_switch_after_reward": 0.4286,
+      "p_switch_after_none": 0.6945,
+      "log_ici_mean": -0.9568,
+      "log_ici_sd": 0.3002
+    },
+    {
+      "p_switch_after_reward": 0.0431,
+      "p_switch_after_none": 0.1088,
+      "log_ici_mean": -1.2622,
+      "log_ici_sd": 0.3408
+    },
+    {
+      "p_switch_after_reward": 0.0653,
+      "p_switch_after_none": 0.548,
+      "log_ici_mean": -1.0022,
+      "log_ici_sd": 0.3504
+    },
+    {
+      "p_switch_after_reward": 0.1927,
+      "p_switch_after_none": 0.7293,
+      "log_ici_mean": -0.6372,
+      "log_ici_sd": 0.267
+    },
+    {
+      "p_switch_after_reward": 0.1426,
+      "p_switch_after_none": 0.1796,
+      "log_ici_mean": -1.0235,
+      "log_ici_sd": 0.2676
+    },
+    {
+      "p_switch_after_reward": 0.0875,
+      "p_switch_after_none": 0.3629,
+      "log_ici_mean": -0.8199,
+      "log_ici_sd": 0.454
+    },
+    {
+      "p_switch_after_reward": 0.2461,
+      "p_switch_after_none": 0.3584,
+      "log_ici_mean": -0.827,
+      "log_ici_sd": 0.303
+    },
+    {
+      "p_switch_after_reward": 0.0463,
+      "p_switch_after_none": 0.1385,
+      "log_ici_mean": -1.2636,
+      "log_ici_sd": 0.3193
+    },
+    {
+      "p_switch_after_reward": 0.022,
+      "p_switch_after_none": 0.3007,
+      "log_ici_mean": -0.8812,
+      "log_ici_sd": 0.3989
+    },
+    {
+      "p_switch_after_reward": 0.2741,
+      "p_switch_after_none": 0.3874,
+      "log_ici_mean": -1.1572,
+      "log_ici_sd": 0.2416
+    },
+    {
+      "p_switch_after_reward": 0.4274,
+      "p_switch_after_none": 0.5222,
+      "log_ici_mean": -1.2342,
+      "log_ici_sd": 0.2783
+    },
+    {
+      "p_switch_after_reward": 0.0904,
+      "p_switch_after_none": 0.3187,
+      "log_ici_mean": -0.8624,
+      "log_ici_sd": 0.4682
+    },
+    {
+      "p_switch_after_reward": 0.2072,
+      "p_switch_after_none": 0.511,
+      "log_ici_mean": -1.0065,
+      "log_ici_sd": 0.4711
+    },
+    {
+      "p_switch_after_reward": 0.1453,
+      "p_switch_after_none": 0.2685,
+      "log_ici_mean": -1.0746,
+      "log_ici_sd": 0.3164
+    },
+    {
+      "p_switch_after_reward": 0.0518,
+      "p_switch_after_none": 0.1691,
+      "log_ici_mean": -1.057,
+      "log_ici_sd": 0.3793
+    },
+    {
+      "p_switch_after_reward": 0.1414,
+      "p_switch_after_none": 0.2131,
+      "log_ici_mean": -1.092,
+      "log_ici_sd": 0.2814
+    },
+    {
+      "p_switch_after_reward": 0.0746,
+      "p_switch_after_none": 0.1713,
+      "log_ici_mean": -1.1739,
+      "log_ici_sd": 0.3563
+    },
+    {
+      "p_switch_after_reward": 0.1586,
+      "p_switch_after_none": 0.6279,
+      "log_ici_mean": -0.4103,
+      "log_ici_sd": 0.3001
+    },
+    {
+      "p_switch_after_reward": 0.2299,
+      "p_switch_after_none": 0.3656,
+      "log_ici_mean": -1.0116,
+      "log_ici_sd": 0.3606
+    },
+    {
+      "p_switch_after_reward": 0.0496,
+      "p_switch_after_none": 0.11,
+      "log_ici_mean": -1.2039,
+      "log_ici_sd": 0.321
+    },
+    {
+      "p_switch_after_reward": 0.2004,
+      "p_switch_after_none": 0.4569,
+      "log_ici_mean": -1.0152,
+      "log_ici_sd": 0.2565
+    },
+    {
+      "p_switch_after_reward": 0.0676,
+      "p_switch_after_none": 0.2099,
+      "log_ici_mean": -0.9206,
+      "log_ici_sd": 0.3251
+    },
+    {
+      "p_switch_after_reward": 0.5113,
+      "p_switch_after_none": 0.7008,
+      "log_ici_mean": -0.8867,
+      "log_ici_sd": 0.3191
+    },
+    {
+      "p_switch_after_reward": 0.6769,
+      "p_switch_after_none": 0.7094,
+      "log_ici_mean": -0.8963,
+      "log_ici_sd": 0.3127
+    }
+  ],
+  "aggregate": {
+    "p_switch_after_reward": {
+      "median": 0.14394288434809988,
+      "q25": 0.067507104876166,
+      "q75": 0.26877063722832784
+    },
+    "p_switch_after_none": {
+      "median": 0.2885609427396171,
+      "q25": 0.17119280996921973,
+      "q75": 0.4729003157765651
+    },
+    "log_ici_mean": {
+      "median": -1.0470048294002254,
+      "q25": -1.119318775264796,
+      "q75": -0.9188314017237429
+    },
+    "log_ici_sd": {
+      "median": 0.3172721155362923,
+      "q25": 0.28065605099767704,
+      "q75": 0.36019504615652376
+    }
+  }
+}

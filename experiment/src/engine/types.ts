@@ -205,13 +205,27 @@ export const DEFAULT_ENGINE_CONFIG: EngineConfig = {
   viMinMultiple: 0.1,
   viMaxMultiple: 3.0,
   depletion: {
-    // Off by default. Depletion was implemented and measured against a
-    // stationary schedule on simulated sessions; it lowered obtained
-    // reinforcement and made the reward-rate coordinate noisier at every
-    // strength tested, because a melioration-like responder simply leaves a
-    // depleting alternative and thereby stabilises its own obtained rate. The
-    // mechanism is kept because it is what the previous study used and a future
-    // comparison may want it, but it is not the default here.
+    // Off by default. Depletion was implemented and then measured against a
+    // stationary schedule using responders calibrated to the previous study's
+    // 60 participants. It lowered obtained reinforcement at every strength
+    // tested and never improved the reward-rate coordinate it was meant to
+    // rescue:
+    //
+    //     stationary          1.96 reinforcers per 10-response bin
+    //     deplete 0.06        1.58
+    //     deplete 0.25        1.17
+    //     deplete 0.40        1.00
+    //
+    // The reason is behavioural rather than arithmetic: a responder that leaves
+    // an alternative when it stops paying stabilises its own obtained rate, so
+    // depletion removes reinforcement without adding the swings in reward rate
+    // that made that coordinate informative in the previous study. There, the
+    // patches emptied in about eight responses -- faster than choice could
+    // track -- which is what produced those swings.
+    //
+    // The mechanism is kept because a future comparison may want it, and
+    // because settling this on real behaviour rather than on simulated
+    // responders is a reasonable thing for the pilot to do.
     enabled: false,
     perResponse: 0.06,
     recoveryPerS: 0.09,
