@@ -71,15 +71,24 @@ Create the study, then:
 https://<your-app>.vercel.app/?PROLIFIC_PID={{%PROLIFIC_PID%}}&STUDY_ID={{%STUDY_ID%}}&SESSION_ID={{%SESSION_ID%}}
 ```
 
-`readProlificParams` reads these, and `PROLIFIC_PID` becomes both the
-participant id and the randomization seed. Get this wrong and every participant
-falls back to a browser-local id, which means they all receive the *same*
-schedule and, because `session_id` is derived from it, they overwrite each
-other's rows.
+Set **how Prolific records IDs** to *via URL parameters*
+(`prolific_id_option: "url_parameters"` over the API). This is a separate
+setting from the URL itself, and it is the one that decides whether those
+placeholders get filled in. Left on the default, Prolific asks the participant
+to type their ID instead and the placeholders arrive empty.
 
-**Completion** — choose a completion code, put the same string in
-`VITE_COMPLETION_CODE`, and redeploy. The end screen shows whatever that
-variable holds; if it does not match Prolific, nobody can be paid.
+`readProlificParams` reads these, and `PROLIFIC_PID` becomes both the
+participant id and the randomization seed. Get either half wrong and every
+participant falls back to a browser-local id, which means they all receive the
+*same* schedule and, because `session_id` is derived from it, they overwrite
+each other's rows.
+
+**Completion** — a study carries a list of completion codes. Take the one whose
+`code_type` is `COMPLETED`, put that exact string in `VITE_COMPLETION_CODE`, and
+redeploy. The end screen shows whatever that variable holds; if it does not
+match, nobody can be paid.
+
+**Devices** — desktop only (`device_compatibility: ["desktop"]`).
 
 **Timing** — about 26 minutes of responding, plus consent and instructions.
 Budget 35 minutes and set the maximum generously: a participant who is timed out
@@ -87,8 +96,7 @@ mid-session leaves a partial record that the export will exclude. The task
 carries its own 30-minute soft cap, which drops trailing perturbation blocks
 rather than truncating a reversal stage.
 
-**Devices** — desktop only. The task needs a keyboard (F and J) and a viewport
-large enough for two panels.
+The task needs a keyboard (F and J) and a viewport large enough for two panels.
 
 ## 4. Before you launch: run it yourself
 
@@ -142,7 +150,51 @@ range the simulated responders assumed.
 | Symptom | Cause |
 |---|---|
 | No rows in Supabase, task otherwise fine | env vars set after the last build; redeploy |
-| Every participant gets the same schedule | study URL missing `PROLIFIC_PID` |
+| Every participant gets the same schedule | study URL missing `PROLIFIC_PID`, or ID recording not set to URL parameters |
 | Participants report the code is rejected | `VITE_COMPLETION_CODE` differs from Prolific, or was changed without redeploying |
 | Export returns nothing | all sessions still `in_progress`; nobody reached the end screen |
 | Sessions overwrite each other | two people on one browser without a distinct `PROLIFIC_PID` |
+
+---
+
+## Appendix: driving Prolific from the API
+
+Everything in section 3 can be done over
+[Prolific's REST API](https://docs.prolific.com/api-reference/studies/create-study.md)
+instead of the dashboard, which is worth it mainly because it resolves the
+ordering problem: creating the draft hands you the completion code, so you can
+set `VITE_COMPLETION_CODE` and deploy before anything is visible to
+participants. A token comes from **Settings -> API tokens**.
+
+```bash
+curl -sX POST https://api.prolific.com/api/v1/studies/ \
+  -H "Authorization: Token $PROLIFIC_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Choice and adaptation in a two-option task",
+    "description": "...",
+    "external_study_url": "https://<app>.vercel.app/?PROLIFIC_PID={{%PROLIFIC_PID%}}&STUDY_ID={{%STUDY_ID%}}&SESSION_ID={{%SESSION_ID%}}",
+    "prolific_id_option": "url_parameters",
+    "estimated_completion_time": 35,
+    "total_available_places": 3,
+    "reward": 700,
+    "device_compatibility": ["desktop"],
+    "completion_codes": [
+      {"code": "<chosen>", "code_type": "COMPLETED",
+       "actions": [{"action": "AUTOMATICALLY_APPROVE"}]}
+    ]
+  }'
+```
+
+`reward` is in cents of the workspace currency. The study is created
+`UNPUBLISHED` and stays invisible to participants until it is transitioned:
+
+```bash
+curl -sX POST https://api.prolific.com/api/v1/studies/<id>/transition/ \
+  -H "Authorization: Token $PROLIFIC_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"action": "PUBLISH"}'
+```
+
+That second call is the one that spends money and exposes the study. Do section
+4's own-run check between the two.
