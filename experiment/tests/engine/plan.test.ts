@@ -27,27 +27,53 @@ describe('buildSessionPlan', () => {
     }
   });
 
-  it('reverses the mapping in stage 2 and restores it in stage 3', () => {
+  it('alternates the mapping across all four stages (ABAB)', () => {
     for (const seed of SEEDS.slice(0, 10)) {
       const plan = buildSessionPlan(seed);
-      const byStage = (s: number) =>
-        plan.blocks.filter((b) => b.reversalStage === s);
+      const at = (stage: number, color: string) =>
+        plan.blocks.find((b) => b.reversalStage === stage && b.color === color)!;
 
       for (const color of ['green', 'blue'] as const) {
-        const s1 = byStage(1).find((b) => b.color === color)!;
-        const s2 = byStage(2).find((b) => b.color === color)!;
-        const s3 = byStage(3).find((b) => b.color === color)!;
+        const [s1, s2, s3, s4] = [1, 2, 3, 4].map((n) => at(n, color));
         expect(s2.contingency).not.toBe(s1.contingency);
-        // Stage 3 restores stage 1, which is what breaks the confound between
+        // Restoring the first mapping is what breaks the confound between
         // "different contingency" and "later in the session".
         expect(s3.contingency).toBe(s1.contingency);
+        expect(s4.contingency).toBe(s2.contingency);
       }
     }
   });
 
+  it('repeats the A-to-B transition so a single odd reversal cannot pass for a real one', () => {
+    const plan = buildSessionPlan('seed');
+    const green = [1, 2, 3, 4].map(
+      (n) => plan.blocks.find((b) => b.reversalStage === n && b.color === 'green')!.contingency,
+    );
+    const transitions = green.slice(1).map((c, i) => `${green[i]}->${c}`);
+    // A-to-B occurs at stages 1-2 and 3-4; B-to-A at stages 2-3.
+    const forward = transitions.filter((t) => t === transitions[0]);
+    expect(forward).toHaveLength(2);
+    expect(transitions).toHaveLength(3);
+  });
+
+  it('gives every colour x contingency cell the same amount of data', () => {
+    // The weakest cell sets what the design can claim. Under the earlier ABA
+    // arrangement the reversed cells got half the exposures of the original
+    // ones, so the binding constraint was worse than the headline figure.
+    const plan = buildSessionPlan('seed');
+    const counts = new Map<string, number>();
+    for (const b of plan.blocks) {
+      if (b.part !== 'reversal') continue;
+      const key = `${b.color}|${b.contingency}`;
+      counts.set(key, (counts.get(key) ?? 0) + b.targetResponses);
+    }
+    expect(counts.size).toBe(4);
+    expect(new Set(counts.values()).size).toBe(1);
+  });
+
   it('gives every colour x contingency x stage cell the planned number of exposures', () => {
     const plan = buildSessionPlan('seed');
-    for (const stage of [1, 2, 3]) {
+    for (const stage of [1, 2, 3, 4]) {
       for (const color of ['green', 'blue'] as const) {
         const cells = plan.blocks.filter(
           (b) => b.reversalStage === stage && b.color === color,
@@ -147,10 +173,11 @@ describe('buildSessionPlan', () => {
     const perBlock = DEFAULT_DESIGN.blockResponses / bin - 1;
     const perCellPerStage = perBlock * DEFAULT_DESIGN.exposuresPerColorPerStage;
 
-    // 45 transitions is the AUC ~0.78 operating point the design was sized to.
-    expect(perCellPerStage).toBe(45);
-    // Stages 1 and 3 share a mapping, so a cell pooled across them doubles.
-    expect(perCellPerStage * 2).toBe(90);
+    expect(perCellPerStage).toBe(36);
+    // Under ABAB each cell occurs in two stages, so it pools to 72 -- the
+    // AUC ~0.82 operating point the design was sized to, and now the same for
+    // every cell rather than only the unreversed ones.
+    expect(perCellPerStage * 2).toBe(72);
   });
 
   it('stays inside the session response budget', () => {

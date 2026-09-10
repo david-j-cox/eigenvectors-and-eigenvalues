@@ -80,45 +80,63 @@ export class MeliorationAgent implements SimAgent {
   }
 }
 
+/** Which condition of the previous study a simulated responder is drawn from. */
+export type CalibrationPool = 'asymmetric' | 'lean' | 'symmetric';
+
 /**
  * A responder whose switching statistics are taken from real participants.
  *
  * Each simulated participant draws one real person's measured
- * p(switch | reinforced) and p(switch | not reinforced), together with their
- * inter-response-time distribution, from
- * `human_calibration.json` -- 60 participants from the previous study. Those
- * two conditional probabilities are the whole of the behaviour being borrowed:
- * they fix how often the agent changes over and how strongly reinforcement
- * holds it in place, which are exactly the quantities a changeover delay acts
- * on. Sampling a whole person rather than averaging keeps the heterogeneity,
- * so the simulated sample spans the real range instead of clustering on a
- * median responder nobody resembles.
+ * p(switch | reinforced) and p(switch | not reinforced) together with their
+ * inter-response-time distribution. Those two probabilities are the whole of
+ * the behaviour being borrowed: they fix how often the agent changes over and
+ * how strongly reinforcement holds it in place, which are exactly the
+ * quantities a changeover delay acts on. Sampling a whole person rather than
+ * averaging keeps the real heterogeneity.
+ *
+ * **The pool matters, because switching is a function of the schedule.** In the
+ * previous study the same people switched on 16% of responses under an
+ * asymmetric schedule and 23% under a lean symmetric one. Pooling across
+ * conditions would average away that dependence and quietly pick a switch rate
+ * belonging to no condition at all.
+ *
+ * No previous condition matches this task on both dimensions. Ours is
+ * asymmetric (4:1) *and* lean (~0.20 reinforcers per response), a combination
+ * that did not occur:
+ *
+ *   'asymmetric' (phases 2-3)  matches the asymmetry, 2.4:1, but is far richer
+ *                              (0.57/response). Predicts less switching.
+ *   'lean'       (phase 4)     matches the density, 0.14/response, but is
+ *                              symmetric. Predicts more switching.
+ *   'symmetric'  (phase 1)     matches only the practice block.
+ *
+ * The two candidates bracket the plausible range and disagree, so any
+ * conclusion that turns on switching frequency should be checked against both.
+ * `scripts/parameter_sweep.ts` does exactly that.
  *
  * `rateSensitivity` is the one part not measured: it tilts switching toward the
  * richer alternative so the agent tracks the contingency at all. It is not
- * calibrated and should not be read as a claim about how humans weight local
- * rates.
- *
- * The important limitation: those participants worked a depleting-patch
- * schedule, where a patch is exhausted in a handful of responses and switching
- * is close to compulsory. A stationary concurrent VI should produce longer
- * runs. So this agent switches at least as often as a participant in the new
- * task plausibly would, which makes it a conservative test of anything whose
- * cost scales with changeovers -- the changeover delay above all.
+ * calibrated and is not a claim about how humans weight local rates.
  */
 export class CalibratedHumanAgent implements SimAgent {
   private readonly pSwitchAfterReward: number;
   private readonly pSwitchAfterNone: number;
   readonly logIciMean: number;
   readonly logIciSd: number;
+  readonly pool: CalibrationPool;
 
   private localRate = { A: 0.25, B: 0.25 };
   private last: Side = 'A';
   private lastRewarded = false;
 
-  constructor(participantIndex: number, private readonly rateSensitivity = 3) {
-    const people = calibration.participants;
+  constructor(
+    participantIndex: number,
+    pool: CalibrationPool = calibration.default_pool as CalibrationPool,
+    private readonly rateSensitivity = 3,
+  ) {
+    const people = calibration.pools[pool].participants;
     const p = people[participantIndex % people.length];
+    this.pool = pool;
     this.pSwitchAfterReward = p.p_switch_after_reward;
     this.pSwitchAfterNone = p.p_switch_after_none;
     this.logIciMean = p.log_ici_mean;

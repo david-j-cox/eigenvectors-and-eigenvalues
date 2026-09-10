@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { COLORS, NEUTRAL_COLOR } from '../../config/task';
+import { COLORS } from '../../config/task';
 import type { SessionPlan, Side } from '../../engine/types';
 import type { TaskState } from '../useTask';
 
@@ -29,7 +29,9 @@ export function TaskScreen({ state, respond }: Props) {
     return () => window.removeEventListener('keydown', onKey);
   }, [respond]);
 
-  const spec = state.part === 'practice' ? NEUTRAL_COLOR : COLORS[state.color];
+  // The block names its own colour, practice included, so what is displayed and
+  // what is logged cannot come apart.
+  const spec = COLORS[state.color];
   const progress = state.totalTrials ? state.trialIndex / state.totalTrials : 0;
 
   return (

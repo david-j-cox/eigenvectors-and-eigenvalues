@@ -89,6 +89,9 @@ META_COLS = [
 ]
 
 
+META_COLS.append("stage_cell")
+
+
 def restrict(tr: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
     """Keep the metadata and only the state coordinates in `cols`."""
     keep = META_COLS + [f"{c}_t" for c in cols] + [f"{c}_next" for c in cols]
@@ -146,9 +149,10 @@ def fit_all(tr: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
 def replication(tr: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
     """Compare operators for the same colour and contingency across stages.
 
-    Stages 1 and 3 arrange the same mapping, separated by the whole of stage 2.
-    That separation is the point: it is the longest-range test of whether an
-    individual's dynamics in an environment recur when they return to it.
+    Under ABAB a mapping is in force in stages 1 and 3, and the reversed mapping
+    in stages 2 and 4. Both pairs are compared, so the replication test itself is
+    replicated within each participant rather than resting on one comparison --
+    and both mappings contribute, rather than only the unreversed one.
     """
     import dynalysis.states as ST
 
@@ -157,35 +161,37 @@ def replication(tr: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
     try:
         rows = []
         for pid, g in tr.groupby("participant_id"):
-            meta = g["context_t"].astype(str).str.split("|", expand=True)
+            meta = g["stage_cell"].astype(str).str.split("|", expand=True)
             g = g.assign(
                 color=meta[0], contingency=meta[1],
                 stage=meta[2].str.removeprefix("s").astype(int),
             )
             for (color, cont), gc in g.groupby(["color", "contingency"]):
                 stages = sorted(gc["stage"].unique())
-                if 1 not in stages or 3 not in stages:
-                    continue
-                early = gc[gc["stage"] == 1]
-                late = gc[gc["stage"] == 3]
-                if len(early) < 12 or len(late) < 12:
-                    continue
+                for a, b in ((1, 3), (2, 4)):
+                    if a not in stages or b not in stages:
+                        continue
+                    early = gc[gc["stage"] == a]
+                    late = gc[gc["stage"] == b]
+                    if len(early) < 12 or len(late) < 12:
+                        continue
 
-                A_e, scaler = O.fit_operator(early, alpha=1.0)
-                A_l, _ = O.fit_operator(late, alpha=1.0, scaler=scaler)
+                    A_e, scaler = O.fit_operator(early, alpha=1.0)
+                    A_l, _ = O.fit_operator(late, alpha=1.0, scaler=scaler)
 
-                row = {"participant_id": pid, "color": color, "contingency": cont,
-                       "n_early": len(early), "n_late": len(late)}
-                row.update(E.compare_operators(A_e, A_l))
+                    row = {"participant_id": pid, "color": color,
+                           "contingency": cont, "stage_pair": f"{a}v{b}",
+                           "n_early": len(early), "n_late": len(late)}
+                    row.update(E.compare_operators(A_e, A_l))
 
-                X = scaler.transform(late[[f"{c}_t" for c in cols]].to_numpy())
-                Y = scaler.transform(late[[f"{c}_next" for c in cols]].to_numpy())
-                mse_op = float(np.mean((Y - X @ A_e.T) ** 2))
-                mse_pers = float(np.mean((Y - X) ** 2))
-                row["early_predicts_late_skill"] = (
-                    1 - mse_op / mse_pers if mse_pers > 0 else np.nan
-                )
-                rows.append(row)
+                    X = scaler.transform(late[[f"{c}_t" for c in cols]].to_numpy())
+                    Y = scaler.transform(late[[f"{c}_next" for c in cols]].to_numpy())
+                    mse_op = float(np.mean((Y - X @ A_e.T) ** 2))
+                    mse_pers = float(np.mean((Y - X) ** 2))
+                    row["early_predicts_late_skill"] = (
+                        1 - mse_op / mse_pers if mse_pers > 0 else np.nan
+                    )
+                    rows.append(row)
         return pd.DataFrame(rows)
     finally:
         ST.STATE_COLS[:] = original
@@ -205,7 +211,7 @@ def color_vs_contingency(tr: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
     try:
         rows = []
         for pid, g in tr.groupby("participant_id"):
-            meta = g["context_t"].astype(str).str.split("|", expand=True)
+            meta = g["stage_cell"].astype(str).str.split("|", expand=True)
             g = g.assign(
                 color=meta[0], contingency=meta[1],
                 stage=meta[2].str.removeprefix("s").astype(int),
@@ -300,14 +306,23 @@ def main():
     st = S.build_states(prepared, args.bin, context_col="context_segment")
     tr_all = S.build_transitions(st, context_col="context_segment")
 
-    # Group transitions by analysis cell rather than by block, so exposures to
-    # the same cell pool into one operator estimate.
-    cell = tr_all["context_t"].astype(str).str.rsplit("|", n=1).str[0]
-    tr_all = tr_all.assign(context_t=cell, context_next=cell)
+    # Two groupings, for two different questions.
+    #
+    # An operator is estimated from a colour x contingency cell pooled across
+    # every stage in which that mapping was in force -- under ABAB, two stages.
+    # The stage-level split is only needed for the replication comparison, which
+    # deliberately holds two estimates apart in time. Using the stage-level cell
+    # for estimation would halve the data behind every operator.
+    stage_cell = tr_all["context_t"].astype(str).str.rsplit("|", n=1).str[0]
+    pooled_cell = stage_cell.str.rsplit("|", n=1).str[0]
+    tr_all = tr_all.assign(
+        stage_cell=stage_cell, context_t=pooled_cell, context_next=pooled_cell
+    )
 
     tr = restrict(tr_all, PRIMARY_STATE)
 
     per_cell = tr.groupby(["participant_id", "context_t"]).size()
+    per_stage_cell = tr.groupby(["participant_id", "stage_cell"]).size()
     ratios = noise_ratios(tr, PRIMARY_STATE, args.bin)
     profiles = fit_all(tr, PRIMARY_STATE)
     rep = replication(tr, PRIMARY_STATE)
@@ -336,12 +351,15 @@ def main():
         "",
         "| Check | Value | Result | Target |",
         "|---|---|---|---|",
-        check("Median transitions per analysis cell", per_cell.median(),
+        check("Transitions per colour x contingency cell", per_cell.median(),
               per_cell.median() >= TARGETS["min_transitions_per_cell"],
-              f">= {TARGETS['min_transitions_per_cell']}"),
-        check("Minimum transitions in any cell", per_cell.min(),
+              f">= {TARGETS['min_transitions_per_cell']} (operator estimation)"),
+        check("Minimum in any cell", per_cell.min(),
               per_cell.min() >= TARGETS["min_transitions_per_cell"] * 0.8,
-              "no cell far below the median"),
+              "the weakest cell is what the design can claim"),
+        check("Transitions per cell x stage", per_stage_cell.median(),
+              per_stage_cell.median() >= TARGETS["min_transitions_per_cell"] / 2,
+              "half the pooled figure (replication comparison)"),
         check("Median responses per second", sessions["responses_per_s"].median(),
               sessions["responses_per_s"].median() >= TARGETS["min_responses_per_s"],
               f">= {TARGETS['min_responses_per_s']}"),
@@ -388,7 +406,7 @@ def main():
 
     if len(rep):
         lines += [
-            "## Stage 1 vs stage 3 replication (same colour, same contingency)",
+            "## Replication across stages (same colour, same contingency)",
             "",
             f"- Comparisons: {len(rep)}",
             f"- Dominant-eigenvector |cos|: {rep['dominant_cosine'].median():.3f} "

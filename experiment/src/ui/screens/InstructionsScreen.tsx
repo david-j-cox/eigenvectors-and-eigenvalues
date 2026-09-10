@@ -31,9 +31,11 @@ export function InstructionsScreen({ onStart }: Props) {
         first. Please keep this window in focus and do not reload the page.
       </p>
       <div className="swatches" aria-hidden="true">
-        {Object.values(COLORS).map((c) => (
-          <span key={c.id} className="swatch" style={{ background: c.hex }} />
-        ))}
+        {Object.values(COLORS)
+          .filter((c) => c.id !== 'neutral')
+          .map((c) => (
+            <span key={c.id} className="swatch" style={{ background: c.hex }} />
+          ))}
       </div>
       <button className="primary" onClick={onStart}>
         Start

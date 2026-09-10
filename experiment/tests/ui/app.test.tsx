@@ -140,11 +140,44 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: /^start$/i }));
 
     const main = container.querySelector('main.task') as HTMLElement;
-    expect(main.dataset.context).toBeDefined();
     expect(screen.getByText(/practice/i)).toBeDefined();
     // The practice background must not be one of the signalled contexts, or
     // participants would meet a context before the task has begun.
-    const experimental = Object.values(COLORS).map((c) => c.hex);
-    expect(experimental).not.toContain(main.style.background);
+    expect(main.dataset.context).toBe('neutral');
+    const signalled = Object.values(COLORS)
+      .filter((c) => c.id !== 'neutral')
+      .map((c) => c.hex);
+    expect(signalled).not.toContain(main.style.background);
+  });
+
+  it('renders the exact colour the block names, so display and log agree', () => {
+    const { container } = render(<App />);
+    consent();
+    fireEvent.click(screen.getByRole('button', { name: /^start$/i }));
+
+    const main = container.querySelector('main.task') as HTMLElement;
+    const shown = COLORS[main.dataset.context as string];
+    expect(shown).toBeDefined();
+    // The hex painted on screen is the same constant written to context_color
+    // in every event row; a mismatch would put a context in the data that no
+    // participant ever saw.
+    expect(main.style.background.replace(/\s/g, '')).toBe(
+      hexToRgb(shown.hex).replace(/\s/g, ''),
+    );
+  });
+
+  it('pairs every signalled colour with a distinct texture', () => {
+    // Colour alone would make the discrimination unavailable to a participant
+    // with a colour-vision deficiency, and would make the three contexts
+    // indistinguishable in a greyscale screenshot.
+    const signalled = Object.values(COLORS).filter((c) => c.id !== 'neutral');
+    const patterns = signalled.map((c) => c.pattern);
+    expect(new Set(patterns).size).toBe(signalled.length);
   });
 });
+
+/** jsdom normalises inline colours to rgb(), so compare in that form. */
+function hexToRgb(hex: string): string {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;
+}

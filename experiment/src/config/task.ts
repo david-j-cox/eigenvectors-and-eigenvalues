@@ -21,14 +21,19 @@ export const COLORS: Record<string, ColorSpec> = {
   green: { id: 'green', hex: '#2E7D5B', pattern: 'plain', label: 'Green' },
   blue: { id: 'blue', hex: '#2E5C8A', pattern: 'stripes', label: 'Blue' },
   red: { id: 'red', hex: '#96382F', pattern: 'dots', label: 'Red' },
+  neutral: { id: 'neutral', hex: '#4A4A4A', pattern: 'plain', label: 'Practice' },
 };
 
-export const NEUTRAL_COLOR: ColorSpec = {
-  id: 'green',
-  hex: '#4A4A4A',
-  pattern: 'plain',
-  label: 'Practice',
-};
+/**
+ * The practice background.
+ *
+ * A desaturated grey that is not one of the signalled contexts, so participants
+ * do not meet a context before the task proper begins. It is a first-class
+ * entry in COLORS rather than a display-only constant: the practice block logs
+ * `physical_context_id: "neutral"`, and if the two were allowed to disagree the
+ * event file would record a context the participant never saw.
+ */
+export const NEUTRAL_COLOR: ColorSpec = COLORS.neutral;
 
 /**
  * Concurrent VI pairs.
@@ -63,7 +68,25 @@ export interface DesignConfig {
    * quantity that decides whether the replication test can succeed at all.
    */
   exposuresPerColorPerStage: number;
-  /** Number of reversal stages. Three gives an ABA design. */
+  /**
+   * Number of reversal stages. Four gives ABAB.
+   *
+   * Three (ABA) was the original choice, on the reasoning that returning to the
+   * first mapping breaks the confound between "different contingency" and
+   * "later in the session". It does, but it is not enough. ABA contains one
+   * A-to-B transition and one B-to-A transition, so neither is replicated
+   * within a participant and a single odd reversal cannot be distinguished from
+   * a real one.
+   *
+   * ABA is also unbalanced in a way that is easy to miss: the first mapping is
+   * in force for two stages and the reversed mapping for one, so every reversed
+   * cell is estimated from half the data of its counterpart. The weakest cell
+   * sets what the design can claim, and under ABA it was the reversed one.
+   *
+   * ABAB fixes both. Each mapping holds for two stages, so all four
+   * colour x contingency cells get equal data, and the A-to-B transition occurs
+   * twice.
+   */
   nStages: number;
   /** Blocks in the dedicated perturbation part. */
   perturbationBlocks: number;
@@ -90,29 +113,30 @@ export interface DesignConfig {
  * transition lost at each block boundary is why larger blocks are more
  * efficient per response.
  *
- * Five exposures per colour per stage gives each colour x contingency x stage
- * cell 500 responses and 45 within-block transitions, and pooling the two
- * stages that share a mapping (1 and 3) gives 90 for the cell as a whole. At 45
- * transitions a same-operator pair separates from a different-operator pair
- * with AUC ~0.78 for a single participant.
+ * Four exposures per colour per stage gives each cell 400 responses and 36
+ * within-block transitions per stage. Under ABAB every colour x contingency
+ * cell occurs in two stages, so each pools to 72 -- and unlike the earlier ABA
+ * arrangement, all four cells get the same amount rather than the reversed ones
+ * getting half.
  *
- * Since AUC is exactly the probability that one participant orders the
- * comparison correctly, a sign test across 45 participants detects that
- * departure from chance with better than 95% power. The group-level directional
- * claims are therefore well supported; a confident per-individual claim would
- * need about 60 transitions per cell and another five minutes.
+ * That evenness is what matters, because the weakest cell sets what the design
+ * can claim. ABA with five exposures gave 90 transitions to the original
+ * mapping and 45 to the reversed one; ABAB with four gives 72 to every cell, so
+ * the binding constraint improves from 45 to 72 even though the per-stage
+ * figure drops.
  *
- * Four exposures was the original figure, chosen when the session was budgeted
- * against an assumed 2 responses per second. Responders calibrated to the
- * previous study's participants respond at 2.84/s, which freed enough time for
- * a fifth exposure without exceeding the session budget.
+ * At 72 transitions a same-operator pair separates from a different-operator
+ * pair with AUC ~0.82 for a single participant. Since AUC is exactly the
+ * probability that one participant orders the comparison correctly, a sign test
+ * across 45 participants detects that departure from chance with better than
+ * 99% power.
  */
 export const DEFAULT_DESIGN: DesignConfig = {
   practiceResponses: 60,
   blockResponses: 100,
   stateBinResponses: 10,
-  exposuresPerColorPerStage: 5,
-  nStages: 3,
+  exposuresPerColorPerStage: 4,
+  nStages: 4,
   perturbationBlocks: 5,
   perturbationBlockResponses: 200,
   nExtinctionPerturbations: 4,

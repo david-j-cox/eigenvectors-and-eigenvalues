@@ -10,19 +10,33 @@ import calibration from '../../src/engine/human_calibration.json';
  *
  * Targets come from the 60 participants in the previous study.
  */
+/**
+ * Per-condition targets. Switching depends on the schedule in force, so an
+ * agent drawn from one pool must be checked against that pool's numbers, not
+ * against an average across conditions that describes no condition at all.
+ */
 const HUMAN = {
-  switchRate: { median: 0.201, q25: 0.115, q75: 0.305 },
-  pSwitchAfterReward: { median: 0.144 },
-  pSwitchAfterNone: { median: 0.289 },
-  meanRun: { median: 4.96 },
-  responsesPerSecond: { median: 2.86, q25: 2.63, q75: 3.14 },
-};
+  asymmetric: {
+    switchRate: 0.161,
+    pSwitchAfterReward: 0.105,
+    pSwitchAfterNone: 0.250,
+    meanRun: 6.07,
+    responsesPerSecond: 2.87,
+  },
+  lean: {
+    switchRate: 0.230,
+    pSwitchAfterReward: 0.134,
+    pSwitchAfterNone: 0.294,
+    meanRun: 4.11,
+    responsesPerSecond: 2.90,
+  },
+} as const;
 
-function runSample(n: number) {
+function runSample(n: number, pool: 'asymmetric' | 'lean' = 'asymmetric') {
   const rows = [];
   for (let i = 0; i < n; i++) {
-    const agent = new CalibratedHumanAgent(i);
-    const { outcomes, durationMs } = simulateSession(`cal-${i}`, agent);
+    const agent = new CalibratedHumanAgent(i, pool);
+    const { outcomes, durationMs } = simulateSession(`cal-${pool}-${i}`, agent);
     const usable = outcomes.filter((o) => !o.perturbationActive);
     const afterReward = usable.filter((_, k) => k > 0 && usable[k - 1].rewardOutcome === 1);
     const afterNone = usable.filter((_, k) => k > 0 && usable[k - 1].rewardOutcome === 0);
@@ -46,47 +60,62 @@ const median = (xs: number[]) => {
 };
 
 describe('CalibratedHumanAgent', () => {
-  const sample = runSample(24);
+  it('draws its parameters from the pool it was given', () => {
+    expect(Object.keys(calibration.pools)).toContain('asymmetric');
+    expect(calibration.pools.asymmetric.source_phases).toEqual([2, 3]);
+    expect(calibration.pools.lean.source_phases).toEqual([4]);
 
-  it('draws its parameters from the measured human distribution', () => {
-    expect(calibration.n_participants).toBe(60);
-    const a = new CalibratedHumanAgent(0);
-    const p = calibration.participants[0];
-    expect(a.logIciMean).toBe(p.log_ici_mean);
+    const a = new CalibratedHumanAgent(0, 'asymmetric');
+    expect(a.logIciMean).toBe(calibration.pools.asymmetric.participants[0].log_ici_mean);
   });
 
-  it('reproduces the human switch rate', () => {
-    const got = median(sample.map((r) => r.switchRate));
-    expect(got).toBeGreaterThan(HUMAN.switchRate.q25 * 0.6);
-    expect(got).toBeLessThan(HUMAN.switchRate.q75 * 1.4);
+  it('keeps the two pools distinct rather than collapsing to one responder set', () => {
+    // The lean condition produced more switching than the asymmetric one. An
+    // agent that ignored the pool would erase the difference the design has to
+    // be robust to.
+    expect(calibration.pools.lean.median_p_switch_after_none).toBeGreaterThan(
+      calibration.pools.asymmetric.median_p_switch_after_none,
+    );
   });
 
-  it('reproduces the win-stay / lose-shift asymmetry', () => {
-    const afterReward = median(sample.map((r) => r.pSwitchAfterReward));
-    const afterNone = median(sample.map((r) => r.pSwitchAfterNone));
-    // The direction is the part that matters for a changeover delay: an agent
-    // that switched just as readily after reinforcement would spend a quite
-    // different amount of time inside the delay.
-    expect(afterNone).toBeGreaterThan(afterReward);
-    expect(afterReward).toBeLessThan(HUMAN.pSwitchAfterReward.median * 2.5);
-    expect(afterNone).toBeLessThan(HUMAN.pSwitchAfterNone.median * 2.5);
-  });
+  for (const pool of ['asymmetric', 'lean'] as const) {
+    describe(`pool: ${pool}`, () => {
+      const sample = runSample(20, pool);
+      const target = HUMAN[pool];
 
-  it('produces human-like run lengths', () => {
-    const got = median(sample.map((r) => r.meanRun));
-    expect(got).toBeGreaterThan(2);
-    expect(got).toBeLessThan(30);
-  });
+      it('reproduces that condition\'s switch rate', () => {
+        const got = median(sample.map((r) => r.switchRate));
+        expect(got).toBeGreaterThan(target.switchRate * 0.5);
+        expect(got).toBeLessThan(target.switchRate * 2.0);
+      });
 
-  it('responds at the rate real participants did', () => {
-    const got = median(sample.map((r) => r.responsesPerSecond));
-    expect(got).toBeGreaterThan(HUMAN.responsesPerSecond.q25 * 0.75);
-    expect(got).toBeLessThan(HUMAN.responsesPerSecond.q75 * 1.25);
-  });
+      it('reproduces the win-stay / lose-shift asymmetry', () => {
+        const afterReward = median(sample.map((r) => r.pSwitchAfterReward));
+        const afterNone = median(sample.map((r) => r.pSwitchAfterNone));
+        // The direction is what matters for a changeover delay: an agent that
+        // switched just as readily after reinforcement would spend a quite
+        // different amount of time inside the delay.
+        expect(afterNone).toBeGreaterThan(afterReward);
+        expect(afterReward).toBeLessThan(target.pSwitchAfterReward * 2.5);
+        expect(afterNone).toBeLessThan(target.pSwitchAfterNone * 2.5);
+      });
 
-  it('spans the between-participant range rather than collapsing to one responder', () => {
-    const rates = sample.map((r) => r.switchRate).sort((a, b) => a - b);
-    const spread = rates[rates.length - 1] - rates[0];
-    expect(spread).toBeGreaterThan(0.05);
-  });
+      it('produces run lengths in the right range', () => {
+        const got = median(sample.map((r) => r.meanRun));
+        expect(got).toBeGreaterThan(target.meanRun * 0.4);
+        expect(got).toBeLessThan(target.meanRun * 4);
+      });
+
+      it('responds at the rate real participants did', () => {
+        const got = median(sample.map((r) => r.responsesPerSecond));
+        expect(got).toBeGreaterThan(target.responsesPerSecond * 0.7);
+        expect(got).toBeLessThan(target.responsesPerSecond * 1.3);
+      });
+
+      it('spans the between-participant range', () => {
+        const rates = sample.map((r) => r.switchRate).sort((a, b) => a - b);
+        expect(rates[rates.length - 1] - rates[0]).toBeGreaterThan(0.03);
+      });
+    });
+  }
 });

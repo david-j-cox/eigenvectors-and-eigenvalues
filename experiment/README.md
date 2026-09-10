@@ -11,16 +11,23 @@ downstream estimate is a per-response state transition and a time-defined block
 yields an unpredictable number of them.
 
 ```
-practice           60 responses,  neutral background
-stage 1     10  x 100 responses,  green -> A-rich, blue -> B-rich
-stage 2     10  x 100 responses,  green -> B-rich, blue -> A-rich
-stage 3     10  x 100 responses,  green -> A-rich, blue -> B-rich
+practice           60 responses,  neutral grey background
+stage 1      8  x 100 responses,  green -> A-rich, blue -> B-rich
+stage 2      8  x 100 responses,  green -> B-rich, blue -> A-rich
+stage 3      8  x 100 responses,  green -> A-rich, blue -> B-rich
+stage 4      8  x 100 responses,  green -> B-rich, blue -> A-rich
 perturbation 5  x 200 responses,  red, 8 perturbations
 ```
 
-4,060 responses, about 24 minutes of responding. Colours alternate strictly, so
-no context repeats on consecutive blocks, and the colour-to-contingency
-assignment is randomised per participant.
+4,260 responses, about 25 minutes of responding. ABAB rather than ABA so the
+A-to-B transition occurs twice and all four colour x contingency cells get equal
+data. Colours alternate strictly, so no context repeats on consecutive blocks,
+and the colour-to-contingency assignment is randomised per participant.
+
+Each context fills the viewport behind two identical panels, and every signalled
+colour is paired with a texture (green plain, blue stripes, red dots) so the
+discrimination does not rest on hue. Practice uses a neutral grey logged as its
+own context id.
 
 ```bash
 npx tsx scripts/print_schedule.ts participant-001   # a participant's full sequence
@@ -50,7 +57,7 @@ in block sequencing or response handling knows that perturbations exist.
 ## Commands
 
 ```bash
-npm test                                   # 90 tests
+npm test                                   # 100 tests
 npm run dev
 npm run build
 npx tsx scripts/pilot_check.ts --n 20      # simulate sessions, export real schema

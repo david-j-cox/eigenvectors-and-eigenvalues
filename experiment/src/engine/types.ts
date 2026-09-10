@@ -14,7 +14,7 @@ export type Side = 'A' | 'B';
 export type ContingencyId = 'A_rich' | 'B_rich' | 'symmetric';
 
 /** Which background the participant sees, independent of what it arranges. */
-export type ContextColorId = 'green' | 'blue' | 'red';
+export type ContextColorId = 'green' | 'blue' | 'red' | 'neutral';
 
 /** The three parts of the integrated session. */
 export type PartId = 'practice' | 'replication' | 'reversal' | 'perturbation';

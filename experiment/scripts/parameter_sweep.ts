@@ -14,6 +14,7 @@
  */
 
 import { CalibratedHumanAgent, simulateSession } from '../src/engine/simulate';
+import type { CalibrationPool } from '../src/engine/simulate';
 import { ENGINE } from '../src/config/task';
 
 function arg(name: string, fallback: string): string {
@@ -32,12 +33,12 @@ interface Row {
   minutes: number;
 }
 
-function run(label: string): Row {
+function run(label: string, pool: CalibrationPool): Row {
   const rows: Row[] = [];
   for (let i = 0; i < N; i++) {
     const { outcomes, durationMs } = simulateSession(
       `sweep-${label}-${i}`,
-      new CalibratedHumanAgent(i),
+      new CalibratedHumanAgent(i, pool),
     );
     const usable = outcomes.filter((o) => !o.perturbationActive);
     rows.push({
@@ -72,29 +73,43 @@ function show(label: string, r: Row) {
 const originalCod = { ms: ENGINE.codMs, responses: ENGINE.codResponses };
 const originalDepletion = { ...ENGINE.depletion };
 
-console.log(`Calibrated responders, n=${N}. Medians across simulated participants.\n`);
+// No previous condition matches this task on both schedule asymmetry and
+// reinforcement density, and the two closest ones predict opposite switch rates
+// (0.16 against 0.23). Every sweep is therefore run under both, and a
+// conclusion is only worth acting on if it survives the pair.
+const POOLS: CalibrationPool[] = ['asymmetric', 'lean'];
 
-console.log('--- changeover delay ---');
-for (const [ms, responses] of [
-  [0, 0], [500, 1], [750, 1], [1000, 1], [1500, 1], [2000, 1], [2000, 2], [3000, 2],
-] as const) {
-  ENGINE.codMs = ms;
-  ENGINE.codResponses = responses;
-  show(`COD ${ms}ms + ${responses} resp`, run(`cod-${ms}-${responses}`));
-}
-ENGINE.codMs = originalCod.ms;
-ENGINE.codResponses = originalCod.responses;
+console.log(`Calibrated responders, n=${N} per pool. Medians across simulated participants.`);
+console.log('asymmetric = previous study phases 2-3 (matches our 4:1 asymmetry, richer)');
+console.log('lean       = previous study phase 4   (matches our reinforcement density, symmetric)\n');
 
-console.log('\n--- depletion ---');
-for (const [enabled, perResponse, recoveryPerS, minRichness] of [
-  [false, 0, 0, 1],
-  [true, 0.06, 0.09, 0.15],
-  [true, 0.15, 0.2, 0.08],
-  [true, 0.25, 0.3, 0.05],
-  [true, 0.4, 0.45, 0.03],
-] as const) {
-  ENGINE.depletion = { enabled, perResponse, recoveryPerS, minRichness };
-  const label = enabled ? `deplete ${perResponse} / rec ${recoveryPerS}` : 'stationary (no depletion)';
-  show(label, run(`dep-${perResponse}`));
+for (const pool of POOLS) {
+  console.log(`=== pool: ${pool} ===`);
+  console.log('--- changeover delay ---');
+  for (const [ms, responses] of [
+    [0, 0], [500, 1], [750, 1], [1000, 1], [1500, 1], [2000, 1], [2000, 2], [3000, 2],
+  ] as const) {
+    ENGINE.codMs = ms;
+    ENGINE.codResponses = responses;
+    show(`COD ${ms}ms + ${responses} resp`, run(`cod-${ms}-${responses}-${pool}`, pool));
+  }
+  ENGINE.codMs = originalCod.ms;
+  ENGINE.codResponses = originalCod.responses;
+
+  console.log('--- depletion ---');
+  for (const [enabled, perResponse, recoveryPerS, minRichness] of [
+    [false, 0, 0, 1],
+    [true, 0.06, 0.09, 0.15],
+    [true, 0.15, 0.2, 0.08],
+    [true, 0.25, 0.3, 0.05],
+    [true, 0.4, 0.45, 0.03],
+  ] as const) {
+    ENGINE.depletion = { enabled, perResponse, recoveryPerS, minRichness };
+    const label = enabled
+      ? `deplete ${perResponse} / rec ${recoveryPerS}`
+      : 'stationary (no depletion)';
+    show(label, run(`dep-${perResponse}-${pool}`, pool));
+  }
+  ENGINE.depletion = originalDepletion;
+  console.log();
 }
-ENGINE.depletion = originalDepletion;

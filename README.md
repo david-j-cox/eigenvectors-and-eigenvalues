@@ -41,7 +41,7 @@ Outputs land in `reanalysis/outputs/`, with `summary.md` and
 ```bash
 cd experiment
 npm install
-npm test          # 90 tests
+npm test          # 100 tests
 npm run dev       # http://localhost:5173
 ```
 
@@ -77,17 +77,20 @@ Point both scripts at real pilot data with `--events` when it exists.
 Decided by measurement, not convention: the state bin (10 responses, since 5 is
 worse despite yielding more transitions), the changeover delay (500 ms and one
 response, since a 2 s time-only delay exceeds an entire average human run and
-leaves 72% of responses ineligible), patch depletion (implemented, off, because
-it reduced reinforcement at every strength without restoring the reward-rate
-dynamics it was meant to), five exposures per cell, and the two-reversal
-structure.
+leaves 65-73% of responses ineligible), patch depletion (implemented, off,
+because it reduced reinforcement at every strength without restoring the
+reward-rate dynamics it was meant to), four exposures per cell, and the ABAB
+reversal structure — which repeats the A-to-B transition and, less obviously,
+gives all four colour x contingency cells equal data where ABA gave the reversed
+ones half.
 
 The simulated responders those decisions rest on are calibrated to the previous
-study's 60 participants — their conditional switch probabilities and their
-inter-response-time distributions, drawn one real person at a time rather than
-averaged. That is what makes claims about changeover delays and reinforcement
-density meaningful, since both turn on how often someone switches and how fast
-they respond.
+study's participants **per condition**, since switching depends on the schedule
+in force: the same people switched on 16% of responses under an asymmetric
+schedule and 23% under a lean symmetric one. No previous condition matches this
+task on both asymmetry and reinforcement density, so every sweep is run under
+both closest analogues and a conclusion is only acted on if it survives the
+pair.
 
 **Not decided: the state vector**, and no simulation can decide it. A simulated
 responder's context-specific dynamics are whatever its author gave it, so the

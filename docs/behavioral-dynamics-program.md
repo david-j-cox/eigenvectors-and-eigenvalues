@@ -107,6 +107,7 @@ into one continuous procedure in which every block serves more than one analysis
 | 1 | A-rich | B-rich |
 | 2 | B-rich | A-rich |
 | 3 | A-rich | B-rich |
+| 4 | B-rich | A-rich |
 
 The colour-to-contingency assignment is randomised per participant, so half see
 the table above and half see it transposed. The perturbation part uses a third
@@ -116,38 +117,80 @@ stages, so no context ever repeats on consecutive blocks. Run
 `experiment/scripts/print_schedule.ts` for a participant's full sequence.
 
 ```
-Practice (60 responses, neutral background)
-Stage 1: 10 blocks x 100 responses, alternating green and blue
-Stage 2: 10 blocks x 100 responses, mapping reversed
-Stage 3: 10 blocks x 100 responses, mapping restored
+Practice (60 responses, neutral grey background)
+Stage 1: 8 blocks x 100 responses, alternating green and blue
+Stage 2: 8 blocks x 100 responses, mapping reversed
+Stage 3: 8 blocks x 100 responses, mapping restored
+Stage 4: 8 blocks x 100 responses, mapping reversed again
 Perturbation part: 5 blocks x 200 responses, red, 8 perturbations
 ```
 
-Total 4,060 responses, about 24 minutes of responding at the 2.84 responses per
-second real participants produced in the previous study. Each colour x
-contingency x stage cell gets five exposures, 500 responses, and 45 within-block
-transitions.
+Total 4,260 responses, about 25 minutes of responding at the 2.8-2.9 responses
+per second real participants produced. Each colour x contingency x stage cell
+gets four exposures and 36 within-block transitions; each cell occurs in two
+stages, so an operator is estimated from 72.
 
-### Why two reversals rather than one
+### Why three reversals rather than one
 
 With a single reversal, green carries A-rich only before it and B-rich only
 after. Every "same colour, different contingency" comparison is therefore also an
 early-versus-late comparison, and the two explanations cannot be separated. The
 build specification's Study 2 has this confound.
 
-Returning to the original mapping in stage 3 fixes it. Both competing
-comparisons can be drawn from adjacent stages, so neither is favoured by having
-its estimates closer together in time:
+Restoring the original mapping in stage 3 breaks it: both competing comparisons
+can then be drawn from adjacent stages, so neither is favoured by having its
+estimates closer together in time.
 
 - same colour, different contingency: green/A-rich (stage 1) against
   green/B-rich (stage 2)
 - different colour, same contingency: green/A-rich (stage 1) against
   blue/A-rich (stage 2)
 
-and each can be computed twice, from the 1-2 and 2-3 stage pairs. Stages 1 and 3
-also share a mapping, which gives the longest-range replication test available:
-the same individual, the same colour, the same contingency, separated by the
-whole of stage 2.
+Three stages (ABA) is not enough, for two reasons. First, ABA contains one
+A-to-B transition and one B-to-A transition, so neither is replicated within a
+participant and a single unusual reversal cannot be distinguished from a real
+one. Second, and easier to miss: under ABA the first mapping is in force for two
+stages and the reversed mapping for one, so every reversed cell is estimated
+from half the data of its counterpart. **The weakest cell is what the design can
+claim**, and under ABA that was always a reversed one.
+
+ABAB fixes both. The A-to-B transition occurs at stages 1-2 and again at 3-4,
+and all four colour x contingency cells receive equal data. The binding
+constraint improves from 45 transitions to 72 even though the per-stage figure
+falls from 45 to 36.
+
+Two same-mapping stage pairs are available for the replication test -- 1 against
+3 and 2 against 4 -- so that test is itself replicated within each participant,
+and both mappings contribute rather than only the unreversed one.
+
+### How the contexts are signalled
+
+Each context fills the whole viewport behind two visually identical response
+panels, so the signal is unmissable and cannot be confused with a property of
+either option. The exact hex values are logged with every response.
+
+| Context | Colour | Texture |
+|---|---|---|
+| Green | `#2E7D5B` | plain |
+| Blue | `#2E5C8A` | diagonal stripes |
+| Red | `#96382F` | dots |
+| Practice | `#4A4A4A` grey | plain |
+
+Every signalled colour is paired with a distinct texture overlay. Colour alone
+would put the discrimination out of reach of a colour-vision-deficient
+participant and would make the three contexts indistinguishable in a greyscale
+screenshot.
+
+Practice is a neutral grey and is a first-class context id rather than a
+display-only override, so a practice response logs
+`physical_context_id: "neutral"`. An earlier version displayed grey while logging
+green, which would have put a context in the data that no participant saw. A
+test now asserts that the hex painted on screen is the constant written to
+`context_color`.
+
+The instructions say only that the background will change from time to time.
+Telling participants that colour signals anything would convert a discrimination
+the task is measuring into an instruction they were given.
 
 ### Schedules
 
@@ -176,30 +219,43 @@ depends entirely on whether the simulated responder switches and responds like a
 participant, so it is not hand-tuned.
 
 `experiment/src/engine/human_calibration.json` holds per-participant parameters
-measured from the previous study's 60 humans:
+measured from the previous study's humans. **They are measured per condition,
+because switching is a function of the schedule in force** -- the same people
+behaved quite differently across the four phases:
 
-| Statistic | Human median [IQR] |
-|---|---|
-| switch rate | 0.201 [0.115, 0.305] |
-| p(switch \| reinforced) | 0.144 |
-| p(switch \| not reinforced) | 0.289 |
-| mean run length | 4.96 responses |
-| response rate | 2.86/s (median ICI 0.349 s) |
+| Previous phase | Schedule | Switch rate | p(sw \| rft) | p(sw \| none) | Mean run | Reward/response |
+|---|---|---|---|---|---|---|
+| 1 Symmetric | 1:1, rich | 0.208 | 0.178 | 0.271 | 4.81 | 0.68 |
+| 2 A advantage | 2.4:1 | 0.163 | 0.110 | 0.257 | 5.98 | 0.58 |
+| 3 B advantage | 2.4:1 | 0.153 | 0.102 | 0.247 | 6.36 | 0.56 |
+| 4 Scarcity | 1:1, lean | 0.230 | 0.134 | 0.294 | 4.11 | 0.14 |
+
+Pooling across these would have produced a switch rate belonging to no condition
+at all. **No previous condition matches the new task on both dimensions**, and
+the two closest ones disagree:
+
+- **`asymmetric`** (phases 2-3) matches the schedule asymmetry (2.4:1 against our
+  4:1) but is far richer than our task, and predicts *less* switching (0.16).
+- **`lean`** (phase 4) matches the reinforcement density (0.14 per response
+  against our ~0.20) but is symmetric, and predicts *more* switching (0.23).
+
+Our task is asymmetric *and* lean, a combination that did not occur. The two
+pools therefore bracket the plausible range, and **every parameter sweep is run
+under both**; a conclusion is only acted on if it survives the pair.
 
 Each simulated participant draws one real person's conditional switch
 probabilities and their log-normal inter-response-time distribution, rather than
 an average, so the sample keeps the real heterogeneity.
-`tests/engine/calibration.test.ts` checks that simulated sessions reproduce
-those statistics.
+`tests/engine/calibration.test.ts` checks that simulated sessions reproduce each
+pool's statistics.
 
-Two limits, both material. First, only the switching and the timing are
-borrowed; the tilt that makes the agent prefer the richer alternative is not
-calibrated. Second, those participants worked a *depleting-patch* schedule where
-a patch empties in about eight responses and switching is near-compulsory. A
-stationary concurrent VI should produce longer runs, so this agent changes over
-at least as often as a real participant plausibly would. That makes it a
-**conservative** test of anything whose cost scales with changeovers, which is
-the right direction of error for the changeover delay.
+Two limits remain. Only the switching and the timing are borrowed; the tilt that
+makes the agent prefer the richer alternative is not calibrated, and it
+interacts with the 4:1 schedule in ways that stop the simulated switch rates
+from reproducing the pools' ordering exactly. And the previous task's depleting
+patches made switching near-compulsory, so these agents change over at least as
+often as a real participant plausibly would -- a **conservative** error for
+anything whose cost scales with changeovers.
 
 ### Two parameters this decided
 
@@ -209,15 +265,15 @@ the right direction of error for the changeover delay.
   1.7 s. A 2 s delay therefore exceeds an entire average run. With calibrated
   responders:
 
-  | COD | Reinforcers per 10-response bin | Responses ineligible |
-  |---|---|---|
-  | none | 3.24 | 0% |
-  | 500 ms + 1 response | 2.21 | 28% |
-  | 750 ms + 1 response | 2.04 | 45% |
-  | 2000 ms + 1 response | 1.26 | 72% |
+  | COD | Reinforcers/bin (asym) | Ineligible (asym) | Reinforcers/bin (lean) | Ineligible (lean) |
+  |---|---|---|---|---|
+  | none | 3.18 | 0% | 2.96 | 0% |
+  | 500 ms + 1 response | 2.14 | 32% | 2.15 | 25% |
+  | 750 ms + 1 response | 1.89 | 41% | 2.02 | 36% |
+  | 2000 ms + 1 response | 0.95 | 73% | 1.21 | 65% |
 
   The 2 s value the earlier design used would have left participants unable to
-  earn anything for most of the task. What this cannot settle is the COD's
+  earn anything for most of the task, under either calibration. What this cannot settle is the COD's
   effect on *behaviour*: the calibrated agent's switching comes from fixed
   probabilities and barely responds to it, so whether 500 ms is long enough to
   suppress adventitious reinforcement of changeovers is a pilot question.
@@ -227,12 +283,12 @@ the right direction of error for the changeover delay.
   rate genuinely dynamic, so carrying depletion over seemed likely to help. With
   calibrated responders it did not, at any strength:
 
-  | Depletion per response | Reinforcers per 10-response bin |
-  |---|---|
-  | none | 1.96 |
-  | 0.06 | 1.58 |
-  | 0.25 | 1.17 |
-  | 0.40 | 1.00 |
+  | Depletion per response | Reinforcers/bin (asym) | Reinforcers/bin (lean) |
+  |---|---|---|
+  | none | 2.10 | 2.21 |
+  | 0.06 | 1.75 | 1.79 |
+  | 0.25 | 1.34 | 1.31 |
+  | 0.40 | 1.13 | 1.08 |
 
   The reason is behavioural: a responder that leaves an alternative when it stops
   paying stabilises its own obtained rate, so depletion removes reinforcement

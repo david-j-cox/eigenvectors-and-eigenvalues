@@ -74,7 +74,7 @@ export function buildSessionPlan(
   blocks.push({
     index: 0,
     part: 'practice',
-    color: REVERSAL_COLORS[0],
+    color: 'neutral',
     contingency: 'symmetric',
     viAMs: CONTINGENCIES.symmetric.viAMs,
     viBMs: CONTINGENCIES.symmetric.viBMs,
