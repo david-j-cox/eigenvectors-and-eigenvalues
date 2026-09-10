@@ -140,6 +140,24 @@ export class EventLogger {
     }
   }
 
+  /**
+   * Write the session record.
+   *
+   * Deliberately swallows its error. The session record is valuable for
+   * reproducibility but the events are the data, and a participant who is
+   * mid-task should never be interrupted because a metadata write failed.
+   * Returns whether it landed, so a caller that cares can check.
+   */
+  async saveSession(record: Record<string, unknown>): Promise<boolean> {
+    try {
+      await this.transport.upsertSession(record);
+      return true;
+    } catch (err) {
+      console.warn('session record upsert failed', err);
+      return false;
+    }
+  }
+
   restorePending(): void {
     if (!this.opts.storageKey || typeof localStorage === 'undefined') return;
     try {

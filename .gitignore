@@ -7,3 +7,4 @@ dist/
 .env
 .env.local
 service-account-key.json
+experiment/tsconfig.tsbuildinfo

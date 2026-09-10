@@ -244,8 +244,9 @@ export const ENGINE: EngineConfig = {
  * of about 2.2 reinforcers per 10-response bin under this schedule, so 2.0
  * passes ordinary variation while catching a schedule or changeover-delay
  * change that materially reduces reinforcement. What actually decides whether
- * the reward-rate coordinate is usable is `maxNoiseRatio`, which this design
- * does not currently meet -- see docs.
+ * the reward-rate coordinate is usable is `maxNoiseRatio`. The concurrent VI
+ * could not meet it -- 0.86 against a 0.6 threshold -- which is why the
+ * depleting-patch schedule is the default; it reaches 0.21.
  */
 export const PILOT_TARGETS = {
   /** Mean reinforcers per 10-response state bin. */

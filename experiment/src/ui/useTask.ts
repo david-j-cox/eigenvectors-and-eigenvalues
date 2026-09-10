@@ -19,6 +19,8 @@ import type { Side } from '../engine/types';
 
 export interface TaskState {
   points: number;
+  /** Reinforcers delivered so far; stored on the session record at the end. */
+  rewards: number;
   blockIndex: number;
   trialInBlock: number;
   trialIndex: number;
@@ -119,6 +121,7 @@ function snapshot(session: Session, token: number, rewarded: boolean): TaskState
 
   return {
     points: snap.cumulativePoints,
+    rewards: token,
     blockIndex: snap.blockIndex,
     trialInBlock: snap.trialInBlock,
     trialIndex: snap.trialIndex,

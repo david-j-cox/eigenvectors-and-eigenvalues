@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { COMPLETION_CODE, EXPERIMENT_VERSION } from '../config/task';
+import { COMPLETION_CODE, DEFAULT_DESIGN, ENGINE, EXPERIMENT_VERSION } from '../config/task';
 import { EventLogger, MemoryTransport } from '../logging/logger';
 import { transportFromEnv } from '../logging/supabase';
-import type { SessionIdentity } from '../logging/schema';
+import { toSessionRecord, type SessionIdentity } from '../logging/schema';
 import { readProlificParams, resolveParticipantId, sessionSeed } from '../utils/prolific';
 import { useTask } from './useTask';
 import { TaskScreen } from './screens/TaskScreen';
@@ -15,6 +15,14 @@ type Phase = 'consent' | 'instructions' | 'task' | 'end' | 'declined';
 
 export function App() {
   const [phase, setPhase] = useState<Phase>('consent');
+
+  // Marks a run as the researcher's own rather than a participant's, so the
+  // export can exclude it. Without this a pre-launch check of the live study
+  // is indistinguishable from participant 1.
+  const isTestSession = useMemo(
+    () => new URLSearchParams(window.location.search).get('test') === '1',
+    [],
+  );
 
   const identity = useMemo<SessionIdentity>(() => {
     const params = readProlificParams();
@@ -54,18 +62,57 @@ export function App() {
 
   const { plan, state, respond } = useTask(identity, logger);
 
+  const saveSession = useCallback(
+    (status: 'in_progress' | 'complete' | 'declined') =>
+      logger.saveSession(
+        toSessionRecord(
+          identity,
+          plan,
+          ENGINE,
+          DEFAULT_DESIGN,
+          { browserWidth: window.innerWidth, browserHeight: window.innerHeight },
+          {
+            totalResponses: state.trialIndex,
+            totalRewards: state.rewards,
+            totalPoints: state.points,
+            completionStatus: status,
+          },
+          COMPLETION_CODE,
+          isTestSession,
+        ),
+      ),
+    [identity, logger, plan, state, isTestSession],
+  );
+
+  // Written once at the start so an abandoned session still leaves a record of
+  // who began and what was arranged, and again at the end with the totals.
+  // The ref keeps the opening write from firing again on every response, since
+  // saveSession closes over the changing task state.
+  const openedRef = useRef(false);
+  useEffect(() => {
+    if (openedRef.current) return;
+    openedRef.current = true;
+    void saveSession('in_progress');
+  }, [saveSession]);
+
   useEffect(() => {
     if (state.finished && phase === 'task') {
-      void logger.flush().then(() => setPhase('end'));
+      void logger
+        .flush()
+        .then(() => saveSession('complete'))
+        .then(() => setPhase('end'));
     }
-  }, [state.finished, phase, logger]);
+  }, [state.finished, phase, logger, saveSession]);
 
   switch (phase) {
     case 'consent':
       return (
         <ConsentScreen
           onAgree={() => setPhase('instructions')}
-          onDecline={() => setPhase('declined')}
+          onDecline={() => {
+            void saveSession('declined');
+            setPhase('declined');
+          }}
         />
       );
     case 'instructions':

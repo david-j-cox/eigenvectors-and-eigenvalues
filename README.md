@@ -7,7 +7,9 @@ behaviour in an environment, then ask whether it predicts that same person's
 later behaviour there and their recovery from a controlled perturbation.
 
 Start with [`docs/behavioral-dynamics-program.md`](docs/behavioral-dynamics-program.md)
-for the design and the evidence behind it.
+for the design and the evidence behind it. To put the task in front of
+participants, see
+[`docs/deployment-runbook.md`](docs/deployment-runbook.md).
 
 ## Layout
 
@@ -16,7 +18,7 @@ dynalysis/     shared analysis library (states, operators, eigenanalysis, simula
 reanalysis/    Phase 0: individual-level reanalysis of the previous 60-participant study
 experiment/    the browser task (TypeScript, React, Vite, Supabase)
 analysis/      pilot diagnostics and analysis of new data
-docs/          the program document
+docs/          the program document and the deployment runbook
 ```
 
 ## Quick start
@@ -41,7 +43,7 @@ Outputs land in `reanalysis/outputs/`, with `summary.md` and
 ```bash
 cd experiment
 npm install
-npm test          # 107 tests
+npm test          # 111 tests
 npm run dev       # http://localhost:5173
 ```
 

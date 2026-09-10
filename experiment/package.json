@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:prod": "tsx scripts/preflight.ts && tsc -b && vite build",
+    "preflight": "tsx scripts/preflight.ts",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",

@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 
 import { App } from '../../src/ui/App';
+import { EventLogger } from '../../src/logging/logger';
 import { COLORS, ENGINE } from '../../src/config/task';
 
 /**
@@ -27,7 +28,20 @@ describe('App', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    window.history.replaceState({}, '', '/');
   });
+
+  /** Capture session records without reaching into the App's private logger. */
+  const captureSessions = () => {
+    const records: Record<string, unknown>[] = [];
+    vi.spyOn(EventLogger.prototype, 'saveSession').mockImplementation(
+      async (record: Record<string, unknown>) => {
+        records.push(record);
+        return true;
+      },
+    );
+    return records;
+  };
 
   /** Advance past the cooldown so the next response is accepted. */
   const tick = () => {
@@ -173,6 +187,56 @@ describe('App', () => {
     const signalled = Object.values(COLORS).filter((c) => c.id !== 'neutral');
     const patterns = signalled.map((c) => c.pattern);
     expect(new Set(patterns).size).toBe(signalled.length);
+  });
+
+  // The session record is what makes a schedule checkable after the fact, and
+  // for a while nothing wrote it at all: the transport had the method and no
+  // caller. These pin the three statuses a session can end in.
+
+  it('writes a session record carrying the seed and the colour mapping', () => {
+    const records = captureSessions();
+    render(<App />);
+
+    expect(records).toHaveLength(1);
+    const [record] = records;
+    expect(record.completion_status).toBe('in_progress');
+    expect(record.seed).toBeTruthy();
+    expect(record.color_to_contingency).toBeTruthy();
+    expect(record.ended_at).toBeNull();
+    expect(record.is_test_session).toBe(false);
+  });
+
+  it('marks the record declined when consent is refused', () => {
+    const records = captureSessions();
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: /no thanks/i }));
+
+    expect(records.map((r) => r.completion_status)).toEqual(['in_progress', 'declined']);
+    expect(records[1].ended_at).toBeTruthy();
+  });
+
+  it('flags a researcher test run so the export can exclude it', () => {
+    window.history.replaceState({}, '', '/?test=1');
+    const records = captureSessions();
+    render(<App />);
+
+    expect(records[0].is_test_session).toBe(true);
+  });
+
+  it('does not rewrite the opening record on every response', () => {
+    const records = captureSessions();
+    const { container } = render(<App />);
+    consent();
+    fireEvent.click(screen.getByRole('button', { name: /^start$/i }));
+
+    for (let i = 0; i < 5; i++) {
+      tick();
+      act(() => {
+        fireEvent.click(container.querySelectorAll('.panel')[0]);
+      });
+    }
+
+    expect(records).toHaveLength(1);
   });
 });
 

@@ -57,12 +57,17 @@ in block sequencing or response handling knows that perturbations exist.
 ## Commands
 
 ```bash
-npm test                                   # 107 tests
+npm test                                   # 111 tests
 npm run dev
 npm run build
 npx tsx scripts/pilot_check.ts --n 20      # simulate sessions, export real schema
 npx tsx scripts/pilot_check.ts --n 20 --no-depletion
+
+npm run preflight                          # check deployment env vars
+npm run build:prod                         # preflight, then build
 ```
+
+Deploying to participants is `../docs/deployment-runbook.md`.
 
 ## Reproducibility
 

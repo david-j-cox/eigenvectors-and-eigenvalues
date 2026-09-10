@@ -210,3 +210,67 @@ export function toCsv(rows: EventRow[]): string {
   const body = rows.map((r) => EVENT_COLUMNS.map((c) => csvCell(r[c])).join(','));
   return [header, ...body].join('\n');
 }
+
+// ============================================================
+// The session record.
+//
+// One row per session, holding the seed and the resolved plan.
+// The events alone can reconstruct the schedule -- the seed is
+// just `version::participant_id` -- but that reconstruction is
+// only trustworthy if there is something independent to check it
+// against. This is that something: if a regenerated schedule and
+// the stored plan disagree, the discrepancy is visible rather
+// than silently absorbed.
+//
+// It is written twice: once when the participant starts, so an
+// abandoned session still leaves a record saying who started and
+// what was arranged, and once at the end with the totals.
+// ============================================================
+
+export interface SessionOutcomeSummary {
+  totalResponses: number;
+  totalRewards: number;
+  totalPoints: number;
+  completionStatus: 'in_progress' | 'complete' | 'declined';
+}
+
+export function toSessionRecord(
+  identity: SessionIdentity,
+  plan: SessionPlan,
+  engineConfig: unknown,
+  designConfig: unknown,
+  quality: Pick<QualityContext, 'browserWidth' | 'browserHeight'>,
+  summary: SessionOutcomeSummary,
+  completionCode: string,
+  isTestSession: boolean,
+): Record<string, unknown> {
+  return {
+    session_id: identity.sessionId,
+    participant_id: identity.participantId,
+    prolific_pid: identity.prolificPid,
+    study_id: identity.studyId,
+    prolific_session_id: identity.prolificSessionId,
+    experiment_version: identity.experimentVersion,
+
+    seed: plan.seed,
+    color_to_contingency: plan.colorToContingency,
+    block_plan: plan.blocks,
+    perturbation_plan: plan.perturbations,
+    engine_config: engineConfig,
+    design_config: designConfig,
+
+    ended_at: summary.completionStatus === 'in_progress' ? null : new Date().toISOString(),
+    total_responses: summary.totalResponses,
+    total_rewards: summary.totalRewards,
+    total_points: summary.totalPoints,
+    completion_status: summary.completionStatus,
+    completion_code: completionCode,
+
+    browser_width: quality.browserWidth,
+    browser_height: quality.browserHeight,
+    user_agent: typeof navigator === 'undefined' ? null : navigator.userAgent,
+    is_test_session: isTestSession,
+
+    updated_at: new Date().toISOString(),
+  };
+}
