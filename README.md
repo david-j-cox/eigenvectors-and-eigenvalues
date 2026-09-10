@@ -19,6 +19,7 @@ reanalysis/    Phase 0: individual-level reanalysis of the previous 60-participa
 experiment/    the browser task (TypeScript, React, Vite, Supabase)
 analysis/      pilot diagnostics and analysis of new data
 docs/          the program document and the deployment runbook
+scripts/       operational tooling for running the study on Prolific
 ```
 
 ## Quick start

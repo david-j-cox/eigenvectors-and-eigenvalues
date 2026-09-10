@@ -159,42 +159,45 @@ range the simulated responders assumed.
 
 ## Appendix: driving Prolific from the API
 
-Everything in section 3 can be done over
-[Prolific's REST API](https://docs.prolific.com/api-reference/studies/create-study.md)
-instead of the dashboard, which is worth it mainly because it resolves the
-ordering problem: creating the draft hands you the completion code, so you can
-set `VITE_COMPLETION_CODE` and deploy before anything is visible to
-participants. A token comes from **Settings -> API tokens**.
+`scripts/prolific.sh` wraps the endpoints needed here. Using it instead of the
+dashboard resolves the ordering problem section 2 leaves: creating the draft
+returns the completion code, so Vercel can be configured and deployed before
+anything is visible to participants.
+
+**Store the token once.** Copy it from Prolific (**Settings -> API tokens**),
+then run:
 
 ```bash
-curl -sX POST https://api.prolific.com/api/v1/studies/ \
-  -H "Authorization: Token $PROLIFIC_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Choice and adaptation in a two-option task",
-    "description": "...",
-    "external_study_url": "https://<app>.vercel.app/?PROLIFIC_PID={{%PROLIFIC_PID%}}&STUDY_ID={{%STUDY_ID%}}&SESSION_ID={{%SESSION_ID%}}",
-    "prolific_id_option": "url_parameters",
-    "estimated_completion_time": 35,
-    "total_available_places": 3,
-    "reward": 700,
-    "device_compatibility": ["desktop"],
-    "completion_codes": [
-      {"code": "<chosen>", "code_type": "COMPLETED",
-       "actions": [{"action": "AUTOMATICALLY_APPROVE"}]}
-    ]
-  }'
+security add-generic-password -a prolific -s prolific-api -w "$(pbpaste)" -U
 ```
 
-`reward` is in cents of the workspace currency. The study is created
-`UNPUBLISHED` and stays invisible to participants until it is transitioned:
+The token is taken from the clipboard, so its value never appears in a command
+line, in shell history, or in a terminal transcript. The wrapper reads it from
+the Keychain at the moment of each call and passes it to curl over stdin rather
+than as an argument, keeping it out of the process list.
 
 ```bash
-curl -sX POST https://api.prolific.com/api/v1/studies/<id>/transition/ \
-  -H "Authorization: Token $PROLIFIC_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"action": "PUBLISH"}'
+./scripts/prolific.sh whoami                      # confirm the token works
+./scripts/prolific.sh balance                     # workspace funds
+
+# 1. Edit scripts/study.pilot.json: the Vercel URL, the completion code you
+#    choose, and the reward. Then:
+./scripts/prolific.sh create scripts/study.pilot.json
+
+# 2. Put that completion code in VITE_COMPLETION_CODE, deploy, and run
+#    section 4's own-run check against the live URL.
+
+./scripts/prolific.sh cost <study-id>             # what publishing would charge
+./scripts/prolific.sh publish <study-id>          # spends money; prompts first
+./scripts/prolific.sh submissions <study-id>
 ```
 
-That second call is the one that spends money and exposes the study. Do section
-4's own-run check between the two.
+The study is created `UNPUBLISHED` and stays invisible to participants until
+`publish`. That is the only irreversible call, so it re-reads the study, prints
+what is about to go live, and requires the id typed back before proceeding.
+
+**Reward.** `reward` is in cents of the workspace currency.
+[Prolific's minimum is £6/$8 per hour and its recommendation £9/$12](https://researcher-help.prolific.com/en/articles/445266-how-much-should-i-pay-participants).
+The template's 700 over an estimated 35 minutes is £12/$12 per hour, above the
+recommendation in either currency. `cost` shows the total including Prolific's
+fee before anything is charged.

@@ -1,0 +1,19 @@
+{
+  "name": "Choosing between two options for points",
+  "description": "You will click between two on-screen options to earn points. Which option pays off better changes during the task, and part of what we are studying is how people adjust when it does. The task takes about 26 minutes of steady clicking plus instructions. It needs a keyboard and a desktop or laptop computer.",
+  "external_study_url": "https://REPLACE-ME.vercel.app/?PROLIFIC_PID={{%PROLIFIC_PID%}}&STUDY_ID={{%STUDY_ID%}}&SESSION_ID={{%SESSION_ID%}}",
+  "prolific_id_option": "url_parameters",
+  "estimated_completion_time": 35,
+  "maximum_allowed_time": 70,
+  "total_available_places": 3,
+  "reward": 700,
+  "device_compatibility": ["desktop"],
+  "peripheral_requirements": [],
+  "completion_codes": [
+    {
+      "code": "REPLACE-ME",
+      "code_type": "COMPLETED",
+      "actions": [{ "action": "AUTOMATICALLY_APPROVE" }]
+    }
+  ]
+}
