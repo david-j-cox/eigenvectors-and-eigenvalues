@@ -1,0 +1,39 @@
+{
+  "name": "Decision-Making Under Dynamic Conditions (Main)",
+  "project": "6aa3344d8cf12fee3bb3c48a",
+  "description": "This study investigates how people make repeated choices when outcomes may change over time.\n\nYou will play a game (approximately 25-30 minutes total) in which you click panels to earn points. There is a brief practice round followed by the main task, which consists of several phases.\n\nThe task needs a keyboard and a desktop or laptop computer. There are no known risks beyond those of everyday computer use; you may experience mild boredom or fatigue. Full consent information is shown before the task begins.",
+  "external_study_url": "https://eigen-dynamics-task.vercel.app/?PROLIFIC_PID={{%PROLIFIC_PID%}}&STUDY_ID={{%STUDY_ID%}}&SESSION_ID={{%SESSION_ID%}}",
+  "prolific_id_option": "url_parameters",
+  "estimated_completion_time": 40,
+  "maximum_allowed_time": 80,
+  "total_available_places": 10,
+  "reward": 667,
+  "device_compatibility": [
+    "desktop"
+  ],
+  "peripheral_requirements": [],
+  "completion_codes": [
+    {
+      "code": "C4T0EJED",
+      "code_type": "COMPLETED",
+      "actions": [
+        {
+          "action": "AUTOMATICALLY_APPROVE"
+        }
+      ]
+    }
+  ],
+  "filters": [
+    {
+      "filter_id": "previous_studies_blocklist",
+      "selected_values": [
+        "6aa33c9f3f1373c6733bb498",
+        "6aa3e1434aa8dba5501ced9b",
+        "6aa41a5f4a9448cb6a4969e8",
+        "69ac76805a1f272032a2d892",
+        "69acc22050036493d9b18d4a",
+        "69b730b2cc5d7d1bcd797688"
+      ]
+    }
+  ]
+}
