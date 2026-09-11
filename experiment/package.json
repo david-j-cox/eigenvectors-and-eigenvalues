@@ -9,7 +9,7 @@
     "build:prod": "tsx scripts/preflight.ts && tsc -b && vite build",
     "preflight": "tsx scripts/preflight.ts",
     "preview": "vite preview",
-    "test": "vitest run",
+    "test": "tsc -b && vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "schedule": "tsx scripts/print_schedule.ts"
