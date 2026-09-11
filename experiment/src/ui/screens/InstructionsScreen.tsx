@@ -22,7 +22,7 @@ export function InstructionsScreen({ onStart }: Props) {
         <li>Some choices earn a point. The panel flashes when you earn one.</li>
         <li>Your goal is to earn as many points as you can.</li>
         <li>
-          The background colour will change from time to time. Keep playing
+          The background color will change from time to time. Keep playing
           as you were.
         </li>
       </ul>
