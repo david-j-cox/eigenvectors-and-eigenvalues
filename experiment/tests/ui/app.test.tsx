@@ -238,6 +238,34 @@ describe('App', () => {
 
     expect(records).toHaveLength(1);
   });
+
+  // The session clock must not start while the participant is still reading.
+  // A pilot participant spent 25 minutes on consent and instructions and was
+  // past the 30-minute soft cap before responding once, which cost them four
+  // of five perturbation blocks and all 8 of their perturbations.
+  it('starts the session clock at the first response, not at mount', () => {
+    const logged: { elapsed_time_ms: number }[] = [];
+    vi.spyOn(EventLogger.prototype, 'log').mockImplementation((row) => {
+      logged.push(row as unknown as { elapsed_time_ms: number });
+    });
+
+    const { container } = render(<App />);
+
+    // Time passes while the participant reads consent and instructions.
+    clock += 26 * 60 * 1000;
+    consent();
+    fireEvent.click(screen.getByRole('button', { name: /^start$/i }));
+
+    tick();
+    act(() => {
+      fireEvent.click(container.querySelectorAll('.panel')[0]);
+    });
+
+    expect(logged).toHaveLength(1);
+    // Elapsed is measured from the first response, so it is near zero rather
+    // than the 26 minutes that had passed on the preceding screens.
+    expect(logged[0].elapsed_time_ms).toBeLessThan(1000);
+  });
 });
 
 /** jsdom normalises inline colours to rgb(), so compare in that form. */

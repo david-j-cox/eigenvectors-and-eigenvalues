@@ -42,8 +42,17 @@ export function useTask(identity: SessionIdentity, logger: EventLogger) {
   const sessionRef = useRef<Session | null>(null);
   if (sessionRef.current === null) sessionRef.current = new Session(plan, ENGINE);
 
-  const startedAtRef = useRef(Date.now());
-  const originRef = useRef(performance.now());
+  // Both clocks start at the FIRST RESPONSE, not when this hook mounts.
+  //
+  // useTask is created by App while the consent screen is showing, so an origin
+  // fixed here would begin counting while the participant is still reading. One
+  // pilot participant spent 25 minutes on consent and instructions, which put
+  // them past the 30-minute soft cap before their first response: the guard
+  // dropped four of their five perturbation blocks, and they contributed 0 of 8
+  // perturbations. Their responding was never slow -- a 254 ms median ICI, the
+  // fastest of the three.
+  const startedAtRef = useRef<number | null>(null);
+  const originRef = useRef<number | null>(null);
   const focusLost = useRef(0);
   const feedback = useRef(0);
   const guardApplied = useRef(false);
@@ -87,6 +96,10 @@ export function useTask(identity: SessionIdentity, logger: EventLogger) {
   const respond = useCallback(
     (side: Side) => {
       const session = sessionRef.current!;
+      if (originRef.current === null) {
+        originRef.current = performance.now();
+        startedAtRef.current = Date.now();
+      }
       const now = performance.now() - originRef.current;
 
       const block = session.currentBlock();
@@ -94,7 +107,7 @@ export function useTask(identity: SessionIdentity, logger: EventLogger) {
       if (!outcome || !block) return;
 
       logger.log(
-        toEventRow(outcome, block, plan, identity, quality(), startedAtRef.current),
+        toEventRow(outcome, block, plan, identity, quality(), startedAtRef.current!),
       );
 
       // Time guard: if the session is running long, drop trailing perturbation
