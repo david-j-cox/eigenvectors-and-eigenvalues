@@ -59,7 +59,7 @@ describe('event rows match their column types', () => {
       const block = session.currentBlock();
       const outcome = session.respond(i % 3 === 0 ? 'A' : 'B', t);
       if (!outcome || !block) continue;
-      const row = toEventRow(outcome, block, plan, identity, quality, 0) as Record<string, unknown>;
+      const row = toEventRow(outcome, block, plan, identity, quality, 0) as unknown as Record<string, unknown>;
       for (const col of integerColumns) {
         const v = row[col];
         if (v === null || v === undefined) continue;
