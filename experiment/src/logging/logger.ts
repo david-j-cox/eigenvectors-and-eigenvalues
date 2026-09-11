@@ -29,17 +29,34 @@ export interface LoggerOptions {
   maxRetries?: number;
   /** Persist unflushed events here so a refresh does not lose them. */
   storageKey?: string;
+  /** Treat a batch in flight longer than this as abandoned. */
+  stallMs?: number;
 }
 
 const DEFAULTS = {
   batchSize: 25,
   flushIntervalMs: 5000,
   maxRetries: 4,
+  // Longer than the transport's own timeout plus its retry backoff, so this
+  // only fires when that mechanism has itself failed to return.
+  stallMs: 120_000,
 };
 
 export class EventLogger {
   private buffer: EventRow[] = [];
   private inFlight = false;
+  /**
+   * When the in-flight batch started.
+   *
+   * `inFlight` is cleared in a finally block, which runs only if the promise
+   * settles. A request that neither resolves nor rejects therefore latches the
+   * flag forever, and since every later flush returns early on it, logging
+   * stops for the rest of the session in silence. That is what cost two of
+   * three participants in the third pilot most of their events. The transport
+   * now times out, and this is the second line of defence: a batch in flight
+   * for longer than any timeout can legitimately take is treated as abandoned.
+   */
+  private inFlightSince = 0;
   private timer: ReturnType<typeof setInterval> | null = null;
   private readonly opts: Required<Omit<LoggerOptions, 'storageKey'>> & {
     storageKey: string | null;
@@ -54,6 +71,7 @@ export class EventLogger {
       batchSize: options.batchSize ?? DEFAULTS.batchSize,
       flushIntervalMs: options.flushIntervalMs ?? DEFAULTS.flushIntervalMs,
       maxRetries: options.maxRetries ?? DEFAULTS.maxRetries,
+      stallMs: options.stallMs ?? DEFAULTS.stallMs,
       storageKey: options.storageKey ?? null,
     };
   }
@@ -86,8 +104,14 @@ export class EventLogger {
    * keeps a slow network from interleaving two copies of the same batch.
    */
   async flush(): Promise<boolean> {
+    if (this.inFlight && Date.now() - this.inFlightSince > this.opts.stallMs) {
+      // Abandoned: let this call take over rather than wait on it forever.
+      console.warn('event upload stalled; retrying');
+      this.inFlight = false;
+    }
     if (this.inFlight || this.buffer.length === 0) return true;
     this.inFlight = true;
+    this.inFlightSince = Date.now();
     const batch = this.buffer.splice(0, this.buffer.length);
 
     let succeeded = false;
