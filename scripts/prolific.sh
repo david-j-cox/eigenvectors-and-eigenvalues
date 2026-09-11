@@ -130,9 +130,17 @@ case "$cmd" in
     id="${1:-}"
     [ -n "$id" ] || { echo "usage: prolific.sh publish <study-id>" >&2; exit 1; }
     echo "About to PUBLISH study $id." >&2
-    run GET "/studies/$id/" | jq '{name, status, total_available_places,
-                                   reward, estimated_completion_time,
-                                   external_study_url}' >&2
+    # Fields printed one per line rather than as a JSON blob: a terminal that
+    # renders the blob as HTML turns the URL's & into &amp;, which reads as a
+    # malformed study URL and is alarming precisely when you are about to spend
+    # money. -r emits the stored bytes.
+    run GET "/studies/$id/" | jq -r '
+      "  name:    \(.name)",
+      "  status:  \(.status)",
+      "  places:  \(.total_available_places)",
+      "  reward:  \(.reward) cents over \(.estimated_completion_time) min",
+      "  code:    \(.completion_codes[0].code)",
+      "  url:     \(.external_study_url)"' >&2
     read -r -p "Type the study id again to confirm: " confirm
     [ "$confirm" = "$id" ] || { echo "Not confirmed; nothing published." >&2; exit 1; }
     run POST "/studies/$id/transition/" '{"action":"PUBLISH"}'
