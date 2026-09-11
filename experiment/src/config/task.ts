@@ -223,7 +223,8 @@ export const ENGINE: EngineConfig = {
   // when the COD is active. Mean richness of the chosen side during the COD
   // was 2.4-2.8x its value outside. Switching fell to 0.071-0.093 against the
   // 0.185 the calibrated responders produced, which in turn left switch rate
-  // unusable as a state coordinate.
+  // without between-bin variation above its own counting noise, and so
+  // useless as a state coordinate however reliably it is recorded.
   //
   // Replaying the three pilot participants' own response sequences against
   // candidate values, holding their switching fixed:
