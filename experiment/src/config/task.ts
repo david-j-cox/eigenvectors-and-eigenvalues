@@ -196,7 +196,13 @@ export const PRIMARY_STATE_COORDINATES = [
  * exists to make.
  */
 export const SESSION_TIME_GUARD = {
-  softCapMs: 30 * 60 * 1000,
+  // 40 minutes of RESPONDING, now that the clock starts at the first response
+  // rather than at the consent screen. Across the six pilot participants the
+  // median needed 17 minutes to emit all 4,260 responses and the slowest 37,
+  // so 30 truncated one of them for no reason other than responding slowly.
+  // Raising it costs nothing for anyone near the median and rescues the tail;
+  // Prolific's maximum_allowed_time is 80 minutes, so it fits.
+  softCapMs: 40 * 60 * 1000,
   droppablePart: 'perturbation' as const,
 };
 

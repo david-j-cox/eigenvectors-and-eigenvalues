@@ -165,8 +165,8 @@ export class Session {
     let withheldByCod: boolean;
 
     if (this.cfg.scheduleMode === 'depleting_probability') {
-      // Both alternatives recover over the interval since the previous
-      // response; the chosen one is then read and depleted.
+      // Both alternatives recover by one response's worth; the chosen one is
+      // then read and depleted. Nothing here consults the clock.
       const recovered = recoverPatches(this.patchA, this.patchB);
       this.patchA = recovered.a;
       this.patchB = recovered.b;
