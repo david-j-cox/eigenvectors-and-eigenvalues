@@ -152,6 +152,25 @@ to in-memory logging.
 
 Then launch to 2-3 participants before opening the study further.
 
+## While collecting
+
+Run this the same day participants finish, not at analysis time:
+
+```bash
+./scripts/check_sessions.sh
+```
+
+It compares the responses each session record claims against the rows actually
+stored, and flags any session where they disagree. The third pilot lost 7,519
+responses to a row the database refused, which blocked every batch behind it,
+and nothing surfaced that until the data was analysed. Two of the three
+participants still had the file the end screen let them download and sent it on
+request -- which worked only because they were asked within the day.
+
+A session reading ROWS MISSING is worth an immediate message to that
+participant asking for their download. It verifies against the rows already
+stored before being merged; `git log` for 09fa848 has the procedure.
+
 ## After collection
 
 ```bash
