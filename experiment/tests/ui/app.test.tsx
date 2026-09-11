@@ -266,6 +266,7 @@ describe('App', () => {
     // than the 26 minutes that had passed on the preceding screens.
     expect(logged[0].elapsed_time_ms).toBeLessThan(1000);
   });
+
 });
 
 /** jsdom normalises inline colors to rgb(), so compare in that form. */

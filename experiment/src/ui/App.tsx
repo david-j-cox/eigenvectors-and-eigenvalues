@@ -95,6 +95,24 @@ export function App() {
     void saveSession('in_progress');
   }, [saveSession]);
 
+  // The end screen reports how many responses are still queued. That number
+  // has to keep being read: a participant who finishes mid-batch sees a
+  // non-zero count that the next flush clears seconds later, and a screen
+  // rendered once says so forever. One wrote in to ask about a single pending
+  // response that had in fact uploaded, because the text tells them to wait for
+  // a message that could never change.
+  const [pending, setPending] = useState(0);
+  useEffect(() => {
+    if (phase !== 'end') return;
+    const tick = () => {
+      setPending(logger.pendingCount);
+      if (logger.pendingCount > 0) void logger.flush();
+    };
+    tick();
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, [phase, logger]);
+
   useEffect(() => {
     if (state.finished && phase === 'task') {
       void logger
@@ -124,7 +142,7 @@ export function App() {
         <EndScreen
           points={state.points}
           completionCode={COMPLETION_CODE}
-          pending={logger.pendingCount}
+          pending={pending}
           onDownload={() => downloadCsv(logger, identity.participantId)}
         />
       );

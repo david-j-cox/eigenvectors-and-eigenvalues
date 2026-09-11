@@ -19,9 +19,13 @@ export function EndScreen({ points, completionCode, pending, onDownload }: Props
       {pending > 0 && (
         <>
           <p className="warning">
-            {pending} responses have not yet uploaded. Please stay on this page
-            a few moments longer. If this message does not clear, download your
-            data and contact the researcher.
+            {pending === 1
+              ? 'One response is'
+              : `${pending} responses are`}{' '}
+            still uploading. Please keep this page open for a few more moments
+            &mdash; this message will disappear on its own once it finishes. If
+            it is still here after a minute, use the button below and email the
+            file to the researcher.
           </p>
           <button onClick={onDownload}>Download my data</button>
         </>
