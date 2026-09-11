@@ -206,7 +206,33 @@ export const ENGINE: EngineConfig = {
   ...DEFAULT_ENGINE_CONFIG,
   // The changeover delay exists to stop the switch response itself from being
   // adventitiously reinforced. The response requirement alone achieves that;
-  // the 500 ms is there so a fast double-tap cannot satisfy it instantly.
+  // the time component is there so a fast double-tap cannot satisfy it
+  // instantly.
+  //
+  // Cut from 500 ms after pilot 1, where it blocked 2,476 of the 4,837
+  // reinforcers the schedule set up -- 51%, in every subject. The VI analysis
+  // below underestimated its cost because it predates depletion: under
+  // depleting patches the alternative you return to has recovered, so the
+  // return is exactly when a reinforcer is most likely waiting, and exactly
+  // when the COD is active. Mean richness of the chosen side during the COD
+  // was 2.4-2.8x its value outside. Switching fell to 0.071-0.093 against the
+  // 0.185 the calibrated responders produced, which in turn left switch rate
+  // unusable as a state coordinate.
+  //
+  // Replaying the three pilot participants' own response sequences against
+  // candidate values, holding their switching fixed:
+  //
+  //     COD      in COD    reinforcers recovered    per 10-response bin
+  //     500 ms    20.9%              1                    1.99
+  //     300 ms    14.6%            748                    2.60
+  //     200 ms    10.0%          1,275                    3.06
+  //     150 ms     8.2%          1,502                    3.24
+  //
+  // 150 ms and below are identical to no time delay at all: median ICI was
+  // 181-246 ms, so the one-response requirement is already the binding
+  // constraint and the clock never fires. 200 ms keeps a real margin over the
+  // response requirement -- a double-tap at twice their median rate is still
+  // inside it -- while recovering half the blocked reinforcement.
   //
   // The duration is short because it is expensive. Responders calibrated to the
   // previous study's 60 participants -- switching on ~22% of responses at 2.8
@@ -225,7 +251,7 @@ export const ENGINE: EngineConfig = {
   // probabilities and barely responds to it. Whether 500 ms is long enough to
   // suppress adventitious reinforcement of changeovers is a question for the
   // pilot, not for the simulation.
-  codMs: 500,
+  codMs: 200,
   codResponses: 1,
   responseCooldownMs: 150,
   pointsPerReinforcer: 1,
