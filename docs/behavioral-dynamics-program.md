@@ -3,8 +3,8 @@
 ## What this program tests
 
 For an individual organism, does a transition operator estimated from earlier
-behaviour in an environment reproduce a stable eigensystem, predict that same
-individual's later behaviour in that environment, and prospectively predict
+behavior in an environment reproduce a stable eigensystem, predict that same
+individual's later behavior in that environment, and prospectively predict
 recovery from a controlled perturbation?
 
 The unit of analysis is the individual. Group summaries are produced only after
@@ -29,7 +29,7 @@ collected.
 From `reanalysis/outputs/summary.md`, across 60 participants with a median of
 92 within-context transitions each:
 
-- Individual operators predict the same individual's later behaviour. Held-out
+- Individual operators predict the same individual's later behavior. Held-out
   skill against persistence is 0.29 for a pooled `A_i`, and 92% of participants
   beat persistence. Context-specific and input-driven architectures beat the
   pooled operator for 92% of participants.
@@ -109,15 +109,15 @@ into one continuous procedure in which every block serves more than one analysis
 | 3 | A-rich | B-rich |
 | 4 | B-rich | A-rich |
 
-The colour-to-contingency assignment is randomised per participant, so half see
+The color-to-contingency assignment is randomized per participant, so half see
 the table above and half see it transposed. The perturbation part uses a third
-colour (red) held at one contingency throughout, so its pre-perturbation
-baseline is never a reversed cell. Colours alternate strictly within and across
+color (red) held at one contingency throughout, so its pre-perturbation
+baseline is never a reversed cell. Colors alternate strictly within and across
 stages, so no context ever repeats on consecutive blocks. Run
 `experiment/scripts/print_schedule.ts` for a participant's full sequence.
 
 ```
-Practice (60 responses, neutral grey background)
+Practice (60 responses, neutral gray background)
 Stage 1: 8 blocks x 100 responses, alternating green and blue
 Stage 2: 8 blocks x 100 responses, mapping reversed
 Stage 3: 8 blocks x 100 responses, mapping restored
@@ -126,24 +126,24 @@ Perturbation part: 5 blocks x 200 responses, red, 8 perturbations
 ```
 
 Total 4,260 responses, about 25 minutes of responding at the 2.8-2.9 responses
-per second real participants produced. Each colour x contingency x stage cell
+per second real participants produced. Each color x contingency x stage cell
 gets four exposures and 36 within-block transitions; each cell occurs in two
 stages, so an operator is estimated from 72.
 
 ### Why three reversals rather than one
 
 With a single reversal, green carries A-rich only before it and B-rich only
-after. Every "same colour, different contingency" comparison is therefore also an
+after. Every "same color, different contingency" comparison is therefore also an
 early-versus-late comparison, and the two explanations cannot be separated. The
 build specification's Study 2 has this confound.
 
 Restoring the original mapping in stage 3 breaks it: both competing comparisons
-can then be drawn from adjacent stages, so neither is favoured by having its
+can then be drawn from adjacent stages, so neither is favored by having its
 estimates closer together in time.
 
-- same colour, different contingency: green/A-rich (stage 1) against
+- same color, different contingency: green/A-rich (stage 1) against
   green/B-rich (stage 2)
-- different colour, same contingency: green/A-rich (stage 1) against
+- different color, same contingency: green/A-rich (stage 1) against
   blue/A-rich (stage 2)
 
 Three stages (ABA) is not enough, for two reasons. First, ABA contains one
@@ -155,7 +155,7 @@ from half the data of its counterpart. **The weakest cell is what the design can
 claim**, and under ABA that was always a reversed one.
 
 ABAB fixes both. The A-to-B transition occurs at stages 1-2 and again at 3-4,
-and all four colour x contingency cells receive equal data. The binding
+and all four color x contingency cells receive equal data. The binding
 constraint improves from 45 transitions to 72 even though the per-stage figure
 falls from 45 to 36.
 
@@ -163,33 +163,33 @@ Two same-mapping stage pairs are available for the replication test -- 1 against
 3 and 2 against 4 -- so that test is itself replicated within each participant,
 and both mappings contribute rather than only the unreversed one.
 
-### How the contexts are signalled
+### How the contexts are signaled
 
 Each context fills the whole viewport behind two visually identical response
 panels, so the signal is unmissable and cannot be confused with a property of
 either option. The exact hex values are logged with every response.
 
-| Context | Colour | Texture |
+| Context | Color | Texture |
 |---|---|---|
 | Green | `#2E7D5B` | plain |
 | Blue | `#2E5C8A` | diagonal stripes |
 | Red | `#96382F` | dots |
-| Practice | `#4A4A4A` grey | plain |
+| Practice | `#4A4A4A` gray | plain |
 
-Every signalled colour is paired with a distinct texture overlay. Colour alone
-would put the discrimination out of reach of a colour-vision-deficient
-participant and would make the three contexts indistinguishable in a greyscale
+Every signaled color is paired with a distinct texture overlay. Color alone
+would put the discrimination out of reach of a color-vision-deficient
+participant and would make the three contexts indistinguishable in a grayscale
 screenshot.
 
-Practice is a neutral grey and is a first-class context id rather than a
+Practice is a neutral gray and is a first-class context id rather than a
 display-only override, so a practice response logs
-`physical_context_id: "neutral"`. An earlier version displayed grey while logging
+`physical_context_id: "neutral"`. An earlier version displayed gray while logging
 green, which would have put a context in the data that no participant saw. A
 test now asserts that the hex painted on screen is the constant written to
 `context_color`.
 
 The instructions say only that the background will change from time to time.
-Telling participants that colour signals anything would convert a discrimination
+Telling participants that color signals anything would convert a discrimination
 the task is measuring into an instruction they were given.
 
 ### Schedules
@@ -274,7 +274,7 @@ anything whose cost scales with changeovers.
 
   The 2 s value the earlier design used would have left participants unable to
   earn anything for most of the task, under either calibration. What this cannot settle is the COD's
-  effect on *behaviour*: the calibrated agent's switching comes from fixed
+  effect on *behavior*: the calibrated agent's switching comes from fixed
   probabilities and barely responds to it, so whether 500 ms is long enough to
   suppress adventitious reinforcement of changeovers is a pilot question.
 
@@ -290,7 +290,7 @@ anything whose cost scales with changeovers.
   | 0.25 | 1.34 | 1.31 |
   | 0.40 | 1.13 | 1.08 |
 
-  The reason is behavioural: a responder that leaves an alternative when it stops
+  The reason is behavioral: a responder that leaves an alternative when it stops
   paying stabilises its own obtained rate, so depletion removes reinforcement
   without producing the swings in reward rate it was meant to restore. In the
   previous study the patches emptied faster than choice could track, which is
@@ -363,7 +363,7 @@ A claim that a context-specific mode reproduced requires all of:
    stronger than it is.
 
 Whether dynamics follow physical context or functional contingency is decided by
-whether same-contingency similarity exceeds same-colour similarity, computed
+whether same-contingency similarity exceeds same-color similarity, computed
 within participant and matched on elapsed time by the two-reversal design.
 
 ## Status
@@ -379,4 +379,4 @@ Not yet done: a human pilot. Every number in this document about the new task
 comes from simulated responders. Their switching and timing are calibrated to
 real participants, which is what makes the changeover-delay and reinforcement
 results usable; their *dynamics* are not and cannot be, which is why the state
-vector stays open until real behaviour settles it.
+vector stays open until real behavior settles it.

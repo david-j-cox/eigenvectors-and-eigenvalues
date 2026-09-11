@@ -7,7 +7,7 @@ interface Props {
 /**
  * The instructions describe the response and the point, and nothing about the
  * schedules. Telling participants that one side is richer, or that the
- * background colour signals anything, would convert a discrimination the task
+ * background color signals anything, would convert a discrimination the task
  * is measuring into an instruction they were given.
  */
 export function InstructionsScreen({ onStart }: Props) {

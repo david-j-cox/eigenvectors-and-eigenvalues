@@ -28,7 +28,7 @@ A failed noise-ratio check means that coordinate is measured mostly as sampling 
 - Spectral radius: 0.665 [0.587, 0.710]
 - Complex dominant pair: 40% of participants
 
-## Stage 1 vs stage 3 replication (same colour, same contingency)
+## Stage 1 vs stage 3 replication (same color, same contingency)
 
 - Comparisons: 20
 - Dominant-eigenvector |cos|: 0.972 [0.832, 0.981]
@@ -43,7 +43,7 @@ Compare the |cos| value against the same-operator floor in `reanalysis/outputs/d
 | diff_color_same_contingency | 0.929 |
 | same_color_diff_contingency | 0.301 |
 
-Participants whose dynamics follow the contingency rather than the colour: 90%
+Participants whose dynamics follow the contingency rather than the color: 90%
 
 Both comparisons are matched on elapsed time by construction, so a difference between them cannot be explained by one pair of estimates simply being closer together in the session.
 

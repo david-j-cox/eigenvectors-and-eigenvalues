@@ -1,12 +1,12 @@
 /* ============================================================
    Task styling.
 
-   The background carries the context, so it is the one colour that
+   The background carries the context, so it is the one color that
    must be exact: the hex values here are the same constants the
    event log records, and they are read from config rather than
    duplicated as CSS literals wherever that is possible.
 
-   Each context colour is paired with a texture so the
+   Each context color is paired with a texture so the
    discrimination does not rest on hue alone.
    ============================================================ */
 
@@ -148,7 +148,7 @@ button.primary {
 .progress { height: 6px; background: rgba(0, 0, 0, 0.18); }
 .bar { height: 100%; background: rgba(255, 255, 255, 0.75); transition: width 200ms; }
 
-/* Texture pairs with each colour so the contexts remain distinguishable
+/* Texture pairs with each color so the contexts remain distinguishable
    without relying on hue. */
 .pattern-stripes::before,
 .pattern-dots::before {

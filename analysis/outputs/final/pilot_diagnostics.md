@@ -8,7 +8,7 @@ State: choice_prop_A, reward_rate, switch_rate in 10-response bins
 
 | Check | Value | Result | Target |
 |---|---|---|---|
-| Transitions per colour x contingency cell | 72.000 | PASS | >= 40 (operator estimation) |
+| Transitions per color x contingency cell | 72.000 | PASS | >= 40 (operator estimation) |
 | Minimum in any cell | 72.000 | PASS | the weakest cell is what the design can claim |
 | Transitions per cell x stage | 36.000 | PASS | half the pooled figure (replication comparison) |
 | Median responses per second | 3.718 | PASS | >= 1.2 |
@@ -29,7 +29,7 @@ A failed noise-ratio check means that coordinate is measured mostly as sampling 
 - Spectral radius: 0.292 [0.163, 0.502]
 - Complex dominant pair: 38% of participants
 
-## Replication across stages (same colour, same contingency)
+## Replication across stages (same color, same contingency)
 
 - Comparisons: 52
 - Dominant-eigenvector |cos|: 0.593 [0.217, 0.787]
@@ -44,7 +44,7 @@ Compare the |cos| value against the same-operator floor in `reanalysis/outputs/d
 | diff_color_same_contingency | 0.746 |
 | same_color_diff_contingency | 0.603 |
 
-Participants whose dynamics follow the contingency rather than the colour: 77%
+Participants whose dynamics follow the contingency rather than the color: 77%
 
 Both comparisons are matched on elapsed time by construction, so a difference between them cannot be explained by one pair of estimates simply being closer together in the session.
 

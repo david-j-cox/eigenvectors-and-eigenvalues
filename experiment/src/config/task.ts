@@ -13,8 +13,8 @@ import { DEFAULT_ENGINE_CONFIG } from '../engine/types';
 export const EXPERIMENT_VERSION = 'eigen-dynamics-1.0.0';
 
 /**
- * Colours are paired with a pattern so the discrimination never rests on hue
- * alone, which also keeps the task usable for colour-vision-deficient
+ * Colors are paired with a pattern so the discrimination never rests on hue
+ * alone, which also keeps the task usable for color-vision-deficient
  * participants without changing the design.
  */
 export const COLORS: Record<string, ColorSpec> = {
@@ -27,7 +27,7 @@ export const COLORS: Record<string, ColorSpec> = {
 /**
  * The practice background.
  *
- * A desaturated grey that is not one of the signalled contexts, so participants
+ * A desaturated gray that is not one of the signaled contexts, so participants
  * do not meet a context before the task proper begins. It is a first-class
  * entry in COLORS rather than a display-only constant: the practice block logs
  * `physical_context_id: "neutral"`, and if the two were allowed to disagree the
@@ -84,7 +84,7 @@ export interface DesignConfig {
   /** State bin used by the analysis; blockResponses should be a multiple. */
   stateBinResponses: number;
   /**
-   * Exposures to each colour within each reversal stage. Together with
+   * Exposures to each color within each reversal stage. Together with
    * blockResponses this sets transitions per operator estimate, which is the
    * quantity that decides whether the replication test can succeed at all.
    */
@@ -105,7 +105,7 @@ export interface DesignConfig {
    * sets what the design can claim, and under ABA it was the reversed one.
    *
    * ABAB fixes both. Each mapping holds for two stages, so all four
-   * colour x contingency cells get equal data, and the A-to-B transition occurs
+   * color x contingency cells get equal data, and the A-to-B transition occurs
    * twice.
    */
   nStages: number;
@@ -134,8 +134,8 @@ export interface DesignConfig {
  * transition lost at each block boundary is why larger blocks are more
  * efficient per response.
  *
- * Four exposures per colour per stage gives each cell 400 responses and 36
- * within-block transitions per stage. Under ABAB every colour x contingency
+ * Four exposures per color per stage gives each cell 400 responses and 36
+ * within-block transitions per stage. Under ABAB every color x contingency
  * cell occurs in two stages, so each pools to 72 -- and unlike the earlier ABA
  * arrangement, all four cells get the same amount rather than the reversed ones
  * getting half.
@@ -180,7 +180,7 @@ export const DEFAULT_DESIGN: DesignConfig = {
  * because dropping it is the single most damaging change of all: it carries
  * most of what distinguishes one context's dynamics from another.
  *
- * ICI is still logged per response and analysed as a 4-D sensitivity check.
+ * ICI is still logged per response and analyzed as a 4-D sensitivity check.
  */
 export const PRIMARY_STATE_COORDINATES = [
   'choice_prop_A',
@@ -252,7 +252,7 @@ export const ENGINE: EngineConfig = {
   // A 2 s delay exceeds the average human run of ~5 responses, so a participant
   // would spend most of the task unable to earn anything.
   //
-  // What this cannot tell us is the COD's effect on behaviour, since the
+  // What this cannot tell us is the COD's effect on behavior, since the
   // calibrated agent's switching is fixed by measured conditional
   // probabilities and barely responds to it. Whether 500 ms is long enough to
   // suppress adventitious reinforcement of changeovers is a question for the

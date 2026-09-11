@@ -1,10 +1,10 @@
-# Eigenvectors and eigenvalues of individual behaviour
+# Eigenvectors and eigenvalues of individual behavior
 
 Does an individual organism have a reproducible dynamical mode? This repository
 extends the dynamic-foraging study in `../measuring-behavior-trajectories` into a
 prospective test: estimate a transition operator from a person's earlier
-behaviour in an environment, then ask whether it predicts that same person's
-later behaviour there and their recovery from a controlled perturbation.
+behavior in an environment, then ask whether it predicts that same person's
+later behavior there and their recovery from a controlled perturbation.
 
 Start with [`docs/behavioral-dynamics-program.md`](docs/behavioral-dynamics-program.md)
 for the design and the evidence behind it. To put the task in front of
@@ -87,7 +87,7 @@ leaves 65-73% of responses ineligible), patch depletion (implemented, off,
 because it reduced reinforcement at every strength without restoring the
 reward-rate dynamics it was meant to), four exposures per cell, and the ABAB
 reversal structure — which repeats the A-to-B transition and, less obviously,
-gives all four colour x contingency cells equal data where ABA gave the reversed
+gives all four color x contingency cells equal data where ABA gave the reversed
 ones half.
 
 The simulated responders those decisions rest on are calibrated to the previous

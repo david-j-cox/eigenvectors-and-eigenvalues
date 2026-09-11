@@ -181,7 +181,7 @@ def recovery_prediction(
 ) -> pd.DataFrame:
     """How much pre-perturbation data is needed to forecast recovery?
 
-    A perturbation is modelled as a displacement of the state away from its
+    A perturbation is modeled as a displacement of the state away from its
     local equilibrium; recovery is then the free response delta_x_{t+k} =
     A^k delta_x_t. The operator is estimated from pre-perturbation data only,
     exactly as the study requires, and scored on the simulated recovery.

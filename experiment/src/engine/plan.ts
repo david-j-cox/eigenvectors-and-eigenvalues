@@ -4,14 +4,14 @@
 // The session is one continuous procedure, not three studies run
 // back to back. Every block does double duty:
 //
-//   * Repeated exposures to a colour x contingency cell give the
+//   * Repeated exposures to a color x contingency cell give the
 //     replication test (does the same operator recur?).
-//   * Reversing the colour-contingency mapping between stages
+//   * Reversing the color-contingency mapping between stages
 //     gives the physical-vs-functional test.
 //   * Returning to the original mapping in stage 3 breaks the
 //     confound between "different contingency" and "later in the
 //     session" that a single reversal cannot avoid: with only one
-//     reversal, every same-colour/different-contingency
+//     reversal, every same-color/different-contingency
 //     comparison is also an early-vs-late comparison, and the two
 //     explanations cannot be separated.
 //
@@ -38,7 +38,7 @@ import type {
 import { CONTINGENCIES, DEFAULT_DESIGN, EXPERIMENT_VERSION } from '../config/task';
 import type { DesignConfig } from '../config/task';
 
-/** The reversal part uses two colours; the third is held out for the
+/** The reversal part uses two colors; the third is held out for the
  *  perturbation part so its baseline is never a reversed cell. */
 const REVERSAL_COLORS: ContextColorId[] = ['green', 'blue'];
 const PERTURBATION_COLOR: ContextColorId = 'red';
@@ -51,7 +51,7 @@ export function buildSessionPlan(
   const orderRng = createRng(deriveSeed(seed, 'order'));
   const perturbRng = createRng(deriveSeed(seed, 'perturbation'));
 
-  // Which colour arranges which contingency in stage 1. Stage 2 swaps them,
+  // Which color arranges which contingency in stage 1. Stage 2 swaps them,
   // stage 3 restores stage 1.
   const baseMapping = assignMapping(
     REVERSAL_COLORS,
@@ -123,7 +123,7 @@ export function buildSessionPlan(
   }
 
   // ------------------------------------------- perturbation baseline ---
-  // A single colour and contingency held constant, so the pre-perturbation
+  // A single color and contingency held constant, so the pre-perturbation
   // operator is estimated from an unambiguous local environment.
   const perturbContingency = baseMapping[REVERSAL_COLORS[0]];
   const perturbSpec = CONTINGENCIES[perturbContingency];
@@ -163,7 +163,7 @@ export function buildSessionPlan(
  * Distribute perturbations over the baseline blocks.
  *
  * The first block is left undisturbed so every perturbation has a full block of
- * unperturbed behaviour before it, and types are interleaved rather than
+ * unperturbed behavior before it, and types are interleaved rather than
  * blocked so repetition number is not confounded with type.
  *
  * Within a block, each perturbation gets its own non-overlapping window and is

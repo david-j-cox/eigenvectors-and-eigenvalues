@@ -1,6 +1,6 @@
 {
   "source": "measuring-behavior-trajectories/analysis/data/01_raw_data/events.csv",
-  "note": "Behavioural parameters measured PER CONDITION from the previous study's participants. Switching depends strongly on the schedule in force, so a pool must be chosen to match the schedule being simulated. No previous condition matches the new task on both asymmetry and reinforcement density: 'asymmetric' matches the first and 'lean' the second, and they predict opposite switch rates (0.16 vs 0.23). Conclusions that depend on switching frequency should be checked against both.",
+  "note": "Behavioral parameters measured PER CONDITION from the previous study's participants. Switching depends strongly on the schedule in force, so a pool must be chosen to match the schedule being simulated. No previous condition matches the new task on both asymmetry and reinforcement density: 'asymmetric' matches the first and 'lean' the second, and they predict opposite switch rates (0.16 vs 0.23). Conclusions that depend on switching frequency should be checked against both.",
   "default_pool": "asymmetric",
   "pools": {
     "asymmetric": {

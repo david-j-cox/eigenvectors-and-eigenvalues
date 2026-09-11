@@ -117,7 +117,7 @@ drop policy if exists dynamics_events_update   on public.dynamics_events;
 
 -- RLS stays enabled. With no policies it denies everything, which is
 -- the correct posture for a role that should never touch these tables
--- directly, and it is a second line of defence behind the revokes.
+-- directly, and it is a second line of defense behind the revokes.
 alter table public.dynamics_events   enable row level security;
 alter table public.dynamics_sessions enable row level security;
 

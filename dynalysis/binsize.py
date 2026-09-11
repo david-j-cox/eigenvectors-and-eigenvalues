@@ -8,7 +8,7 @@ because the bin sits on a trade-off whose two sides are set by the individual:
     is binomial, so it falls as 1/B;
   * wider bins yield fewer transitions, and the operator needs transitions.
 
-Where the optimum sits depends on how much the participant's behaviour actually
+Where the optimum sits depends on how much the participant's behavior actually
 moves between bins, which differs between people and between coordinates. A
 participant who switches on 7% of responses and one who switches on 22% are not
 measured equally well by the same bin.
@@ -16,7 +16,7 @@ measured equally well by the same bin.
 The decomposition
 -----------------
 Between-bin variance of a coordinate observed at bin B is the true variation of
-the behaviour plus the sampling variance of estimating it from B responses:
+the behavior plus the sampling variance of estimating it from B responses:
 
     Var_obs(B) = sigma2_true + V1 / B
 
@@ -65,7 +65,7 @@ import pandas as pd
 class CoordinateFit:
     name: str
     v1: float                 # per-response sampling variance
-    sigma2_true: float        # variance of the underlying behaviour
+    sigma2_true: float        # variance of the underlying behavior
     min_bin: float            # smallest bin reaching the target noise ratio
     signal_ratio: float       # observed variance / sampling floor at the probe bin
     usable: bool              # False when there is no signal to recover

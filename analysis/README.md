@@ -35,7 +35,7 @@ event files but operators nobody can estimate has not passed.
 The reward-rate noise ratio used to be the check most likely to fail, and it is
 why the task no longer runs on a concurrent VI. Under an interval schedule that
 coordinate was 86% sampling noise, because obtained reinforcement is set by the
-programmed rate rather than by behaviour, and no schedule parameter fixed it.
+programmed rate rather than by behavior, and no schedule parameter fixed it.
 Depleting patches bring it to 21%, against the 17% the previous study's
 participants produced. That question is settled in simulation and is not what the
 pilot is for.

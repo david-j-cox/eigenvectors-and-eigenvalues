@@ -39,7 +39,7 @@ def temporal_split(
 
     Splitting inside context rather than across the whole session means the
     training set sees every environment; the test set is still strictly later
-    behaviour in each of them.
+    behavior in each of them.
     """
     train = pd.Series(False, index=g.index)
     test = pd.Series(False, index=g.index)
@@ -62,7 +62,7 @@ def make_inputs(df: pd.DataFrame, contexts: list) -> np.ndarray:
 
     The first context is the reference level, so its indicator is dropped.
     Latent option values are deliberately not used as inputs: depletion makes
-    them partly a consequence of the participant's own behaviour, which would
+    them partly a consequence of the participant's own behavior, which would
     smuggle the response back in as if it were an environmental cause.
     """
     cols = [
@@ -144,7 +144,7 @@ def fit_participant(
     min_train: int = 15,
     min_test: int = 4,
 ) -> dict | None:
-    """Fit every architecture for one participant and score held-out behaviour.
+    """Fit every architecture for one participant and score held-out behavior.
 
     Returns None when the participant does not have enough transitions to both
     train and be tested honestly.

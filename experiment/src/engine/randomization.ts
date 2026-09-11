@@ -95,10 +95,10 @@ function pickNext<T>(
 
 /**
  * Order blocks that alternate between two contexts without ever repeating,
- * used for the reversal part where only two colours are in play.
+ * used for the reversal part where only two colors are in play.
  *
- * `avoidFirst` carries the previous stage's final colour across the stage
- * boundary. Without it the alternation restarts freely and can repeat a colour
+ * `avoidFirst` carries the previous stage's final color across the stage
+ * boundary. Without it the alternation restarts freely and can repeat a color
  * at the seam, which would produce a "context transition" that is really a
  * continuation and inflate apparent within-context stability.
  */
@@ -118,7 +118,7 @@ export function alternatingPairs<T>(
 }
 
 /**
- * Randomly pair physical colours with arranged contingencies.
+ * Randomly pair physical colors with arranged contingencies.
  *
  * Counterbalanced per participant so that any dynamical difference between,
  * say, green and blue in the group cannot be an artifact of green always

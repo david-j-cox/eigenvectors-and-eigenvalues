@@ -2,8 +2,8 @@
 Per-participant dynamical profiles.
 
 Every participant gets an independent profile before any group summary is
-computed: how well their own earlier behaviour predicts their own later
-behaviour, what their eigensystem is, how stable it is, and whether an
+computed: how well their own earlier behavior predicts their own later
+behavior, what their eigensystem is, how stable it is, and whether an
 operator estimated from the first half of a context still describes the second
 half of that same context.
 

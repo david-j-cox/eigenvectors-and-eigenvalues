@@ -1,6 +1,6 @@
 # The task
 
-A concurrent-operants two-alternative choice procedure with signalled contexts,
+A concurrent-operants two-alternative choice procedure with signaled contexts,
 two contingency reversals, and embedded perturbations. About 26 minutes of
 responding.
 
@@ -11,7 +11,7 @@ downstream estimate is a per-response state transition and a time-defined block
 yields an unpredictable number of them.
 
 ```
-practice           60 responses,  neutral grey background
+practice           60 responses,  neutral gray background
 stage 1      8  x 100 responses,  green -> A-rich, blue -> B-rich
 stage 2      8  x 100 responses,  green -> B-rich, blue -> A-rich
 stage 3      8  x 100 responses,  green -> A-rich, blue -> B-rich
@@ -20,22 +20,22 @@ perturbation 5  x 200 responses,  red, 8 perturbations
 ```
 
 4,260 responses, about 25 minutes of responding. ABAB rather than ABA so the
-A-to-B transition occurs twice and all four colour x contingency cells get equal
-data. Colours alternate strictly, so no context repeats on consecutive blocks,
-and the colour-to-contingency assignment is randomised per participant.
+A-to-B transition occurs twice and all four color x contingency cells get equal
+data. Colors alternate strictly, so no context repeats on consecutive blocks,
+and the color-to-contingency assignment is randomized per participant.
 
-Each context fills the viewport behind two identical panels, and every signalled
-colour is paired with a texture (green plain, blue stripes, red dots) so the
-discrimination does not rest on hue. Practice uses a neutral grey logged as its
+Each context fills the viewport behind two identical panels, and every signaled
+color is paired with a texture (green plain, blue stripes, red dots) so the
+discrimination does not rest on hue. Practice uses a neutral gray logged as its
 own context id.
 
 ```bash
 npx tsx scripts/print_schedule.ts participant-001   # a participant's full sequence
 ```
 
-The colour-to-contingency mapping is randomised per participant and stored in the
-session record. Stage 3 restores stage 1, which is what lets a same-colour and a
-different-colour comparison be matched on elapsed time; see
+The color-to-contingency mapping is randomized per participant and stored in the
+session record. Stage 3 restores stage 1, which is what lets a same-color and a
+different-color comparison be matched on elapsed time; see
 `../docs/behavioral-dynamics-program.md`.
 
 ## Code
@@ -72,10 +72,10 @@ Deploying to participants is `../docs/deployment-runbook.md`.
 
 ## Reproducibility
 
-Every randomised feature derives from `experiment version :: participant id`
+Every randomized feature derives from `experiment version :: participant id`
 through separate named streams, so changing the number of perturbations cannot
 renumber the block order. Given those two strings the entire schedule is
 reconstructible after the fact and can be checked against what was logged.
 
 A participant who refreshes returns to the same schedule rather than a fresh
-randomisation.
+randomization.

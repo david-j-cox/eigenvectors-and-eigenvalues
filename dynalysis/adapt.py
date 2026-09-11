@@ -34,7 +34,7 @@ def cell_key(
 
     ``color_contingency_stage`` is the finest cell and the one the replication
     test needs: an operator is only compared with another operator estimated
-    under the same colour, the same contingency, and a different stage.
+    under the same color, the same contingency, and a different stage.
 
     ``contingency`` and ``color`` are the two competing coarser groupings the
     study is designed to choose between -- whether dynamics follow what the
@@ -116,7 +116,7 @@ def add_primitives(df: pd.DataFrame, ici_cap_s: float = 5.0) -> pd.DataFrame:
 
 
 def split_segment(states: pd.DataFrame, col: str = "context_segment") -> pd.DataFrame:
-    """Recover colour, contingency, stage and block from a segment key."""
+    """Recover color, contingency, stage and block from a segment key."""
     parts = states[col].astype(str).str.split("|", expand=True)
     out = states.copy()
     out["color"] = parts[0]

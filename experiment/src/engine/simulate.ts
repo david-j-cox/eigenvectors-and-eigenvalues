@@ -33,7 +33,7 @@ export interface SimAgent {
  * locks onto one side and makes the task look far leaner than a participant
  * would actually find it.
  *
- * This is a behavioural stand-in for pilot data, not a theory of choice. Its
+ * This is a behavioral stand-in for pilot data, not a theory of choice. Its
  * only job is to exercise the procedure with runs, changeovers, and near-
  * matching allocation of roughly the right magnitude.
  */
@@ -53,7 +53,7 @@ export class MeliorationAgent implements SimAgent {
     /**
      * Ceiling on the unreinforced-run term. Without it a lean patch drives
      * switching upward without limit, which produces an agent that changes over
-     * on most responses -- behaviour no participant shows under these schedules,
+     * on most responses -- behavior no participant shows under these schedules,
      * and which would make the simulated data useless as a design check.
      */
     private readonly lapseCap = 12,
@@ -89,7 +89,7 @@ export type CalibrationPool = 'asymmetric' | 'lean' | 'symmetric';
  * Each simulated participant draws one real person's measured
  * p(switch | reinforced) and p(switch | not reinforced) together with their
  * inter-response-time distribution. Those two probabilities are the whole of
- * the behaviour being borrowed: they fix how often the agent changes over and
+ * the behavior being borrowed: they fix how often the agent changes over and
  * how strongly reinforcement holds it in place, which are exactly the
  * quantities a changeover delay acts on. Sampling a whole person rather than
  * averaging keeps the real heterogeneity.
@@ -176,7 +176,7 @@ export class CalibratedHumanAgent implements SimAgent {
  *
  * Kept as a deliberately poor responder: it does not respond to the lean
  * schedule's accumulating setups, so it is a useful worst case for checking
- * that the procedure survives degenerate behaviour.
+ * that the procedure survives degenerate behavior.
  */
 export class MatchingAgent implements SimAgent {
   private rewards = { A: 1, B: 1 };

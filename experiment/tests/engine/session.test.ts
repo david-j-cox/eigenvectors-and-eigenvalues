@@ -41,7 +41,7 @@ describe('Session response handling', () => {
 
 describe('full simulated sessions', () => {
   // A responder carrying one real participant's switching statistics and
-  // response timing. The behavioural assertions below are only meaningful
+  // response timing. The behavioral assertions below are only meaningful
   // against a responder that could plausibly be a participant; MatchingAgent
   // and RandomAgent appear further down as deliberately degenerate cases.
   const result = simulateSession('sim-seed-1', new CalibratedHumanAgent(3));
@@ -168,7 +168,7 @@ describe('full simulated sessions', () => {
 });
 
 describe('concurrent VI mode', () => {
-  // The alternative schedule, kept because it is the behaviour-analytic
+  // The alternative schedule, kept because it is the behavior-analytic
   // standard even though the depleting-patch mode is the default here.
   const vi = simulateSession(
     'vi-seed', new CalibratedHumanAgent(3), 500, undefined, { scheduleMode: 'vi' },

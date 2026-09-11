@@ -1,5 +1,5 @@
 // Replay real participants' recorded choices and timing through the current
-// engine. Their behaviour is fixed; only the schedule differs. This is the
+// engine. Their behavior is fixed; only the schedule differs. This is the
 // cheapest available test of a schedule change, and it uses the responding
 // people actually produced rather than what a calibrated agent would produce.
 import { readFileSync } from 'node:fs';

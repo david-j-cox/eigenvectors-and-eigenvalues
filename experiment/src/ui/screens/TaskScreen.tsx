@@ -29,7 +29,7 @@ export function TaskScreen({ state, respond }: Props) {
     return () => window.removeEventListener('keydown', onKey);
   }, [respond]);
 
-  // The block names its own colour, practice included, so what is displayed and
+  // The block names its own color, practice included, so what is displayed and
   // what is logged cannot come apart.
   const spec = COLORS[state.color];
   const progress = state.totalTrials ? state.trialIndex / state.totalTrials : 0;

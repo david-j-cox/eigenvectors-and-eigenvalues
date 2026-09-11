@@ -44,7 +44,7 @@ from dynalysis import adapt, eigen as E, operators as O, states as S  # noqa: E4
 # criterion scores every candidate state near chance and mostly measures how
 # many parameters each one has. The question of which coordinates carry an
 # organism's context-specific dynamics is the empirical question this study
-# exists to answer, and it can only be settled on behaviour.
+# exists to answer, and it can only be settled on behavior.
 #
 # Rerun `run_state_selection.py` on real pilot data before treating this as
 # fixed.
@@ -147,7 +147,7 @@ def fit_all(tr: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
 
 
 def replication(tr: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
-    """Compare operators for the same colour and contingency across stages.
+    """Compare operators for the same color and contingency across stages.
 
     Under ABAB a mapping is in force in stages 1 and 3, and the reversed mapping
     in stages 2 and 4. Both pairs are compared, so the replication test itself is
@@ -200,7 +200,7 @@ def replication(tr: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
 def color_vs_contingency(tr: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
     """The competing similarity predictions, matched on elapsed time.
 
-    Both comparisons use operators from adjacent stages, so neither is favoured
+    Both comparisons use operators from adjacent stages, so neither is favored
     by having its two estimates closer together in the session. With a single
     reversal that matching is impossible, which is why the design uses two.
     """
@@ -231,13 +231,13 @@ def color_vs_contingency(tr: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
                 for (color, cont, stage), A in ops.items():
                     if stage != a:
                         continue
-                    # Same colour, different contingency: the reversal changed
-                    # what this colour arranges.
+                    # Same color, different contingency: the reversal changed
+                    # what this color arranges.
                     same_color = [
                         (k, v) for k, v in ops.items()
                         if k[2] == b and k[0] == color and k[1] != cont
                     ]
-                    # Different colour, same contingency: the other colour now
+                    # Different color, same contingency: the other color now
                     # arranges what this one used to.
                     same_cont = [
                         (k, v) for k, v in ops.items()
@@ -308,7 +308,7 @@ def main():
 
     # Two groupings, for two different questions.
     #
-    # An operator is estimated from a colour x contingency cell pooled across
+    # An operator is estimated from a color x contingency cell pooled across
     # every stage in which that mapping was in force -- under ABAB, two stages.
     # The stage-level split is only needed for the replication comparison, which
     # deliberately holds two estimates apart in time. Using the stage-level cell
@@ -351,7 +351,7 @@ def main():
         "",
         "| Check | Value | Result | Target |",
         "|---|---|---|---|",
-        check("Transitions per colour x contingency cell", per_cell.median(),
+        check("Transitions per color x contingency cell", per_cell.median(),
               per_cell.median() >= TARGETS["min_transitions_per_cell"],
               f">= {TARGETS['min_transitions_per_cell']} (operator estimation)"),
         check("Minimum in any cell", per_cell.min(),
@@ -406,7 +406,7 @@ def main():
 
     if len(rep):
         lines += [
-            "## Replication across stages (same colour, same contingency)",
+            "## Replication across stages (same color, same contingency)",
             "",
             f"- Comparisons: {len(rep)}",
             f"- Dominant-eigenvector |cos|: {rep['dominant_cosine'].median():.3f} "
@@ -446,7 +446,7 @@ def main():
             *[f"| {k} | {v:.3f} |" for k, v in med.items()],
             "",
             f"Participants whose dynamics follow the contingency rather than the "
-            f"colour: {share:.0%}",
+            f"color: {share:.0%}",
             "",
             "Both comparisons are matched on elapsed time by construction, so a "
             "difference between them cannot be explained by one pair of "

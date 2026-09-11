@@ -10,7 +10,7 @@ import { COLORS, ENGINE } from '../../src/config/task';
  * These tests exercise the wiring between the browser and the engine, not the
  * engine itself. The properties that matter here are the ones a unit test of
  * the engine cannot see: that a keypress reaches the session, that the context
- * colour actually rendered is the one the plan specifies, and that the
+ * color actually rendered is the one the plan specifies, and that the
  * participant is never shown a control that logs nothing.
  *
  * The clock is controlled throughout. The engine timestamps every response
@@ -148,23 +148,23 @@ describe('App', () => {
     expect(trials()).toBe(2);
   });
 
-  it('shows the practice context before any experimental colour', () => {
+  it('shows the practice context before any experimental color', () => {
     const { container } = render(<App />);
     consent();
     fireEvent.click(screen.getByRole('button', { name: /^start$/i }));
 
     const main = container.querySelector('main.task') as HTMLElement;
     expect(screen.getByText(/practice/i)).toBeDefined();
-    // The practice background must not be one of the signalled contexts, or
+    // The practice background must not be one of the signaled contexts, or
     // participants would meet a context before the task has begun.
     expect(main.dataset.context).toBe('neutral');
-    const signalled = Object.values(COLORS)
+    const signaled = Object.values(COLORS)
       .filter((c) => c.id !== 'neutral')
       .map((c) => c.hex);
-    expect(signalled).not.toContain(main.style.background);
+    expect(signaled).not.toContain(main.style.background);
   });
 
-  it('renders the exact colour the block names, so display and log agree', () => {
+  it('renders the exact color the block names, so display and log agree', () => {
     const { container } = render(<App />);
     consent();
     fireEvent.click(screen.getByRole('button', { name: /^start$/i }));
@@ -180,20 +180,20 @@ describe('App', () => {
     );
   });
 
-  it('pairs every signalled colour with a distinct texture', () => {
-    // Colour alone would make the discrimination unavailable to a participant
-    // with a colour-vision deficiency, and would make the three contexts
-    // indistinguishable in a greyscale screenshot.
-    const signalled = Object.values(COLORS).filter((c) => c.id !== 'neutral');
-    const patterns = signalled.map((c) => c.pattern);
-    expect(new Set(patterns).size).toBe(signalled.length);
+  it('pairs every signaled color with a distinct texture', () => {
+    // Color alone would make the discrimination unavailable to a participant
+    // with a color-vision deficiency, and would make the three contexts
+    // indistinguishable in a grayscale screenshot.
+    const signaled = Object.values(COLORS).filter((c) => c.id !== 'neutral');
+    const patterns = signaled.map((c) => c.pattern);
+    expect(new Set(patterns).size).toBe(signaled.length);
   });
 
   // The session record is what makes a schedule checkable after the fact, and
   // for a while nothing wrote it at all: the transport had the method and no
   // caller. These pin the three statuses a session can end in.
 
-  it('writes a session record carrying the seed and the colour mapping', () => {
+  it('writes a session record carrying the seed and the color mapping', () => {
     const records = captureSessions();
     render(<App />);
 
@@ -268,7 +268,7 @@ describe('App', () => {
   });
 });
 
-/** jsdom normalises inline colours to rgb(), so compare in that form. */
+/** jsdom normalises inline colors to rgb(), so compare in that form. */
 function hexToRgb(hex: string): string {
   const n = parseInt(hex.slice(1), 16);
   return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;

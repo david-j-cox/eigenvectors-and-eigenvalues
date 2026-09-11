@@ -7,11 +7,11 @@ const seed = process.argv[2] ?? 'participant-001';
 const plan = buildSessionPlan(seed);
 
 console.log(`seed: ${seed}`);
-console.log(`colour -> contingency (stage 1): ${JSON.stringify(plan.colorToContingency)}`);
+console.log(`color -> contingency (stage 1): ${JSON.stringify(plan.colorToContingency)}`);
 console.log(`reversals begin at block: ${plan.reversalBlockIndices.join(', ')}`);
 console.log(`total responses: ${plannedResponses(plan)}\n`);
 
-console.log('blk  part          stage  colour  contingency  VI A / VI B      resp  exposure');
+console.log('blk  part          stage  color  contingency  VI A / VI B      resp  exposure');
 for (const b of plan.blocks) {
   const spec = CONTINGENCIES[b.contingency];
   const vi = `${(spec.viAMs / 1000).toFixed(1)}s / ${(spec.viBMs / 1000).toFixed(1)}s`;

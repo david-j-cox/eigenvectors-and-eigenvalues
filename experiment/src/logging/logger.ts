@@ -58,7 +58,7 @@ export class EventLogger {
    * flag forever, and since every later flush returns early on it, logging
    * stops for the rest of the session in silence. That is what cost two of
    * three participants in the third pilot most of their events. The transport
-   * now times out, and this is the second line of defence: a batch in flight
+   * now times out, and this is the second line of defense: a batch in flight
    * for longer than any timeout can legitimately take is treated as abandoned.
    */
   private inFlightSince = 0;

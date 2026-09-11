@@ -6,7 +6,7 @@ Within-context transitions per participant: **92** (min 25, max 120)
 
 All values are median [IQR] across participants.
 
-## 1. Does an individual's earlier behaviour predict their own later behaviour?
+## 1. Does an individual's earlier behavior predict their own later behavior?
 
 Skill is 1 - MSE/MSE_persistence on strictly later transitions in each context.
 

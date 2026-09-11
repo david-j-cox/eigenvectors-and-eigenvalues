@@ -1,7 +1,7 @@
 // ============================================================
 // Deterministic, auditable pseudorandom number generation.
 //
-// Every randomized feature of a session -- colour-to-contingency
+// Every randomized feature of a session -- color-to-contingency
 // mapping, block order, perturbation placement, VI intervals --
 // derives from the participant's seed. Given the seed and the
 // experiment version, the entire schedule is reconstructible

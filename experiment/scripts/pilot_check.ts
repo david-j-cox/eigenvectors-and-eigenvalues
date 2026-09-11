@@ -52,7 +52,7 @@ for (let i = 0; i < nSessions; i++) {
   // idealized responder.
   // Each simulated participant borrows one real participant's switching
   // statistics and response timing. Two degenerate responders are mixed in so
-  // the diagnostics also see behaviour no human would produce.
+  // the diagnostics also see behavior no human would produce.
   const agent =
     i % 12 === 11
       ? new RandomAgent()

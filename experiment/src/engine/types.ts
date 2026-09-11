@@ -23,7 +23,7 @@ export interface ColorSpec {
   id: ContextColorId;
   /** Exact value logged with every event so context is recoverable from raw data. */
   hex: string;
-  /** Paired with colour so the discrimination does not rest on hue alone. */
+  /** Paired with color so the discrimination does not rest on hue alone. */
   pattern: 'plain' | 'stripes' | 'dots';
   label: string;
 }
@@ -43,7 +43,7 @@ export interface ContingencySpec {
   label: string;
 }
 
-/** One block: a run of responses under one colour and one contingency. */
+/** One block: a run of responses under one color and one contingency. */
 export interface Block {
   index: number;
   part: PartId;
@@ -52,7 +52,7 @@ export interface Block {
   viAMs: number;
   viBMs: number;
   targetResponses: number;
-  /** 1-based count of how many times this colour x contingency cell has occurred. */
+  /** 1-based count of how many times this color x contingency cell has occurred. */
   exposureNumber: number;
   /** Reversal stage for the reversal part; null elsewhere. */
   reversalStage: number | null;
@@ -85,7 +85,7 @@ export interface Perturbation {
 export interface SessionPlan {
   experimentVersion: string;
   seed: string;
-  /** The randomized mapping from physical colour to arranged contingency. */
+  /** The randomized mapping from physical color to arranged contingency. */
   colorToContingency: Record<string, ContingencyId>;
   blocks: Block[];
   perturbations: Perturbation[];
@@ -192,7 +192,7 @@ export interface EngineConfig {
 
 /**
  * 'vi' arranges concurrent variable-interval schedules with a changeover
- * delay -- the behaviour-analytic standard, and the schedule under which
+ * delay -- the behavior-analytic standard, and the schedule under which
  * accumulating setups on the neglected alternative make exclusive preference
  * costly.
  *
@@ -269,7 +269,7 @@ export const DEFAULT_ENGINE_CONFIG: EngineConfig = {
     //     deplete 0.25        1.17
     //     deplete 0.40        1.00
     //
-    // The reason is behavioural rather than arithmetic: a responder that leaves
+    // The reason is behavioral rather than arithmetic: a responder that leaves
     // an alternative when it stops paying stabilises its own obtained rate, so
     // depletion removes reinforcement without adding the swings in reward rate
     // that made that coordinate informative in the previous study. There, the
@@ -277,7 +277,7 @@ export const DEFAULT_ENGINE_CONFIG: EngineConfig = {
     // track -- which is what produced those swings.
     //
     // The mechanism is kept because a future comparison may want it, and
-    // because settling this on real behaviour rather than on simulated
+    // because settling this on real behavior rather than on simulated
     // responders is a reasonable thing for the pilot to do.
     enabled: false,
     perResponse: 0.06,

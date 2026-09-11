@@ -163,7 +163,7 @@ Run this the same day participants finish, not at analysis time:
 It compares the responses each session record claims against the rows actually
 stored, and flags any session where they disagree. The third pilot lost 7,519
 responses to a row the database refused, which blocked every batch behind it,
-and nothing surfaced that until the data was analysed. Two of the three
+and nothing surfaced that until the data was analyzed. Two of the three
 participants still had the file the end screen let them download and sent it on
 request -- which worked only because they were asked within the day.
 
@@ -257,6 +257,6 @@ There is no performance bonus, and the estimate is therefore the whole of what
 sets the rate. The points the task awards are feedback only: nothing converts
 them to money. The same was true of the previous study, where "bonus" referred
 to the Phase 4 bonus *pulses* -- a schedule manipulation, recorded in
-`bonus_target` as the favoured alternative -- and not to a payment. Adding a
+`bonus_target` as the favored alternative -- and not to a payment. Adding a
 real bonus would change the compensation participants consent to, so it is a
 protocol question before it is a code one.

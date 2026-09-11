@@ -11,14 +11,14 @@ describe('buildSessionPlan', () => {
     expect(JSON.stringify(a)).toBe(JSON.stringify(b));
   });
 
-  it('counterbalances the colour-to-contingency mapping across participants', () => {
+  it('counterbalances the color-to-contingency mapping across participants', () => {
     const seen = new Set(
       SEEDS.map((s) => JSON.stringify(buildSessionPlan(s).colorToContingency)),
     );
     expect(seen.size).toBe(2);
   });
 
-  it('never repeats a colour on consecutive blocks within the reversal part', () => {
+  it('never repeats a color on consecutive blocks within the reversal part', () => {
     for (const seed of SEEDS) {
       const blocks = buildSessionPlan(seed).blocks.filter((b) => b.part === 'reversal');
       for (let i = 1; i < blocks.length; i++) {
@@ -56,7 +56,7 @@ describe('buildSessionPlan', () => {
     expect(transitions).toHaveLength(3);
   });
 
-  it('gives every colour x contingency cell the same amount of data', () => {
+  it('gives every color x contingency cell the same amount of data', () => {
     // The weakest cell sets what the design can claim. Under the earlier ABA
     // arrangement the reversed cells got half the exposures of the original
     // ones, so the binding constraint was worse than the headline figure.
@@ -71,7 +71,7 @@ describe('buildSessionPlan', () => {
     expect(new Set(counts.values()).size).toBe(1);
   });
 
-  it('gives every colour x contingency x stage cell the planned number of exposures', () => {
+  it('gives every color x contingency x stage cell the planned number of exposures', () => {
     const plan = buildSessionPlan('seed');
     for (const stage of [1, 2, 3, 4]) {
       for (const color of ['green', 'blue'] as const) {

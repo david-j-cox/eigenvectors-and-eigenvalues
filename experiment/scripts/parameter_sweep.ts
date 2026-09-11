@@ -8,7 +8,7 @@
  * deplete the alternatives -- turn on how often a participant changes over and
  * how fast they respond. Those are exactly the quantities
  * `human_calibration.json` supplies, so this sweep is the version of the
- * earlier comparison that is anchored to behaviour rather than to a guess.
+ * earlier comparison that is anchored to behavior rather than to a guess.
  *
  * Usage: npx tsx scripts/parameter_sweep.ts [--n 24]
  */
