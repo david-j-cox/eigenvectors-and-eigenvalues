@@ -90,10 +90,10 @@ export class Session {
     this.viB = createViState(first.viBMs, startMs, this.rng, cfg);
     const spec = CONTINGENCIES[first.contingency];
     this.patchA = createPatchState(
-      spec.recoveryAPerS, cfg.patch.depletionPerResponse, cfg.patch.startingValue,
+      spec.recoveryAPerResponse, cfg.patch.depletionPerResponse, cfg.patch.startingValue,
     );
     this.patchB = createPatchState(
-      spec.recoveryBPerS, cfg.patch.depletionPerResponse, cfg.patch.startingValue,
+      spec.recoveryBPerResponse, cfg.patch.depletionPerResponse, cfg.patch.startingValue,
     );
     this.blockStartedAtMs = startMs;
   }
@@ -167,7 +167,7 @@ export class Session {
     if (this.cfg.scheduleMode === 'depleting_probability') {
       // Both alternatives recover over the interval since the previous
       // response; the chosen one is then read and depleted.
-      const recovered = recoverPatches(this.patchA, this.patchB, dtSeconds);
+      const recovered = recoverPatches(this.patchA, this.patchB);
       this.patchA = recovered.a;
       this.patchB = recovered.b;
       this.applyPerturbationToPatches(eff);
@@ -307,10 +307,10 @@ export class Session {
     this.viB = createViState(next.viBMs, nowMs, this.rng, this.cfg);
     const spec = CONTINGENCIES[next.contingency];
     this.patchA = createPatchState(
-      spec.recoveryAPerS, this.cfg.patch.depletionPerResponse, this.cfg.patch.startingValue,
+      spec.recoveryAPerResponse, this.cfg.patch.depletionPerResponse, this.cfg.patch.startingValue,
     );
     this.patchB = createPatchState(
-      spec.recoveryBPerS, this.cfg.patch.depletionPerResponse, this.cfg.patch.startingValue,
+      spec.recoveryBPerResponse, this.cfg.patch.depletionPerResponse, this.cfg.patch.startingValue,
     );
   }
 
@@ -336,25 +336,25 @@ export class Session {
     // recovery to zero and nothing would ever restore it, so the alternatives
     // would stay dead for the remainder of the block and the recovery the
     // perturbation exists to measure could never happen.
-    let recoveryA = spec.recoveryAPerS;
-    let recoveryB = spec.recoveryBPerS;
+    let recoveryA = spec.recoveryAPerResponse;
+    let recoveryB = spec.recoveryBPerResponse;
 
     if (eff.perturbation) {
       if (!Number.isFinite(eff.viAMs) && !Number.isFinite(eff.viBMs)) {
         // Extinction: both alternatives are emptied and held there.
-        this.patchA = { ...this.patchA, value: 0, recoveryPerS: 0 };
-        this.patchB = { ...this.patchB, value: 0, recoveryPerS: 0 };
+        this.patchA = { ...this.patchA, value: 0, recoveryPerResponse: 0 };
+        this.patchB = { ...this.patchB, value: 0, recoveryPerResponse: 0 };
         return;
       }
       // A reversal swaps which alternative restores faster.
       if (eff.viAMs === block.viBMs && eff.viBMs === block.viAMs) {
-        recoveryA = spec.recoveryBPerS;
-        recoveryB = spec.recoveryAPerS;
+        recoveryA = spec.recoveryBPerResponse;
+        recoveryB = spec.recoveryAPerResponse;
       }
     }
 
-    this.patchA = { ...this.patchA, recoveryPerS: recoveryA };
-    this.patchB = { ...this.patchB, recoveryPerS: recoveryB };
+    this.patchA = { ...this.patchA, recoveryPerResponse: recoveryA };
+    this.patchB = { ...this.patchB, recoveryPerResponse: recoveryB };
   }
 
   /** Elapsed time in the current block, for the UI only. */

@@ -227,36 +227,53 @@ export function collect(
 export interface PatchState {
   /** Current reinforcement probability, in [0, 1]. */
   value: number;
-  /** Value regained per second away from, or working, this alternative. */
-  recoveryPerS: number;
+  /**
+   * Value regained per response made anywhere in the session.
+   *
+   * Per RESPONSE, not per second. Recovery was originally per second while
+   * depletion was per response, which made the schedule's richness a function
+   * of how fast the participant happened to respond: a slower responder
+   * accrued more recovery between their own responses and met a richer
+   * schedule. Across the six pilot participants median inter-response time
+   * correlated with mean richness at r = 0.992 and with obtained reward rate
+   * at r = 0.982, so the reward-rate coordinate was very largely a measure of
+   * response rate. Both quantities are now in the same currency, and the
+   * design is response-indexed throughout for the same reason blocks are.
+   */
+  recoveryPerResponse: number;
   /** Value lost each time this alternative is harvested. */
   depletionPerResponse: number;
 }
 
 export function createPatchState(
-  recoveryPerS: number,
+  recoveryPerResponse: number,
   depletionPerResponse: number,
   startingValue: number,
 ): PatchState {
-  return { value: startingValue, recoveryPerS, depletionPerResponse };
+  return { value: startingValue, recoveryPerResponse, depletionPerResponse };
 }
 
 /**
- * Recover both alternatives over the interval since the previous response.
+ * Recover both alternatives by one response's worth.
  *
  * Both recover, not just the neglected one: the chosen alternative is depleted
  * separately, after its reinforcement probability has been read. Recovering
  * only the unchosen one would make time away doubly valuable and exaggerate the
  * pull back toward a neglected alternative.
+ *
+ * Called once per response, so an alternative left alone regains value as the
+ * participant works the other -- time away is counted in responses elsewhere,
+ * which is what makes returning to it worthwhile. Nothing here reads the clock,
+ * so two participants who allocate identically meet identical schedules however
+ * fast either of them responds.
  */
 export function recoverPatches(
   a: PatchState,
   b: PatchState,
-  dtSeconds: number,
 ): { a: PatchState; b: PatchState } {
   const grow = (p: PatchState): PatchState => ({
     ...p,
-    value: Math.min(1, p.value + p.recoveryPerS * Math.max(0, dtSeconds)),
+    value: Math.min(1, p.value + p.recoveryPerResponse),
   });
   return { a: grow(a), b: grow(b) };
 }

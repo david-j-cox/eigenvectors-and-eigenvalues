@@ -38,8 +38,8 @@ export interface ContingencySpec {
    * 'depleting_probability'. Recovery rate is what the context manipulates:
    * an A-rich context restores option A faster than option B.
    */
-  recoveryAPerS: number;
-  recoveryBPerS: number;
+  recoveryAPerResponse: number;
+  recoveryBPerResponse: number;
   label: string;
 }
 
