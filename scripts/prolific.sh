@@ -21,8 +21,9 @@
 #   ./prolific.sh create study.json      # create an UNPUBLISHED draft
 #   ./prolific.sh get <study-id>
 #   ./prolific.sh cost <study-id>        # what publishing would charge
-#   ./prolific.sh bonus <study-id> <csv>  # SPENDS MONEY, prompts first
-#   ./prolific.sh publish <study-id>     # SPENDS MONEY, prompts first
+#   ./prolific.sh bonus <study-id> <csv>  # price a bonus batch (no payment)
+#   ./prolific.sh bonus-pay <batch-id>    # SPENDS MONEY
+#   ./prolific.sh publish <id> --yes      # SPENDS MONEY
 #   ./prolific.sh submissions <study-id>
 # ============================================================
 set -euo pipefail
@@ -108,19 +109,31 @@ case "$cmd" in
     ;;
 
   bonus)
-    # Two steps at Prolific's end: a batch is created, then paid. Only the
-    # second moves money, so the total is shown and confirmed in between.
+    # Creates the batch only. Paying is a separate command, so the totals are
+    # seen before any money moves and no interactive prompt is involved --
+    # a prompt cannot be answered in every environment this runs in.
     sid="${1:-}"; csv="${2:-}"
     [ -n "$sid" ] && [ -f "$csv" ] || {
       echo "usage: prolific.sh bonus <study-id> <bonuses.csv>" >&2
       echo "  csv lines: <participant-id>,<amount>   e.g. abc123,4.56" >&2; exit 1; }
+    echo "Bonuses from $csv:" >&2; cat "$csv" >&2
     body=$(jq -Rs --arg s "$sid" '{study_id:$s, csv_bonuses:.}' < "$csv")
-    echo "Setting up bonuses from $csv:" >&2; cat "$csv" >&2
     resp=$(run POST /submissions/bonus-payments/ "$body")
-    echo "$resp" | jq '{id, amount, fees, total_amount}' >&2
-    bid=$(echo "$resp" | jq -r '.id')
-    read -r -p "Pay this batch? type yes to confirm: " c
-    [ "$c" = "yes" ] || { echo "Not paid. Batch $bid remains unpaid." >&2; exit 1; }
+    echo "$resp" | jq -r '
+      "  bonus:  \(.amount/100 | tostring) ",
+      "  fees:   \(.fees/100 | tostring)",
+      "  total:  \(.total_amount/100 | tostring)",
+      "  batch:  \(.id)"' >&2
+    echo >&2
+    echo "Nothing has been paid. To pay this batch:" >&2
+    echo "  ./scripts/prolific.sh bonus-pay $(echo "$resp" | jq -r .id)" >&2
+    ;;
+
+  bonus-pay)
+    # The step that moves money. Takes a batch id that already exists, so the
+    # amount was printed and read before this is run.
+    bid="${1:-}"
+    [ -n "$bid" ] || { echo "usage: prolific.sh bonus-pay <batch-id>" >&2; exit 1; }
     run POST "/bulk-bonus-payments/$bid/pay/"
     ;;
 
@@ -141,8 +154,12 @@ case "$cmd" in
       "  reward:  \(.reward) cents over \(.estimated_completion_time) min",
       "  code:    \(.completion_codes[0].code)",
       "  url:     \(.external_study_url)"' >&2
-    read -r -p "Type the study id again to confirm: " confirm
-    [ "$confirm" = "$id" ] || { echo "Not confirmed; nothing published." >&2; exit 1; }
+    if [ "${2:-}" != "--yes" ]; then
+      echo >&2
+      echo "Nothing has been published. To publish:" >&2
+      echo "  ./scripts/prolific.sh publish $id --yes" >&2
+      exit 1
+    fi
     run POST "/studies/$id/transition/" '{"action":"PUBLISH"}'
     ;;
 
