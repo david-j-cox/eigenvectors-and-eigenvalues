@@ -163,8 +163,12 @@ export function toEventRow(
     reward_outcome: outcome.rewardOutcome,
     points_earned: outcome.pointsEarned,
     cumulative_points: outcome.cumulativePoints,
-    vi_a_ms: Number.isFinite(outcome.viAMs) ? outcome.viAMs : -1,
-    vi_b_ms: Number.isFinite(outcome.viBMs) ? outcome.viBMs : -1,
+    // Rounded because the column is an integer and these are not whole numbers:
+    // under depleting patches the effective interval is intervalMs / richness,
+    // so a nominal 500 arrives as 500.00000000000006. Postgres rejects the row
+    // outright rather than truncating, which cost a pilot session.
+    vi_a_ms: Number.isFinite(outcome.viAMs) ? Math.round(outcome.viAMs) : -1,
+    vi_b_ms: Number.isFinite(outcome.viBMs) ? Math.round(outcome.viBMs) : -1,
     rate_a_per_s: ratePerS(outcome.viAMs),
     rate_b_per_s: ratePerS(outcome.viBMs),
     richness_a: outcome.richnessA,
