@@ -62,3 +62,42 @@ describe('a hung upload does not wedge the logger', () => {
     expect(transport.delivered).toHaveLength(10);
   });
 });
+
+describe('a batch the server will never accept', () => {
+  class AlwaysRefuses implements Transport {
+    attempts = 0;
+    readonly delivered: EventRow[] = [];
+    poison = true;
+    async upsertEvents(rows: EventRow[]): Promise<void> {
+      this.attempts++;
+      if (this.poison && rows.some((r) => (r as unknown as { bad?: boolean }).bad)) {
+        throw new Error('value out of range for type integer');
+      }
+      this.delivered.push(...rows);
+    }
+    async upsertSession(): Promise<void> {}
+  }
+
+  it('is set aside so the responses behind it still upload', async () => {
+    const transport = new AlwaysRefuses();
+    const logger = new EventLogger(transport, {
+      batchSize: 1000, maxRetries: 0, quarantineAfter: 2,
+    });
+
+    // One unwritable row, then a block of good ones.
+    logger.log({ session_id: 's', trial_index: 0, bad: true } as unknown as EventRow);
+    for (let i = 1; i < 20; i++) logger.log(row(i));
+
+    // Repeated flushes: the poisoned batch is refused, then quarantined.
+    await logger.flush();
+    await logger.flush();
+    await logger.flush();
+
+    expect(logger.quarantinedCount).toBeGreaterThan(0);
+
+    // The point: new responses after the poison still get through.
+    for (let i = 20; i < 30; i++) logger.log(row(i));
+    await logger.flush();
+    expect(transport.delivered.length).toBeGreaterThan(0);
+  });
+});

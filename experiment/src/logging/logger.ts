@@ -31,6 +31,8 @@ export interface LoggerOptions {
   storageKey?: string;
   /** Treat a batch in flight longer than this as abandoned. */
   stallMs?: number;
+  /** Consecutive failed flushes before a batch is set aside. */
+  quarantineAfter?: number;
 }
 
 const DEFAULTS = {
@@ -40,6 +42,9 @@ const DEFAULTS = {
   // Longer than the transport's own timeout plus its retry backoff, so this
   // only fires when that mechanism has itself failed to return.
   stallMs: 120_000,
+  // Consecutive failed flushes before a batch is set aside. Each flush already
+  // makes maxRetries attempts, so this is a persistent refusal, not a blip.
+  quarantineAfter: 3,
 };
 
 export class EventLogger {
@@ -64,6 +69,8 @@ export class EventLogger {
 
   /** Every event ever logged, kept for the local download fallback. */
   private readonly all: EventRow[] = [];
+  /** Batches the server has repeatedly refused; kept out of the retry queue. */
+  private readonly quarantined: EventRow[] = [];
   private failures = 0;
 
   constructor(private readonly transport: Transport, options: LoggerOptions = {}) {
@@ -72,6 +79,7 @@ export class EventLogger {
       flushIntervalMs: options.flushIntervalMs ?? DEFAULTS.flushIntervalMs,
       maxRetries: options.maxRetries ?? DEFAULTS.maxRetries,
       stallMs: options.stallMs ?? DEFAULTS.stallMs,
+      quarantineAfter: options.quarantineAfter ?? DEFAULTS.quarantineAfter,
       storageKey: options.storageKey ?? null,
     };
   }
@@ -121,9 +129,25 @@ export class EventLogger {
       this.persistLocally();
       succeeded = true;
       return true;
-    } catch {
-      this.buffer.unshift(...batch);
+    } catch (err) {
       this.failures++;
+      if (this.failures >= this.opts.quarantineAfter) {
+        // The batch is not merely undeliverable now, it has failed repeatedly.
+        // A row the server will never accept -- a value out of range for its
+        // column, say -- would otherwise sit at the front of the buffer and
+        // block every response behind it for the rest of the session. Set it
+        // aside so the remainder still uploads. Quarantined rows stay in the
+        // local download, so nothing is lost that the participant cannot send.
+        this.quarantined.push(...batch);
+        this.failures = 0;
+        console.warn(
+          `dropping ${batch.length} events from the upload queue after ` +
+            `${this.opts.quarantineAfter} failures; they remain in the local export`,
+          err,
+        );
+      } else {
+        this.buffer.unshift(...batch);
+      }
       return false;
     } finally {
       this.inFlight = false;
@@ -195,7 +219,12 @@ export class EventLogger {
   }
 
   get pendingCount(): number {
-    return this.buffer.length;
+    return this.buffer.length + this.quarantined.length;
+  }
+
+  /** Events the server refused; they are still in the local export. */
+  get quarantinedCount(): number {
+    return this.quarantined.length;
   }
 
   get consecutiveFailures(): number {

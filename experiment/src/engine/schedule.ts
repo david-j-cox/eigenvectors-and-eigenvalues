@@ -223,6 +223,14 @@ export function collect(
 // distinguishes one context's dynamics from another.
 // ============================================================
 
+/**
+ * Below this a patch counts as empty. Floating-point residue from repeated
+ * recovery and depletion can leave a value near 1e-16, which is not a
+ * meaningfully different reinforcement probability from zero but does behave
+ * very differently when something divides by it.
+ */
+const PATCH_EPSILON = 1e-9;
+
 /** Latent value of one alternative; this value is its reinforcement probability. */
 export interface PatchState {
   /** Current reinforcement probability, in [0, 1]. */
@@ -291,9 +299,15 @@ export function harvestPatch(
   codBlocking: boolean,
 ): { delivered: boolean; withheldByCod: boolean; probability: number; patch: PatchState } {
   const probability = patch.value;
+  // Floored at zero rather than left at whatever residue the arithmetic leaves.
+  // Repeated recovery and depletion of values like 0.086 and 0.12 can settle on
+  // 1e-16 instead of 0 -- positive, and meaninglessly so. A real participant's
+  // sequence produced 1.11e-16, and the equivalent interval derived from it
+  // overflowed the integer column it is logged in.
+  const next = patch.value - patch.depletionPerResponse;
   const depleted: PatchState = {
     ...patch,
-    value: Math.max(0, patch.value - patch.depletionPerResponse),
+    value: next > PATCH_EPSILON ? next : 0,
   };
 
   if (codBlocking) {
@@ -309,7 +323,23 @@ export function harvestPatch(
   };
 }
 
-/** Effective interval, in ms, equivalent to a probability -- for logging only. */
+/**
+ * Effective interval, in ms, equivalent to a probability -- for logging only.
+ *
+ * A patch worked to exhaustion leaves a value that is positive but vanishingly
+ * small, and dividing by it produced intervals around 1e18. vi_a_ms is an
+ * `integer` column, so Postgres rejected the row, and because a failed batch
+ * returns to the front of the buffer the whole session's uploads stopped
+ * behind it. That cost two participants most of their data in the third pilot:
+ * one recorded richness of 2.2e-16 at trial 307 and uploaded nothing after
+ * trial 303.
+ *
+ * Anything leaner than one reinforcer per INT32_MAX milliseconds is extinction
+ * for every purpose the log serves, and is reported as such -- the same value
+ * a probability of exactly zero already gave.
+ */
 export function probabilityAsIntervalMs(p: number, meanIciMs: number): number {
-  return p > 0 ? meanIciMs / p : EXTINCTION_MS;
+  if (p <= 0) return EXTINCTION_MS;
+  const interval = meanIciMs / p;
+  return interval > 2_147_483_647 ? EXTINCTION_MS : interval;
 }

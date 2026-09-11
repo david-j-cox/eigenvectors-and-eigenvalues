@@ -6,6 +6,7 @@ import { buildSessionPlan } from '../../src/engine/plan';
 import { Session } from '../../src/engine/session';
 import { toEventRow } from '../../src/logging/schema';
 import { ENGINE, EXPERIMENT_VERSION } from '../../src/config/task';
+import { probabilityAsIntervalMs } from '../../src/engine/schedule';
 
 /**
  * Every value must satisfy the column type it is about to be written into.
@@ -36,6 +37,24 @@ describe('event rows match their column types', () => {
   it('found the integer columns in the migration', () => {
     expect(integerColumns.length).toBeGreaterThan(10);
     expect(integerColumns).toContain('vi_a_ms');
+  });
+
+  it('never derives an interval outside int32, however lean a patch gets', () => {
+    // The failing case, reproduced from a real participant: repeated recovery
+    // and depletion left a patch at 1.11e-16, and 350 / 1.11e-16 is 3.15e18.
+    // vi_a_ms is an integer column, so Postgres refused the row, and because a
+    // refused batch returns to the front of the upload queue it blocked every
+    // response behind it for the rest of the session.
+    const INT32_MAX = 2_147_483_647;
+    for (const p of [1.11e-16, 2.22e-16, 1e-12, 1e-9, 1e-6, 1e-3, 0.02, 0.5, 1]) {
+      const ms = probabilityAsIntervalMs(p, 350);
+      if (Number.isFinite(ms)) {
+        expect(Math.abs(ms)).toBeLessThanOrEqual(INT32_MAX);
+      }
+    }
+    // Exactly zero was always reported as extinction; a hair above it now is too.
+    expect(Number.isFinite(probabilityAsIntervalMs(0, 350))).toBe(false);
+    expect(Number.isFinite(probabilityAsIntervalMs(1.11e-16, 350))).toBe(false);
   });
 
   it('writes whole numbers into every integer column', () => {
