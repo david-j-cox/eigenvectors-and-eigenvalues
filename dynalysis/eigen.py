@@ -74,7 +74,12 @@ def describe_operator(A: np.ndarray, prefix: str = "") -> dict:
     """Summarize one operator: spectrum, dominant mode, and its loadings."""
     vals, _ = sorted_eig(A)
     v = dominant_vector(A)
-    complex_pair = bool(np.any(np.abs(np.imag(vals)) > 1e-9))
+    # Whether the DOMINANT mode is oscillatory. Testing the whole spectrum here
+    # instead would set the flag for a subordinate complex pair that decays long
+    # before the dominant real mode does, and every consumer reads this column as
+    # "complex dominant pair".
+    complex_pair = bool(np.abs(np.imag(vals[0])) > 1e-9)
+    any_complex = bool(np.any(np.abs(np.imag(vals)) > 1e-9))
 
     out = {
         f"{prefix}spectral_radius": float(np.abs(vals[0])),
@@ -82,6 +87,7 @@ def describe_operator(A: np.ndarray, prefix: str = "") -> dict:
         f"{prefix}lambda1_imag": float(np.imag(vals[0])),
         f"{prefix}lambda2_mag": float(np.abs(vals[1])),
         f"{prefix}complex_pair": complex_pair,
+        f"{prefix}any_complex_pair": any_complex,
         f"{prefix}dominant_feature": STATE_LABELS[STATE_COLS[int(np.argmax(np.abs(v)))]],
     }
     # Half-life of the dominant mode, in state-bins. This is the quantity the
@@ -90,7 +96,7 @@ def describe_operator(A: np.ndarray, prefix: str = "") -> dict:
     out[f"{prefix}half_life_bins"] = (
         float(np.log(0.5) / np.log(rho)) if 0 < rho < 1 else np.inf
     )
-    if complex_pair and abs(np.imag(vals[0])) > 1e-9:
+    if complex_pair:
         out[f"{prefix}oscillation_period_bins"] = float(
             2 * np.pi / abs(np.angle(vals[0]))
         )
