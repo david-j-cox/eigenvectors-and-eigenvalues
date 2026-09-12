@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { COMPLETION_CODE, EXPERIMENT_VERSION } from '../config/task';
 import { ARMS, MNC_CONFIG, type Arm } from '../config/mnc';
@@ -68,6 +68,31 @@ export function MncApp() {
       csvColumns: MNC_COLUMNS,
     });
   }, []);
+
+  // The logger's whole recovery story depends on this lifecycle, and the first
+  // pilot run proved it: without start() there is no periodic flush, so a batch
+  // that fails is unshifted back to the front of the buffer and then "waits for
+  // the timer" -- a timer that never ticks. Three failures later it is
+  // quarantined, reachable only through the End screen's download, which a
+  // participant who closes the tab never sees. Fifteen trials were lost that
+  // way. restorePending() recovers a buffer left behind by a previous tab, and
+  // flushing when the page is hidden is what stops there being one.
+  useEffect(() => {
+    logger.restorePending();
+    logger.start();
+    const onHide = () => {
+      if (document.visibilityState === 'hidden' && logger.pendingCount > 0) {
+        void logger.flush();
+      }
+    };
+    document.addEventListener('visibilitychange', onHide);
+    window.addEventListener('pagehide', onHide);
+    return () => {
+      document.removeEventListener('visibilitychange', onHide);
+      window.removeEventListener('pagehide', onHide);
+      logger.stop();
+    };
+  }, [logger]);
 
   const [pending, setPending] = useState(0);
   const trialCounter = useRef(0);

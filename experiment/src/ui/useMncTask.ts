@@ -33,7 +33,11 @@ export interface MncState {
   msRemaining: number;
 }
 
-const MAX_CONTEXTS = 24; // far more than a 3-minute session can reach
+// At roughly six trials per context and about one second per trial, a fast
+// participant gets through a context every seven seconds, so three minutes can
+// exhaust far more than the 24 this used to allow -- and running out ended the
+// session early. Sized so the clock is always what stops the task.
+const MAX_CONTEXTS = 80;
 
 export interface UseMncArgs {
   seed: string;

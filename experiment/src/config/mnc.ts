@@ -80,14 +80,24 @@ export const MNC_CONFIG = {
   taskMs: 3 * 60 * 1000,
 
   // --- advancement to the next context ---
+  //
+  // The first pilot run settles these. That participant reached chance on the
+  // first trial of a context, 75% by the second, and 100% from the sixth
+  // onward -- a new four-way conjunction took about five trials to find. Under
+  // the original 8-of-10 criterion with a 12-trial minimum, roughly half of
+  // every context was spent at ceiling re-demonstrating a rule already found,
+  // and the whole 50-trial session produced nine errors.
+  //
+  // Acquisition is where the dynamics are, so the design should buy as many
+  // acquisitions as the time allows rather than long tails after each.
   /** A participant must complete at least this many trials before advancing. */
-  minTrialsPerContext: 12,
+  minTrialsPerContext: 6,
   /** Advance on this many correct out of the last `criterionWindow`. */
-  criterionCorrect: 8,
-  criterionWindow: 10,
-  /** Advance regardless after this many trials, so one context cannot eat
-   *  the session and leave no within-subject comparison. */
-  maxTrialsPerContext: 90,
+  criterionCorrect: 4,
+  criterionWindow: 5,
+  /** Advance regardless after this many trials. Also bounds how long a
+   *  participant who never finds the rule can spend on one context. */
+  maxTrialsPerContext: 40,
 
   /** Feedback shown after each choice, in ms. Short: the session is 3 minutes. */
   feedbackMs: 350,

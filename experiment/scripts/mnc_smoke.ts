@@ -18,7 +18,7 @@ import { createRng, deriveSeed } from '../src/utils/rng';
 type Player = 'oracle' | 'random';
 
 function run(seed: string, arm: Arm, player: Player, budgetTrials: number) {
-  const targets = contextTargets(deriveSeed(seed, 'mnc-targets'), 24);
+  const targets = contextTargets(deriveSeed(seed, 'mnc-targets'), 80);
   const trialRng = createRng(deriveSeed(seed, 'mnc-trials'));
   const rewardRng = createRng(deriveSeed(seed, 'mnc-reward'));
   const choiceRng = createRng(deriveSeed(seed, 'player'));

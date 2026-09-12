@@ -147,10 +147,22 @@ describe('advancing between contexts', () => {
     expect(d.reason).toBe('criterion');
   });
 
-  it('does not advance below criterion', () => {
-    const n = 40;
-    const poor = Array.from({ length: n }, (_, i) => i % 4 === 0); // 25%, chance
-    expect(advanceDecision(poor, n).advance).toBe(false);
+  it('does not advance below criterion, at any length short of the cap', () => {
+    // Sweep rather than pick one length: a single n can silently coincide with
+    // maxTrialsPerContext and pass for the wrong reason, which is what happened
+    // when the cap was retuned.
+    for (let n = MNC_CONFIG.minTrialsPerContext; n < MNC_CONFIG.maxTrialsPerContext; n++) {
+      const poor = Array.from({ length: n }, (_, i) => i % 4 === 0); // 25%, chance
+      expect(advanceDecision(poor, n)).toEqual({ advance: false, reason: null });
+    }
+  });
+
+  it('advances for the stated reason, not merely at the right time', () => {
+    const n = MNC_CONFIG.maxTrialsPerContext;
+    const poor = Array.from({ length: n }, (_, i) => i % 4 === 0);
+    expect(advanceDecision(poor, n).reason).toBe('cap');
+    expect(advanceDecision(perfect(n), MNC_CONFIG.minTrialsPerContext).reason)
+      .toBe('criterion');
   });
 
   it('advances on the cap even at chance, so one context cannot eat the session', () => {
