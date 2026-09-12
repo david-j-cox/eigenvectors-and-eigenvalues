@@ -51,7 +51,7 @@ def main() -> None:
     args = ap.parse_args()
 
     d = pd.read_csv(args.events, low_memory=False)
-    d["isA"] = (d.chosen_option == "A").astype(float)
+    d["is_left"] = (d.chosen_option == "left").astype(float)
 
     rows = []
     for pid, g in d.groupby("participant_id"):
@@ -61,16 +61,16 @@ def main() -> None:
             # Everything expressed as the share of responses on the alternative
             # the PREVIOUS exposure's contingency favoured, so carryover reads
             # as a high value immediately after the boundary.
-            old_A = prev.cont == "A_rich"
-            f = (lambda v: v if old_A else 1 - v)
+            old_left = prev.cont == "left_rich"
+            f = (lambda v: v if old_left else 1 - v)
             rows.append(dict(
                 participant_id=pid, color=prev.color, flipped=prev.cont != cur.cont,
-                pre_last50=f(pre.isA.tail(50).mean()),
-                post_r1=f(post.isA.iloc[0]),
-                post_first5=f(post.isA.iloc[:5].mean()),
-                post_41_60=f(post.isA.iloc[40:60].mean()),
+                pre_last50=f(pre.is_left.tail(50).mean()),
+                post_r1=f(post.is_left.iloc[0]),
+                post_first5=f(post.is_left.iloc[:5].mean()),
+                post_41_60=f(post.is_left.iloc[40:60].mean()),
                 start_richness_gap=float(
-                    abs(post.richness_a.iloc[0] - post.richness_b.iloc[0])),
+                    abs(post.richness_left.iloc[0] - post.richness_right.iloc[0])),
             ))
 
     t = pd.DataFrame(rows)

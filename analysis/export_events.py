@@ -136,6 +136,21 @@ def main() -> None:
     if dupes:
         sys.exit(f"{dupes} duplicated (session_id, trial_index) rows; refusing to write.")
 
+    # Canonical names. The alternatives are the left and right panels, reached
+    # with F and J; the task logs them as A and B, which collides with the ABAB
+    # condition labels and describes nothing the participant did. The reversal
+    # part is two conditions experienced twice, so reversal_stage's 1-4 become
+    # A1, B1, A2, B2.
+    events = events.replace({
+        "chosen_option": {"A": "left", "B": "right"},
+        "previous_option": {"A": "left", "B": "right"},
+        "functional_contingency_id": {"A_rich": "left_rich", "B_rich": "right_rich"},
+        "reversal_stage": {1: "A1", 2: "B1", 3: "A2", 4: "B2"},
+    })
+    events = events.rename(columns={"richness_a": "richness_left",
+                                    "richness_b": "richness_right",
+                                    "reversal_stage": "condition"})
+
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     events.to_csv(out, index=False)

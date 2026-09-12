@@ -25,6 +25,12 @@ import numpy as np
 import pandas as pd
 
 HERE = Path(__file__).resolve().parent
+
+# The reversal part is ABAB. A condition is a color-to-contingency mapping;
+# each is experienced twice, so the four presentations are A1, B1, A2, B2.
+# Note A and B here name conditions, not response alternatives -- those are
+# left and right.
+CONDITION_ORDER = ["A1", "B1", "A2", "B2"]
 sys.path.insert(0, str(HERE.parent))
 
 from dynalysis import adapt, eigen as E, operators as O, states as S  # noqa: E402
@@ -37,7 +43,7 @@ from dynalysis import adapt, eigen as E, operators as O, states as S  # noqa: E4
 # under test, while dropping switch rate hurts most despite it being the
 # noisiest coordinate.
 #
-# An earlier version of this file used [P(A), reward rate], chosen on simulated
+# An earlier version of this file used [P(left), reward rate], chosen on simulated
 # sessions. That was a mistake. Simulated responders cannot settle this
 # question: a responder whose switching comes from fixed conditional
 # probabilities has almost no context-specific dynamics to detect, so the
@@ -48,7 +54,7 @@ from dynalysis import adapt, eigen as E, operators as O, states as S  # noqa: E4
 #
 # Rerun `run_state_selection.py` on real pilot data before treating this as
 # fixed.
-PRIMARY_STATE = ["choice_prop_A", "reward_rate", "switch_rate"]
+PRIMARY_STATE = ["choice_prop_left", "reward_rate", "switch_rate"]
 
 def _load_targets() -> dict:
     """Read the acceptance thresholds the task exports.
@@ -89,7 +95,7 @@ META_COLS = [
 ]
 
 
-META_COLS.append("stage_cell")
+META_COLS.append("condition_cell")
 
 
 def restrict(tr: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
@@ -147,10 +153,11 @@ def fit_all(tr: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
 
 
 def replication(tr: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
-    """Compare operators for the same color and contingency across stages.
+    """Compare operators for the same color and contingency across exposures.
 
-    Under ABAB a mapping is in force in stages 1 and 3, and the reversed mapping
-    in stages 2 and 4. Both pairs are compared, so the replication test itself is
+    The reversal part is ABAB: condition A, condition B, then each again. A
+    condition is a color-to-contingency mapping, and each is experienced twice
+    (A1 then A2, B1 then B2). Both pairs are compared, so the replication test is
     replicated within each participant rather than resting on one comparison --
     and both mappings contribute, rather than only the unreversed one.
     """
@@ -161,18 +168,17 @@ def replication(tr: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
     try:
         rows = []
         for pid, g in tr.groupby("participant_id"):
-            meta = g["stage_cell"].astype(str).str.split("|", expand=True)
+            meta = g["condition_cell"].astype(str).str.split("|", expand=True)
             g = g.assign(
-                color=meta[0], contingency=meta[1],
-                stage=meta[2].str.removeprefix("s").astype(int),
+                color=meta[0], contingency=meta[1], condition=meta[2],
             )
             for (color, cont), gc in g.groupby(["color", "contingency"]):
-                stages = sorted(gc["stage"].unique())
-                for a, b in ((1, 3), (2, 4)):
-                    if a not in stages or b not in stages:
+                conditions = [c for c in CONDITION_ORDER if c in set(gc["condition"])]
+                for a, b in (("A1", "A2"), ("B1", "B2")):
+                    if a not in conditions or b not in conditions:
                         continue
-                    early = gc[gc["stage"] == a]
-                    late = gc[gc["stage"] == b]
+                    early = gc[gc["condition"] == a]
+                    late = gc[gc["condition"] == b]
                     if len(early) < 12 or len(late) < 12:
                         continue
 
@@ -180,7 +186,7 @@ def replication(tr: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
                     A_l, _ = O.fit_operator(late, alpha=1.0, scaler=scaler)
 
                     row = {"participant_id": pid, "color": color,
-                           "contingency": cont, "stage_pair": f"{a}v{b}",
+                           "contingency": cont, "condition_pair": f"{a}v{b}",
                            "n_early": len(early), "n_late": len(late)}
                     row.update(E.compare_operators(A_e, A_l))
 
@@ -200,7 +206,7 @@ def replication(tr: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
 def color_vs_contingency(tr: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
     """The competing similarity predictions, matched on elapsed time.
 
-    Both comparisons use operators from adjacent stages, so neither is favored
+    Both comparisons use operators from adjacent conditions, so neither is favored
     by having its two estimates closer together in the session. With a single
     reversal that matching is impossible, which is why the design uses two.
     """
@@ -211,25 +217,25 @@ def color_vs_contingency(tr: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
     try:
         rows = []
         for pid, g in tr.groupby("participant_id"):
-            meta = g["stage_cell"].astype(str).str.split("|", expand=True)
+            meta = g["condition_cell"].astype(str).str.split("|", expand=True)
             g = g.assign(
-                color=meta[0], contingency=meta[1],
-                stage=meta[2].str.removeprefix("s").astype(int),
+                color=meta[0], contingency=meta[1], condition=meta[2],
             )
             _, scaler = O.fit_operator(g, alpha=1.0)
 
             ops = {}
-            for (color, cont, stage), gc in g.groupby(["color", "contingency", "stage"]):
+            for (color, cont, cond), gc in g.groupby(["color", "contingency", "condition"]):
                 if len(gc) < 12:
                     continue
-                ops[(color, cont, stage)], _ = O.fit_operator(
+                ops[(color, cont, cond)], _ = O.fit_operator(
                     gc, alpha=1.0, scaler=scaler
                 )
 
-            for pair in ((1, 2), (2, 3)):
-                a, b = pair
-                for (color, cont, stage), A in ops.items():
-                    if stage != a:
+            # Adjacent presentations, so both comparison kinds span one
+            # condition change and are matched on separation in the session.
+            for a, b in (("A1", "B1"), ("B1", "A2")):
+                for (color, cont, condition), A in ops.items():
+                    if condition != a:
                         continue
                     # Same color, different contingency: the reversal changed
                     # what this color arranges.
@@ -250,7 +256,7 @@ def color_vs_contingency(tr: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
                         for _, B in matches:
                             row = {
                                 "participant_id": pid, "comparison": label,
-                                "stage_pair": f"{a}v{b}", "color": color,
+                                "condition_pair": f"{a}v{b}", "color": color,
                                 "contingency": cont,
                             }
                             row.update(E.compare_operators(A, B))
@@ -309,20 +315,20 @@ def main():
     # Two groupings, for two different questions.
     #
     # An operator is estimated from a color x contingency cell pooled across
-    # every stage in which that mapping was in force -- under ABAB, two stages.
-    # The stage-level split is only needed for the replication comparison, which
-    # deliberately holds two estimates apart in time. Using the stage-level cell
+    # every condition in which that mapping was in force -- under ABAB, two conditions.
+    # The condition-level split is only needed for the replication comparison, which
+    # deliberately holds two estimates apart in time. Using the condition-level cell
     # for estimation would halve the data behind every operator.
-    stage_cell = tr_all["context_t"].astype(str).str.rsplit("|", n=1).str[0]
-    pooled_cell = stage_cell.str.rsplit("|", n=1).str[0]
+    condition_cell = tr_all["context_t"].astype(str).str.rsplit("|", n=1).str[0]
+    pooled_cell = condition_cell.str.rsplit("|", n=1).str[0]
     tr_all = tr_all.assign(
-        stage_cell=stage_cell, context_t=pooled_cell, context_next=pooled_cell
+        condition_cell=condition_cell, context_t=pooled_cell, context_next=pooled_cell
     )
 
     tr = restrict(tr_all, PRIMARY_STATE)
 
     per_cell = tr.groupby(["participant_id", "context_t"]).size()
-    per_stage_cell = tr.groupby(["participant_id", "stage_cell"]).size()
+    per_condition_cell = tr.groupby(["participant_id", "condition_cell"]).size()
     ratios = noise_ratios(tr, PRIMARY_STATE, args.bin)
     profiles = fit_all(tr, PRIMARY_STATE)
     rep = replication(tr, PRIMARY_STATE)
@@ -357,8 +363,8 @@ def main():
         check("Minimum in any cell", per_cell.min(),
               per_cell.min() >= TARGETS["min_transitions_per_cell"] * 0.8,
               "the weakest cell is what the design can claim"),
-        check("Transitions per cell x stage", per_stage_cell.median(),
-              per_stage_cell.median() >= TARGETS["min_transitions_per_cell"] / 2,
+        check("Transitions per cell x condition", per_condition_cell.median(),
+              per_condition_cell.median() >= TARGETS["min_transitions_per_cell"] / 2,
               "half the pooled figure (replication comparison)"),
         check("Median responses per second", sessions["responses_per_s"].median(),
               sessions["responses_per_s"].median() >= TARGETS["min_responses_per_s"],
@@ -406,13 +412,13 @@ def main():
 
     if len(rep):
         lines += [
-            "## Replication across stages (same color, same contingency)",
+            "## Replication across conditions (same color, same contingency)",
             "",
             f"- Comparisons: {len(rep)}",
             f"- Dominant-eigenvector |cos|: {rep['dominant_cosine'].median():.3f} "
             f"[{rep['dominant_cosine'].quantile(.25):.3f}, "
             f"{rep['dominant_cosine'].quantile(.75):.3f}]",
-            f"- Early operator predicting late stage, skill: "
+            f"- Early operator predicting late condition, skill: "
             f"{rep['early_predicts_late_skill'].median():.3f} "
             f"({(rep['early_predicts_late_skill'] > 0).mean():.0%} positive)",
             "",

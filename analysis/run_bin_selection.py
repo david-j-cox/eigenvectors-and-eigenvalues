@@ -22,12 +22,12 @@ from dynalysis.binsize import choose_bin, half_life_responses  # noqa: E402
 HERE = Path(__file__).resolve().parent
 
 COORDS = {
-    "isA": True,
+    "is_left": True,
     "reward_outcome": True,
     "switched": True,
     "logici": False,
 }
-PRETTY = {"isA": "choice P(A)", "reward_outcome": "reward rate",
+PRETTY = {"is_left": "choice P(left)", "reward_outcome": "reward rate",
           "switched": "switch rate", "logici": "mean log ICI"}
 
 
@@ -41,7 +41,7 @@ def main() -> None:
     args = ap.parse_args()
 
     d = pd.read_csv(args.events, low_memory=False)
-    d["isA"] = (d.chosen_option == "A").astype(float)
+    d["is_left"] = (d.chosen_option == "left").astype(float)
     d["logici"] = np.log(d.ici_ms.clip(lower=1))
 
     rows = []

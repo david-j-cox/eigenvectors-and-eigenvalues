@@ -42,12 +42,12 @@ N_GRID = (10, 15, 20, 30, 40, 60, 80)
 # whether it was earning its place even in the previous task, where it did vary,
 # or whether a purely behavioral state does as well.
 VARIANTS = {
-    "4D_full": ["choice_prop_A", "reward_rate", "switch_rate", "mean_log_ici"],
-    "3D_no_switch": ["choice_prop_A", "reward_rate", "mean_log_ici"],
-    "3D_no_ici": ["choice_prop_A", "reward_rate", "switch_rate"],
-    "3D_no_reward": ["choice_prop_A", "switch_rate", "mean_log_ici"],
-    "2D_choice_switch": ["choice_prop_A", "switch_rate"],
-    "2D_choice_reward": ["choice_prop_A", "reward_rate"],
+    "4D_full": ["choice_prop_left", "reward_rate", "switch_rate", "mean_log_ici"],
+    "3D_no_switch": ["choice_prop_left", "reward_rate", "mean_log_ici"],
+    "3D_no_ici": ["choice_prop_left", "reward_rate", "switch_rate"],
+    "3D_no_reward": ["choice_prop_left", "switch_rate", "mean_log_ici"],
+    "2D_choice_switch": ["choice_prop_left", "switch_rate"],
+    "2D_choice_reward": ["choice_prop_left", "reward_rate"],
 }
 
 

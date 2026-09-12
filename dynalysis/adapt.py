@@ -22,19 +22,62 @@ def load_new_events(path) -> pd.DataFrame:
     df["ici_s"] = df["ici_ms"] / 1000.0
     df["elapsed_time_s"] = df["elapsed_time_ms"] / 1000.0
 
-    df["reversal_stage"] = df["reversal_stage"].fillna(-1).astype(int)
+    df = name_sides(df)
+
+    if "condition" not in df.columns:
+        df = df.rename(columns={"reversal_stage": "condition"})
+    df["condition"] = df["condition"].replace(CONDITIONS).fillna("").astype(str)
     return df
+
+
+# -------------------------------------------------------------------- sides --
+#
+# The task logs the two alternatives as A and B, which collides with the ABAB
+# condition labels below and says nothing about what the participant did. They
+# are the left and right panels, reached with F and J. Renamed here so a column
+# named A never has to be disambiguated from a condition named A.
+#
+# The database keeps the original values; this is the analysis frame.
+
+SIDES = {"A": "left", "B": "right"}
+CONTINGENCY_NAMES = {"A_rich": "left_rich", "B_rich": "right_rich"}
+
+
+def name_sides(df: pd.DataFrame) -> pd.DataFrame:
+    """A/B -> left/right. Idempotent, so a frame already exported renamed passes
+    through untouched."""
+    return df.replace({
+        "chosen_option": SIDES,
+        "previous_option": SIDES,
+        "functional_contingency_id": CONTINGENCY_NAMES,
+    }).rename(columns={"richness_a": "richness_left", "richness_b": "richness_right"})
+
+
+# --------------------------------------------------------------- conditions --
+#
+# The reversal part is ABAB: two conditions, each experienced twice. A condition
+# is a color-to-contingency mapping -- under A one color signals left_rich and
+# the other right_rich; under B that is reversed. Which physical color takes
+# which role is randomized per participant, so the label describes the
+# arrangement rather than the appearance.
+#
+# The task logs the four presentations as reversal_stage 1-4, which reads as
+# four things rather than two.
+
+CONDITIONS = {1: "A1", 2: "B1", 3: "A2", 4: "B2",
+              1.0: "A1", 2.0: "B1", 3.0: "A2", 4.0: "B2"}
 
 
 def cell_key(
     df: pd.DataFrame,
-    level: str = "color_contingency_stage",
+    level: str = "color_contingency_condition",
 ) -> pd.Series:
     """The analysis cell each response belongs to.
 
-    ``color_contingency_stage`` is the finest cell and the one the replication
-    test needs: an operator is only compared with another operator estimated
-    under the same color, the same contingency, and a different stage.
+    ``color_contingency_condition`` is the finest cell and the one the
+    replication test needs: an operator is only compared with another estimated
+    under the same color, the same contingency, and a different exposure of the
+    condition.
 
     ``contingency`` and ``color`` are the two competing coarser groupings the
     study is designed to choose between -- whether dynamics follow what the
@@ -42,10 +85,10 @@ def cell_key(
     """
     color = df["physical_context_id"].astype(str)
     cont = df["functional_contingency_id"].astype(str)
-    stage = df["reversal_stage"].astype(str)
+    label = df["condition"].astype(str)
 
-    if level == "color_contingency_stage":
-        return color + "|" + cont + "|s" + stage
+    if level in ("color_contingency_condition", "color_contingency_stage"):
+        return color + "|" + cont + "|" + label
     if level == "color_contingency":
         return color + "|" + cont
     if level == "contingency":
@@ -107,7 +150,7 @@ def add_primitives(df: pd.DataFrame, ici_cap_s: float = 5.0) -> pd.DataFrame:
     interested in.
     """
     out = df.copy()
-    out["choice_A_raw"] = (out["chosen_option"] == "A").astype(int)
+    out["choice_left_raw"] = (out["chosen_option"] == "left").astype(int)
     out["switch_raw"] = out["switched"].astype(int)
     out["log_ici_for_state"] = np.log1p(
         (out["ici_ms"] / 1000.0).clip(lower=0, upper=ici_cap_s)

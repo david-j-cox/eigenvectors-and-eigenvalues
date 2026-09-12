@@ -47,11 +47,11 @@ import dynalysis.states as ST  # noqa: E402
 N_GRID = (15, 20, 30, 36, 50, 80)
 
 VARIANTS = {
-    "4D_full": ["choice_prop_A", "reward_rate", "switch_rate", "mean_log_ici"],
-    "3D_no_ici": ["choice_prop_A", "reward_rate", "switch_rate"],
-    "3D_no_switch": ["choice_prop_A", "reward_rate", "mean_log_ici"],
-    "2D_choice_switch": ["choice_prop_A", "switch_rate"],
-    "2D_choice_reward": ["choice_prop_A", "reward_rate"],
+    "4D_full": ["choice_prop_left", "reward_rate", "switch_rate", "mean_log_ici"],
+    "3D_no_ici": ["choice_prop_left", "reward_rate", "switch_rate"],
+    "3D_no_switch": ["choice_prop_left", "reward_rate", "mean_log_ici"],
+    "2D_choice_switch": ["choice_prop_left", "switch_rate"],
+    "2D_choice_reward": ["choice_prop_left", "reward_rate"],
 }
 
 

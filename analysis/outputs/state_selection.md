@@ -18,7 +18,7 @@ At the 36 transitions per cell the design delivers, the best state is **2D_choic
 
 | coordinate | noise_ratio |
 |---|---|
-| choice_prop_A | 0.062 |
+| choice_prop_left | 0.062 |
 | mean_log_ici | 0.100 |
 | reward_rate | 0.353 |
 | switch_rate | 0.737 |

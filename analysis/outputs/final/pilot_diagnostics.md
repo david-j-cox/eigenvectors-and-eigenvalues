@@ -2,7 +2,7 @@
 
 Events: `data/final_events.csv`  
 Participants: 23  
-State: choice_prop_A, reward_rate, switch_rate in 10-response bins
+State: choice_prop_left, reward_rate, switch_rate in 10-response bins
 
 ## Acceptance checks
 
@@ -10,13 +10,13 @@ State: choice_prop_A, reward_rate, switch_rate in 10-response bins
 |---|---|---|---|
 | Transitions per color x contingency cell | 72.000 | PASS | >= 40 (operator estimation) |
 | Minimum in any cell | 19.000 | FAIL | the weakest cell is what the design can claim |
-| Transitions per cell x stage | 36.000 | PASS | half the pooled figure (replication comparison) |
+| Transitions per cell x condition | 36.000 | PASS | half the pooled figure (replication comparison) |
 | Median responses per second | 3.718 | PASS | >= 1.2 |
 | Median session minutes | 19.094 | PASS | <= 32 |
 | Reinforcers per state bin | 4.077 | PASS | >= 2 |
 | Median switch rate | 0.074 | PASS | 0.02-0.45 |
 | Participants beating persistence | 1.000 | PASS | >= 70% |
-| Noise ratio: P(A) | 0.065 | PASS | <= 0.6 |
+| Noise ratio: P(left) | 0.065 | PASS | <= 0.6 |
 | Noise ratio: reward rate | 0.326 | PASS | <= 0.6 |
 | Noise ratio: switch rate | 0.504 | PASS | <= 0.6 |
 
@@ -29,11 +29,11 @@ A failed noise-ratio check means that coordinate is measured mostly as sampling 
 - Spectral radius: 0.236 [0.135, 0.436]
 - Complex dominant pair: 57% of participants
 
-## Replication across stages (same color, same contingency)
+## Replication across conditions (same color, same contingency)
 
 - Comparisons: 92
 - Dominant-eigenvector |cos|: 0.654 [0.292, 0.818]
-- Early operator predicting late stage, skill: 0.517 (93% positive)
+- Early operator predicting late condition, skill: 0.517 (93% positive)
 
 Compare the |cos| value against the same-operator floor in `reanalysis/outputs/design_replication_floor_bin10.csv` at this number of transitions. Similarity below the floor is estimation noise, not replication.
 

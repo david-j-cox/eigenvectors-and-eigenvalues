@@ -3,7 +3,7 @@ Build coarse-grained behavioral state vectors from raw click-level events.
 
 The state is
 
-    x_t = [ P(A)_t, P(reward)_t, P(switch)_t, mean log(1+ICI)_t ]
+    x_t = [ P(left)_t, P(reward)_t, P(switch)_t, mean log(1+ICI)_t ]
 
 aggregated over non-overlapping bins of BIN_CLICKS responses taken within
 a single experimental context (phase). Bins never straddle a context change,
@@ -16,10 +16,10 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-STATE_COLS = ["choice_prop_A", "reward_rate", "switch_rate", "mean_log_ici"]
+STATE_COLS = ["choice_prop_left", "reward_rate", "switch_rate", "mean_log_ici"]
 
 STATE_LABELS = {
-    "choice_prop_A": "P(A)",
+    "choice_prop_left": "P(left)",
     "reward_rate": "reward rate",
     "switch_rate": "switch rate",
     "mean_log_ici": "mean log ICI",
@@ -34,7 +34,7 @@ def load_events(path) -> pd.DataFrame:
     """Load raw click-level events and add the primitive per-click columns."""
     raw = pd.read_csv(path).sort_values(["participant_id", "click_index"]).copy()
 
-    raw["choice_A_raw"] = (raw["chosen_option"] == "A").astype(int)
+    raw["choice_left_raw"] = (raw["chosen_option"] == "left").astype(int)
 
     raw["switch_raw"] = (
         raw.groupby("participant_id")["chosen_option"]
@@ -70,7 +70,7 @@ def build_states(
 
     agg = {
         "n_clicks": ("click_index", "size"),
-        "choice_prop_A": ("choice_A_raw", "mean"),
+        "choice_prop_left": ("choice_left_raw", "mean"),
         "reward_rate": ("reward_outcome", "mean"),
         "switch_rate": ("switch_raw", "mean"),
         "mean_log_ici": ("log_ici_for_state", "mean"),
