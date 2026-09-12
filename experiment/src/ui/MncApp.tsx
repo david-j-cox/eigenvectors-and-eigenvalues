@@ -23,6 +23,16 @@ type Phase = 'intro' | 'task' | 'end';
  * chance -- with six participants, hashing could easily give 5 and 1. The
  * hash is the fallback for anyone arriving without the parameter.
  */
+/** One nonce per page load, so a reload starts a new session rather than
+ *  colliding with the old one. Module scope, not component state: StrictMode
+ *  mounts the tree twice in development and a nonce in state would differ
+ *  between the two mounts. */
+const runNonce = Math.random().toString(36).slice(2, 10);
+
+function armForId(participantId: string): Arm {
+  return resolveArm(participantId);
+}
+
 function resolveArm(participantId: string): Arm {
   const q = new URLSearchParams(window.location.search).get('arm');
   if (q === 'deterministic' || q === 'probabilistic') return q;
@@ -44,7 +54,17 @@ export function MncApp() {
       participantId,
       prolificPid: params.prolificPid,
       studyId: params.studyId,
-      sessionId: sessionSeed(participantId, EXPERIMENT_VERSION),
+      // The arm is part of the session identity, and so is the run.
+      //
+      // sessionSeed is a pure function of participant and version, so the same
+      // browser running both arms produces one session_id for both -- and with
+      // a (session_id, trial_index) primary key and ON CONFLICT DO NOTHING,
+      // the second run's trials would silently collide with the first's and be
+      // dropped from trial 15 onward. The arm alone is not enough either: a
+      // participant who reloads and repeats the same arm would collide with
+      // themselves. A per-load nonce makes each run its own session, which is
+      // what a session is.
+      sessionId: `${sessionSeed(participantId, EXPERIMENT_VERSION)}::${armForId(participantId)}::${runNonce}`,
       experimentVersion: EXPERIMENT_VERSION,
     };
   }, []);
