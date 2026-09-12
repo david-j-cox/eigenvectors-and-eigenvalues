@@ -16,9 +16,11 @@
 import type { EventRow } from './schema';
 import { EVENT_COLUMNS } from './schema';
 
-export interface Transport {
+/** Rows are opaque to the logger; only the transport interprets them. The
+ *  default keeps every existing call site unchanged. */
+export interface Transport<R = EventRow> {
   /** Upsert a batch of events. Must be idempotent on (session_id, trial_index). */
-  upsertEvents(rows: EventRow[]): Promise<void>;
+  upsertEvents(rows: R[]): Promise<void>;
   /** Write or update the session-level record. */
   upsertSession(record: Record<string, unknown>): Promise<void>;
 }
@@ -47,8 +49,8 @@ const DEFAULTS = {
   quarantineAfter: 3,
 };
 
-export class EventLogger {
-  private buffer: EventRow[] = [];
+export class EventLogger<R = EventRow> {
+  private buffer: R[] = [];
   private inFlight = false;
   /**
    * When the in-flight batch started.
@@ -68,12 +70,12 @@ export class EventLogger {
   };
 
   /** Every event ever logged, kept for the local download fallback. */
-  private readonly all: EventRow[] = [];
+  private readonly all: R[] = [];
   /** Batches the server has repeatedly refused; kept out of the retry queue. */
-  private readonly quarantined: EventRow[] = [];
+  private readonly quarantined: R[] = [];
   private failures = 0;
 
-  constructor(private readonly transport: Transport, options: LoggerOptions = {}) {
+  constructor(private readonly transport: Transport<R>, options: LoggerOptions = {}) {
     this.opts = {
       batchSize: options.batchSize ?? DEFAULTS.batchSize,
       flushIntervalMs: options.flushIntervalMs ?? DEFAULTS.flushIntervalMs,
@@ -96,7 +98,7 @@ export class EventLogger {
     this.timer = null;
   }
 
-  log(row: EventRow): void {
+  log(row: R): void {
     this.buffer.push(row);
     this.all.push(row);
     this.persistLocally();
@@ -211,7 +213,7 @@ export class EventLogger {
     try {
       const raw = localStorage.getItem(this.opts.storageKey);
       if (!raw) return;
-      const rows = JSON.parse(raw) as EventRow[];
+      const rows = JSON.parse(raw) as R[];
       if (Array.isArray(rows) && rows.length) this.buffer.unshift(...rows);
     } catch {
       // Corrupt local state is discarded rather than allowed to block startup.
@@ -244,19 +246,25 @@ export class EventLogger {
     };
     return [
       EVENT_COLUMNS.join(','),
-      ...this.all.map((r) => EVENT_COLUMNS.map((c) => cell(r[c])).join(',')),
+      ...this.all.map((r) =>
+        EVENT_COLUMNS.map((c) => cell((r as Record<string, unknown>)[c])).join(','),
+      ),
     ].join('\n');
   }
 }
 
-/** Collects events in memory only; used for local development and tests. */
-export class MemoryTransport implements Transport {
-  readonly events: EventRow[] = [];
+/** Collects events in memory only; used for local development and tests.
+ *  Deduplicates on the same key the database does, so a test exercising the
+ *  retry path sees the same idempotency the real transport provides. */
+export class MemoryTransport<
+  R extends { session_id: string; trial_index: number } = EventRow,
+> implements Transport<R> {
+  readonly events: R[] = [];
   session: Record<string, unknown> | null = null;
   /** Set to make the next N calls fail, for exercising the retry path. */
   failuresRemaining = 0;
 
-  async upsertEvents(rows: EventRow[]): Promise<void> {
+  async upsertEvents(rows: R[]): Promise<void> {
     if (this.failuresRemaining > 0) {
       this.failuresRemaining--;
       throw new Error('simulated transport failure');

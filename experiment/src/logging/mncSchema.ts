@@ -1,0 +1,138 @@
+// ============================================================
+// One row per choice in the Multiple Necessary Cues pilot.
+//
+// The row carries the whole trial, not a summary of it: every
+// alternative that was on screen, which one was the target, which
+// was chosen, and the per-dimension match AND its chance baseline.
+// The baseline matters because a dimension on which all four
+// alternatives agreed carries no evidence about attention to it,
+// and no analysis should have to re-derive that from a seed.
+// ============================================================
+
+import type { Arm, DimId } from '../config/mnc';
+import { DIMENSIONS } from '../config/mnc';
+import type { Compound } from '../engine/mnc';
+import { compoundToIndex, describe } from '../engine/mnc';
+
+export interface MncEventRow {
+  participant_id: string;
+  prolific_pid: string | null;
+  study_id: string | null;
+  session_id: string;
+  experiment_version: string;
+  is_test: 0 | 1;
+
+  arm: Arm;
+  timestamp_utc: string;
+  elapsed_ms: number;
+  response_time_ms: number;
+
+  trial_index: number;          // across the whole session
+  context_index: number;        // which context/target this is
+  trial_in_context: number;
+
+  context_color: string;
+  target_index: number;         // 0..15
+  target_label: string;         // human-readable, e.g. "circle|large|horizontal|dark"
+
+  /** All alternatives as shown, left-to-right / top-to-bottom. */
+  alternatives: number[];
+  target_position: number;
+  chosen_position: number;
+  chosen_index: number;
+  chosen_label: string;
+
+  correct: 0 | 1;
+  rewarded: 0 | 1;
+  points_total: number;
+  error_disparity: number;      // dimensions wrong; 0 when correct
+
+  /** Per dimension: did the choice match the target? */
+  match_shape: 0 | 1;
+  match_size: 0 | 1;
+  match_orientation: 0 | 1;
+  match_brightness: 0 | 1;
+
+  /** Per dimension: how many of the alternatives carried the target's value.
+   *  Equal to the number of alternatives => the dimension did not
+   *  discriminate on this trial. */
+  navail_shape: number;
+  navail_size: number;
+  navail_orientation: number;
+  navail_brightness: number;
+
+  advanced_after: 'criterion' | 'cap' | null;
+}
+
+export function labelOf(c: Compound): string {
+  const d = describe(c);
+  return DIMENSIONS.map((dim) => d[dim.id as DimId]).join('|');
+}
+
+export function buildMncRow(args: {
+  identity: {
+    participantId: string;
+    prolificPid: string | null;
+    studyId: string | null;
+    sessionId: string;
+    experimentVersion: string;
+  };
+  isTest: boolean;
+  arm: Arm;
+  elapsedMs: number;
+  responseTimeMs: number;
+  trialIndex: number;
+  contextIndex: number;
+  trialInContext: number;
+  contextColor: string;
+  target: Compound;
+  alternatives: Compound[];
+  targetPosition: number;
+  chosenPosition: number;
+  correct: boolean;
+  rewarded: boolean;
+  pointsTotal: number;
+  errorDisparity: number;
+  matched: boolean[];
+  matchCounts: number[];
+  advancedAfter: 'criterion' | 'cap' | null;
+}): MncEventRow {
+  const chosen = args.alternatives[args.chosenPosition];
+  const b = (x: boolean): 0 | 1 => (x ? 1 : 0);
+  return {
+    participant_id: args.identity.participantId,
+    prolific_pid: args.identity.prolificPid,
+    study_id: args.identity.studyId,
+    session_id: args.identity.sessionId,
+    experiment_version: args.identity.experimentVersion,
+    is_test: b(args.isTest),
+    arm: args.arm,
+    timestamp_utc: new Date().toISOString(),
+    elapsed_ms: Math.round(args.elapsedMs),
+    response_time_ms: Math.round(args.responseTimeMs),
+    trial_index: args.trialIndex,
+    context_index: args.contextIndex,
+    trial_in_context: args.trialInContext,
+    context_color: args.contextColor,
+    target_index: compoundToIndex(args.target),
+    target_label: labelOf(args.target),
+    alternatives: args.alternatives.map(compoundToIndex),
+    target_position: args.targetPosition,
+    chosen_position: args.chosenPosition,
+    chosen_index: compoundToIndex(chosen),
+    chosen_label: labelOf(chosen),
+    correct: b(args.correct),
+    rewarded: b(args.rewarded),
+    points_total: args.pointsTotal,
+    error_disparity: args.errorDisparity,
+    match_shape: b(args.matched[0]),
+    match_size: b(args.matched[1]),
+    match_orientation: b(args.matched[2]),
+    match_brightness: b(args.matched[3]),
+    navail_shape: args.matchCounts[0],
+    navail_size: args.matchCounts[1],
+    navail_orientation: args.matchCounts[2],
+    navail_brightness: args.matchCounts[3],
+    advanced_after: args.advancedAfter,
+  };
+}

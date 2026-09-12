@@ -23,6 +23,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 import type { Transport } from './logger';
 import type { EventRow } from './schema';
+import type { MncEventRow } from './mncSchema';
 
 export interface SupabaseConfig {
   url: string;
@@ -99,6 +100,53 @@ export function transportFromEnv(): SupabaseTransport | null {
   const env = (import.meta as { env?: Record<string, string> }).env ?? {};
   if (!env.VITE_SUPABASE_URL || !env.VITE_SUPABASE_ANON_KEY) return null;
   return new SupabaseTransport({
+    url: env.VITE_SUPABASE_URL,
+    anonKey: env.VITE_SUPABASE_ANON_KEY,
+  });
+}
+
+// ---------------------------------------------------------------- MNC --
+
+/**
+ * Transport for the Multiple Necessary Cues pilot.
+ *
+ * Same resilience contract as the foraging transport -- bounded request,
+ * idempotent retry -- against a different function and table. The session
+ * record is not used by the pilot, so `upsertSession` is a no-op rather than
+ * a second half-built code path.
+ */
+export class MncSupabaseTransport implements Transport<MncEventRow> {
+  private readonly client: SupabaseClient;
+  private readonly timeoutMs: number;
+
+  constructor(cfg: { url: string; anonKey: string; timeoutMs?: number }) {
+    if (!cfg.url || !cfg.anonKey) {
+      throw new Error('Supabase URL and anon key are required');
+    }
+    this.client = createClient(cfg.url, cfg.anonKey, {
+      auth: { persistSession: false },
+    });
+    this.timeoutMs = cfg.timeoutMs ?? 30_000;
+  }
+
+  async upsertEvents(rows: MncEventRow[]): Promise<void> {
+    if (rows.length === 0) return;
+    const { error } = await withTimeout<{ error: { message: string } | null }>(
+      (signal) => this.client.rpc('log_mnc_events', { p_rows: rows }).abortSignal(signal),
+      this.timeoutMs,
+    );
+    if (error) throw new Error(`mnc event write failed: ${error.message}`);
+  }
+
+  async upsertSession(): Promise<void> {
+    /* the pilot keeps everything it needs on the event rows */
+  }
+}
+
+export function mncTransportFromEnv(): MncSupabaseTransport | null {
+  const env = (import.meta as { env?: Record<string, string> }).env ?? {};
+  if (!env.VITE_SUPABASE_URL || !env.VITE_SUPABASE_ANON_KEY) return null;
+  return new MncSupabaseTransport({
     url: env.VITE_SUPABASE_URL,
     anonKey: env.VITE_SUPABASE_ANON_KEY,
   });
