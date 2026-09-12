@@ -429,6 +429,45 @@
   jitter. Study 2 exists to break that confound and put several variables in competition.</p>
 </div>
 
+
+<section class="ms">
+  <h2><span class="secnum">0</span>Why multiple control, and why now</h2>
+  <p>Behavior rarely meets one stimulus at a time. When several are present, control divides among
+  them, and how it divides has been studied since at least Ray's (1969) demonstration that combining
+  stimuli which control incompatible behavior produces orderly intermediate performance. The
+  question has stayed alive because the answer is not obvious: dimensions differ in salience,
+  discriminability, and in how reliably they predict reinforcement, and these do not contribute
+  equally.</p>
+  <p>The most directly relevant recent finding is Gomes-Ng, Elliffe, and Cowie (2026). Using
+  matching-to-sample with compound stimuli in pigeons, they showed that <b>divided control is graded
+  by the <em>global</em> reinforcer probability associated with each dimension, and is largely
+  insensitive to local, trial-by-trial contingencies</b> signalling which dimension would pay next.
+  They note this distinguishes divided stimulus control from concurrent choice, which tracks local
+  reinforcer ratios closely (Davison &amp; Baum, 2000, 2003; Cowie &amp; Davison, 2016).</p>
+  <p>That contrast is the opening. Their measure was steady-state accuracy in a discrete-trial
+  discrimination; the graded quantity was recovered by comparing performance across conditions. What
+  has not been done is to measure divided control <b>as a dynamical quantity in free-operant
+  concurrent choice</b> &mdash; where the local sensitivity they contrast against is precisely what
+  is on display.</p>
+  <p>Study 1 of this program supplies the instrument. Fitting
+  <var>x</var><sub><var>t</var>+1</sub> = <var>A x</var><sub><var>t</var></sub> +
+  <var>B u</var><sub><var>t</var></sub> + <var>c</var> per subject, with the signalling colour as
+  <var>u</var>, the control term <b>B reversed sign with the contingency reversal for 22 of 23
+  subjects</b>, while the eigenvalues of <var>A</var> stayed inside each subject's own null for
+  23 of 23. So the decomposition separates what the organism brings from what the environment
+  imposes, and the environmental half is a scalar with a sign that behaves as it should. With one
+  cue, that is a manipulation check. With several, each column of <var>B</var> is the control
+  exerted by one dimension, and their relative magnitudes are the division of control &mdash;
+  measured per individual, from the time series, without a steady state.</p>
+  <p>One study 1 result bears directly on what to expect. Away from reversals, an autonomous model
+  with ten bins of memory predicted the choice series as well as one given the cue (median gain
+  &minus;1.7%); the cue mattered only where its own history stopped predicting it. The organism's
+  recent behavior was the better predictor of its next behavior. That is consistent with reports
+  that past behavior can overshadow external stimuli in divided-control preparations, and it makes
+  a concrete prediction for study 2: <b><var>A</var> should dominate <var>B</var> in variance
+  accounted for, and the interesting question is how the remainder divides among cues.</b></p>
+</section>
+
 <section class="ms">
   <h2><span class="secnum">1</span>The change that pays for everything</h2>
   <p>Study 1 spent 3,200 reversal responses on four color &times; contingency cells and fitted a
@@ -551,6 +590,45 @@
   <p><b>An 11-minute task pays $3.33.</b> Prolific's minimum is $8/hour; this is $18/hour. But short
   tasks attract faster, less careful responding, and study 1's own data show response rate varying
   three-fold across subjects.</p>
+</section>
+
+
+<section class="ms">
+  <h2><span class="secnum">6</span>References</h2>
+  <div style="font-size:14px;line-height:1.6">
+  <p style="text-indent:-2em;padding-left:2em">Cowie, S., &amp; Davison, M. (2016). Control by
+  reinforcers across time and space: A review of recent choice research. <em>Journal of the
+  Experimental Analysis of Behavior, 105</em>(2), 246&ndash;269.
+  <a href="https://doi.org/10.1002/jeab.200">https://doi.org/10.1002/jeab.200</a></p>
+  <p style="text-indent:-2em;padding-left:2em">Davison, M., &amp; Baum, W. M. (2000). Choice in a
+  variable environment: Every reinforcer counts. <em>Journal of the Experimental Analysis of
+  Behavior, 74</em>(1), 1&ndash;24.
+  <a href="https://doi.org/10.1901/jeab.2000.74-1">https://doi.org/10.1901/jeab.2000.74-1</a></p>
+  <p style="text-indent:-2em;padding-left:2em">Davison, M., &amp; Baum, W. M. (2003). Every
+  reinforcer counts: Reinforcer magnitude and local preference. <em>Journal of the Experimental
+  Analysis of Behavior, 80</em>(1), 95&ndash;129.
+  <a href="https://doi.org/10.1901/jeab.2003.80-95">https://doi.org/10.1901/jeab.2003.80-95</a></p>
+  <p style="text-indent:-2em;padding-left:2em">Gomes-Ng, S., Elliffe, D., &amp; Cowie, S. (2026).
+  Divided stimulus control depends on global, but not local, reinforcement contingencies.
+  <em>Journal of the Experimental Analysis of Behavior, 126</em>(2), e70127.
+  <a href="https://doi.org/10.1002/jeab.70127">https://doi.org/10.1002/jeab.70127</a></p>
+  <p style="text-indent:-2em;padding-left:2em">Ray, B. A. (1969). Selective attention: The effects of
+  combining stimuli which control incompatible behavior. <em>Journal of the Experimental Analysis of
+  Behavior, 12</em>(4), 539&ndash;550.
+  <a href="https://doi.org/10.1901/jeab.1969.12-539">https://doi.org/10.1901/jeab.1969.12-539</a></p>
+  <p style="text-indent:-2em;padding-left:2em">Shull, R. L., &amp; Pliskoff, S. S. (1967). Changeover
+  delay and concurrent schedules: Some effects on relative performance measures. <em>Journal of the
+  Experimental Analysis of Behavior, 10</em>(6), 517&ndash;527.
+  <a href="https://doi.org/10.1901/jeab.1967.10-517">https://doi.org/10.1901/jeab.1967.10-517</a></p>
+  </div>
+  <div class="caveat" style="margin-top:18px">
+    <p><strong>On sourcing.</strong> Gomes-Ng, Elliffe and Cowie (2026) was verified against the
+    article itself; the remainder come from the bibliography of the preceding study in this program
+    and were checked against their DOIs. A related 2026 paper by the same group on divided control
+    by past behavior, present stimuli and future outcome value in concurrent chains is directly
+    relevant to the overshadowing prediction in &sect;0 but could not be retrieved to verify its
+    citation, so it is described rather than cited.</p>
+  </div>
 </section>
 
 <footer>
