@@ -20,7 +20,7 @@ interface Props {
  * Feedback is the ring around the chosen tile and nothing else: green when a
  * point was earned, red when it was not. An earlier version also disabled the
  * buttons during feedback, which the browser renders by dimming them -- and a
- * dimmed screen is exactly as visible as a coloured ring, so the two signals
+ * dimmed screen is exactly as visible as a colored ring, so the two signals
  * competed and the ring was hard to read. Clicks during feedback are ignored
  * by the task hook, so nothing needs to be disabled to make that safe.
  *

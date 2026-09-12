@@ -7,7 +7,7 @@ import type { Compound } from '../../engine/mnc';
  * which constrains how they are drawn. Size is the outer figure's extent;
  * hue is its fill; shape is circle against square; the line runs horizontally
  * or vertically across it. The line is a fixed near-black rather than a
- * contrasting colour, so hue cannot be read off the line instead of the
+ * contrasting color, so hue cannot be read off the line instead of the
  * figure, which would collapse two dimensions into one.
  *
  * The hues are Okabe-Ito blue and orange. They carry the same lightness, so

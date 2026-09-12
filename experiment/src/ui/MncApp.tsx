@@ -159,15 +159,15 @@ function Intro({ onStart }: { onStart: () => void }) {
       }}
     >
       <div style={{ maxWidth: 520, lineHeight: 1.6 }}>
-        <h1 style={{ fontSize: 24, marginTop: 0 }}>A shape-picking game</h1>
+        <h1 style={{ fontSize: 24, marginTop: 0 }}>Pick the shape that pays</h1>
         <p>
-          On each turn you will see four shapes. <b>One of them earns a point.</b> Click
-          the one you think it is. You will be told whether you got a point.
+          Each turn shows four shapes. One of them pays a point. Click the one you
+          think it is.
         </p>
         <p>
-          The shapes differ in four ways &mdash; whether they are round or square, large
-          or small, light or dark, and whether the bar across them lies flat or upright.
-          The shape that pays depends on <b>all four</b> of those together.
+          The shapes vary in four ways: round or square, large or small, blue or
+          orange, and the bar across them flat or upright. <b>All four matter.</b> The
+          shape that pays is one particular combination of them.
         </p>
         <div style={{ display: 'flex', gap: 12, margin: '18px 0', flexWrap: 'wrap' }}>
           {[0b0000, 0b0011, 0b1101, 0b1010].map((i) => (
@@ -177,13 +177,13 @@ function Intro({ onStart }: { onStart: () => void }) {
           ))}
         </div>
         <p>
-          <b>The background colour tells you which rule is running.</b> When the
-          background changes, the shape that pays has changed too, and you will need to
-          work out the new one.
+          The background color tells you which combination is paying. When the
+          background changes, the combination has changed too, and you have to find
+          the new one.
         </p>
         <p>
-          It lasts about {minutes} minutes. Guessing is expected at first &mdash; that is
-          how you find out what pays.
+          About {minutes} minutes. Expect to guess at first. That is how you find out
+          what pays.
         </p>
         <button
           id="mnc-start"
@@ -202,7 +202,7 @@ function Intro({ onStart }: { onStart: () => void }) {
           Start
         </button>
         <p style={{ fontSize: 12, opacity: 0.6, marginTop: 18 }}>
-          Points are for feedback only; your payment does not depend on them.
+          Points are feedback only. Your payment does not depend on them.
         </p>
       </div>
     </div>
