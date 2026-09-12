@@ -51,7 +51,7 @@ export interface MncEventRow {
   match_shape: 0 | 1;
   match_size: 0 | 1;
   match_orientation: 0 | 1;
-  match_brightness: 0 | 1;
+  match_hue: 0 | 1;
 
   /** Per dimension: how many of the alternatives carried the target's value.
    *  Equal to the number of alternatives => the dimension did not
@@ -59,7 +59,7 @@ export interface MncEventRow {
   navail_shape: number;
   navail_size: number;
   navail_orientation: number;
-  navail_brightness: number;
+  navail_hue: number;
 
   advanced_after: 'criterion' | 'cap' | null;
 }
@@ -128,11 +128,27 @@ export function buildMncRow(args: {
     match_shape: b(args.matched[0]),
     match_size: b(args.matched[1]),
     match_orientation: b(args.matched[2]),
-    match_brightness: b(args.matched[3]),
+    match_hue: b(args.matched[3]),
     navail_shape: args.matchCounts[0],
     navail_size: args.matchCounts[1],
     navail_orientation: args.matchCounts[2],
-    navail_brightness: args.matchCounts[3],
+    navail_hue: args.matchCounts[3],
     advanced_after: args.advancedAfter,
   };
 }
+
+/** Column order for the local CSV fallback. Must list every field on the row:
+ *  the download exists for the case where the upload failed, so a column
+ *  missing here is data lost exactly when it matters. */
+export const MNC_COLUMNS: (keyof MncEventRow)[] = [
+  'participant_id', 'prolific_pid', 'study_id', 'session_id',
+  'experiment_version', 'is_test', 'arm',
+  'timestamp_utc', 'elapsed_ms', 'response_time_ms',
+  'trial_index', 'context_index', 'trial_in_context',
+  'context_color', 'target_index', 'target_label',
+  'alternatives', 'target_position', 'chosen_position', 'chosen_index',
+  'chosen_label', 'correct', 'rewarded', 'points_total', 'error_disparity',
+  'match_shape', 'match_size', 'match_orientation', 'match_hue',
+  'navail_shape', 'navail_size', 'navail_orientation', 'navail_hue',
+  'advanced_after',
+];

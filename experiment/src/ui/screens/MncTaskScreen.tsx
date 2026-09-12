@@ -17,9 +17,17 @@ interface Props {
  * when the rule moved, and when they notice a change is part of what the
  * session is measuring.
  *
- * Feedback marks only whether a point was earned, not which alternative was
- * the target. Showing the target would turn the task into instructed
- * learning; the participant has to find the rule from the consequences.
+ * Feedback is the ring around the chosen tile and nothing else: green when a
+ * point was earned, red when it was not. An earlier version also disabled the
+ * buttons during feedback, which the browser renders by dimming them -- and a
+ * dimmed screen is exactly as visible as a coloured ring, so the two signals
+ * competed and the ring was hard to read. Clicks during feedback are ignored
+ * by the task hook, so nothing needs to be disabled to make that safe.
+ *
+ * The ring reports whether a POINT was earned, not whether the choice was
+ * correct. In the probabilistic arm those differ, and reinforcement is what
+ * the participant actually has to learn from. The target is never revealed;
+ * showing it would make this instructed learning rather than discovery.
  */
 export function MncTaskScreen({ state, choose }: Props) {
   useEffect(() => {
@@ -75,7 +83,7 @@ export function MncTaskScreen({ state, choose }: Props) {
               key={i}
               id={`mnc-alt-${i}`}
               onClick={() => choose(i)}
-              disabled={!!fb}
+              aria-disabled={!!fb}
               aria-label={`Option ${i + 1}`}
               style={{
                 display: 'grid',
@@ -87,6 +95,7 @@ export function MncTaskScreen({ state, choose }: Props) {
                   : '4px solid transparent',
                 borderRadius: 10,
                 cursor: fb ? 'default' : 'pointer',
+                transition: 'border-color 90ms ease',
                 padding: 0,
               }}
             >

@@ -10,7 +10,7 @@
  */
 import { MNC_CONFIG, type Arm } from '../src/config/mnc';
 import {
-  advanceDecision, buildTrial, compoundToIndex, contextTargets, scoreChoice,
+  advanceDecision, buildTrial, contextTargets, scoreChoice,
 } from '../src/engine/mnc';
 import { buildMncRow, type MncEventRow } from '../src/logging/mncSchema';
 import { createRng, deriveSeed } from '../src/utils/rng';
@@ -67,7 +67,7 @@ function check(name: string, rows: MncEventRow[]) {
       problems.push(`${r.trial_index}: target_position does not point at the target`);
     if (r.alternatives[r.chosen_position] !== r.chosen_index)
       problems.push(`${r.trial_index}: chosen_position does not point at the choice`);
-    const nMatched = [r.match_shape, r.match_size, r.match_orientation, r.match_brightness]
+    const nMatched = [r.match_shape, r.match_size, r.match_orientation, r.match_hue]
       .filter((x) => x === 1).length;
     if (r.correct === 1 && nMatched !== 4)
       problems.push(`${r.trial_index}: marked correct with ${nMatched}/4 dimensions matched`);
@@ -75,7 +75,7 @@ function check(name: string, rows: MncEventRow[]) {
       problems.push(`${r.trial_index}: all dimensions matched but marked incorrect`);
     if (4 - nMatched !== r.error_disparity)
       problems.push(`${r.trial_index}: error_disparity disagrees with the match flags`);
-    for (const n of [r.navail_shape, r.navail_size, r.navail_orientation, r.navail_brightness]) {
+    for (const n of [r.navail_shape, r.navail_size, r.navail_orientation, r.navail_hue]) {
       if (n < 1 || n > MNC_CONFIG.alternativesPerTrial)
         problems.push(`${r.trial_index}: impossible availability count ${n}`);
     }

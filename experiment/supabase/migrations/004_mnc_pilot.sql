@@ -50,12 +50,12 @@ create table if not exists public.mnc_events (
   match_shape         smallint    not null,
   match_size          smallint    not null,
   match_orientation   smallint    not null,
-  match_brightness    smallint    not null,
+  match_hue           smallint    not null,
 
   navail_shape        smallint    not null,
   navail_size         smallint    not null,
   navail_orientation  smallint    not null,
-  navail_brightness   smallint    not null,
+  navail_hue          smallint    not null,
 
   advanced_after      text,
 

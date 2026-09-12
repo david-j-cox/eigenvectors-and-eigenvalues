@@ -5,16 +5,21 @@ import type { Compound } from '../../engine/mnc';
  *
  * The four dimensions have to be readable simultaneously and independently,
  * which constrains how they are drawn. Size is the outer figure's extent;
- * brightness is its fill; shape is circle against square; the line runs
- * horizontally or vertically across it. The line is drawn in a fixed colour
- * rather than a contrasting one so that Shade cannot be read off the line
- * instead of the figure, which would make two dimensions one.
+ * hue is its fill; shape is circle against square; the line runs horizontally
+ * or vertically across it. The line is a fixed near-black rather than a
+ * contrasting colour, so hue cannot be read off the line instead of the
+ * figure, which would collapse two dimensions into one.
+ *
+ * The hues are Okabe-Ito blue and orange. They carry the same lightness, so
+ * the dimension survives greyscale printing badly on purpose: a lightness
+ * difference would let hue be judged by brightness, and the grey pair this
+ * replaced was not reliably discriminable at this size anyway.
  */
 export function MncStimulus({ compound, size = 104 }: { compound: Compound; size?: number }) {
-  const [shape, sizeBit, orientation, brightness] = compound;
+  const [shape, sizeBit, orientation, hue] = compound;
   const box = size;
   const extent = sizeBit === 0 ? box * 0.82 : box * 0.56; // large : small
-  const fill = brightness === 0 ? '#6E6E6E' : '#A0A0A0'; // dark : light
+  const fill = hue === 0 ? '#0072B2' : '#E69F00'; // Okabe-Ito blue : orange
   const c = box / 2;
   const half = extent / 2;
   const lineLen = extent * 0.72;

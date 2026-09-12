@@ -31,6 +31,10 @@ export interface LoggerOptions {
   maxRetries?: number;
   /** Persist unflushed events here so a refresh does not lose them. */
   storageKey?: string;
+  /** Column order for toCsv. Defaults to the foraging task's columns; a
+   *  logger carrying different rows must supply its own, or the local CSV
+   *  fallback silently exports a grid of empty cells. */
+  csvColumns?: readonly string[];
   /** Treat a batch in flight longer than this as abandoned. */
   stallMs?: number;
   /** Consecutive failed flushes before a batch is set aside. */
@@ -65,8 +69,9 @@ export class EventLogger<R = EventRow> {
    */
   private inFlightSince = 0;
   private timer: ReturnType<typeof setInterval> | null = null;
-  private readonly opts: Required<Omit<LoggerOptions, 'storageKey'>> & {
+  private readonly opts: Required<Omit<LoggerOptions, 'storageKey' | 'csvColumns'>> & {
     storageKey: string | null;
+    csvColumns: readonly string[];
   };
 
   /** Every event ever logged, kept for the local download fallback. */
@@ -83,6 +88,7 @@ export class EventLogger<R = EventRow> {
       stallMs: options.stallMs ?? DEFAULTS.stallMs,
       quarantineAfter: options.quarantineAfter ?? DEFAULTS.quarantineAfter,
       storageKey: options.storageKey ?? null,
+      csvColumns: options.csvColumns ?? EVENT_COLUMNS,
     };
   }
 
@@ -245,9 +251,9 @@ export class EventLogger<R = EventRow> {
       return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
     };
     return [
-      EVENT_COLUMNS.join(','),
+      this.opts.csvColumns.join(','),
       ...this.all.map((r) =>
-        EVENT_COLUMNS.map((c) => cell((r as Record<string, unknown>)[c])).join(','),
+        this.opts.csvColumns.map((c) => cell((r as Record<string, unknown>)[c])).join(','),
       ),
     ].join('\n');
   }

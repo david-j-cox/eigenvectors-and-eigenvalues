@@ -4,7 +4,7 @@ import { COMPLETION_CODE, EXPERIMENT_VERSION } from '../config/task';
 import { ARMS, MNC_CONFIG, type Arm } from '../config/mnc';
 import { EventLogger, MemoryTransport } from '../logging/logger';
 import { mncTransportFromEnv } from '../logging/supabase';
-import { buildMncRow, type MncEventRow } from '../logging/mncSchema';
+import { buildMncRow, MNC_COLUMNS, type MncEventRow } from '../logging/mncSchema';
 import { readProlificParams, resolveParticipantId, sessionSeed } from '../utils/prolific';
 import { useMncTask } from './useMncTask';
 import { MncTaskScreen } from './screens/MncTaskScreen';
@@ -59,9 +59,14 @@ export function MncApp() {
           'will be lost when this tab closes.',
       );
     }
-    return new EventLogger<MncEventRow>(
-      transport ?? new MemoryTransport<MncEventRow>(),
-    );
+    return new EventLogger<MncEventRow>(transport ?? new MemoryTransport<MncEventRow>(), {
+      // Without a storage key nothing is kept locally, so a failed upload
+      // loses the session outright -- which is exactly what happened on the
+      // first run of this pilot, because the database function did not exist
+      // yet and there was no backup behind it.
+      storageKey: 'mnc-pending-events',
+      csvColumns: MNC_COLUMNS,
+    });
   }, []);
 
   const [pending, setPending] = useState(0);

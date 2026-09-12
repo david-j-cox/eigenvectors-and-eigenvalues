@@ -28,7 +28,7 @@
 // question this pilot exists to answer.
 // ============================================================
 
-export type DimId = 'shape' | 'size' | 'orientation' | 'brightness';
+export type DimId = 'shape' | 'size' | 'orientation' | 'hue';
 
 export interface DimensionSpec {
   id: DimId;
@@ -42,7 +42,11 @@ export const DIMENSIONS: DimensionSpec[] = [
   { id: 'shape', label: 'Shape', values: ['circle', 'square'] },
   { id: 'size', label: 'Size', values: ['large', 'small'] },
   { id: 'orientation', label: 'Line', values: ['horizontal', 'vertical'] },
-  { id: 'brightness', label: 'Shade', values: ['dark', 'light'] },
+  // Blue against orange, from the Okabe-Ito palette. A light/dark grey pair
+  // was tried first and was not reliably discriminable; these two separate
+  // under protanopia, deuteranopia and tritanopia alike, which a
+  // lightness contrast does not.
+  { id: 'hue', label: 'Colour', values: ['blue', 'orange'] },
 ];
 
 export const N_DIMENSIONS = DIMENSIONS.length;
