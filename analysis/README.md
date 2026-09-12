@@ -19,6 +19,16 @@ python3 run_pilot_diagnostics.py --events data/pilot_events.csv
 python3 run_state_selection.py   --events data/pilot_events.csv
 ```
 
+The export also drops six columns that re-encode the schedule state. Under the
+depleting-probability schedule the arranged reinforcement *is* `richness_a` and
+`richness_b`, the probability a response on that alternative pays. `vi_k_ms`,
+`rate_k_per_s` and `effective_rate_k_per_s` are that same number re-expressed so
+the log could also serve a concurrent-VI mode: `rate_k_per_s` correlates with
+`richness_k` at exactly 1.000000, and `effective_rate_k_per_s` applies the VI
+formula to a probability and ends up squaring it. They carry no information and
+would make a design matrix singular. The database keeps them, since it records
+what was collected; the analysis frame does not.
+
 The export drops test and incomplete sessions by default, so the acceptance
 checks run on exactly what a real pilot produced. The event table's columns are
 the ones the simulation writes, so nothing is renamed on the way through.

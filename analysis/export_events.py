@@ -101,6 +101,34 @@ def main() -> None:
 
     events = events.sort_values(["session_id", "trial_index"]).reset_index(drop=True)
 
+    # Drop the redundant encodings of the schedule state.
+    #
+    # Under the depleting-probability schedule the arranged reinforcement IS
+    # richness_a and richness_b: the probability that a response on that
+    # alternative pays. The six columns below are that same number re-expressed
+    # so the log could serve a concurrent-VI mode without the analysis
+    # branching. They carry no information richness does not:
+    #
+    #     vi_k_ms            = 350 / richness_k
+    #     rate_k_per_s       = richness_k / 0.35      (corr with richness: 1.000000)
+    #     effective_rate_k   = 2.857 * richness_k^2
+    #
+    # The last is also wrong here -- it applies the VI formula to a probability
+    # and ends up squaring it -- which went unnoticed precisely because nothing
+    # reads these. Keeping them in an analysis frame invites a singular design
+    # matrix. They stay in the database, which is the record of what was
+    # collected; this is the working copy.
+    REDUNDANT = [
+        "vi_a_ms", "vi_b_ms",
+        "rate_a_per_s", "rate_b_per_s",
+        "effective_rate_a_per_s", "effective_rate_b_per_s",
+    ]
+    dropped = [c for c in REDUNDANT if c in events.columns]
+    if dropped:
+        events = events.drop(columns=dropped)
+        print(f"  dropped {len(dropped)} redundant schedule columns "
+              f"(recoverable from richness_a/richness_b)")
+
     # A duplicated (session_id, trial_index) should be impossible -- it is the
     # table's primary key -- so if one appears the assumption that trial_index
     # orders a session has broken, and the bins would be wrong rather than noisy.
