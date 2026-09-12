@@ -1,8 +1,19 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 
 interface Props {
   onAgree: () => void;
   onDecline: () => void;
+  /**
+   * Replaces the body of the "What you will do" paragraph only.
+   *
+   * This is the one paragraph that legitimately differs between studies in
+   * this program, and the comment below records that duration and task
+   * description are the only parts meant to change. Exposing it as a prop
+   * keeps every other sentence byte-identical across tasks instead of
+   * inviting a second, drifting copy of the whole form. Omit it and the
+   * foraging task's approved wording is used unchanged.
+   */
+  whatYouWillDo?: ReactNode;
 }
 
 /**
@@ -18,7 +29,7 @@ interface Props {
  * Do not edit the substance of this text without checking it against the
  * approved protocol.
  */
-export function ConsentScreen({ onAgree, onDecline }: Props) {
+export function ConsentScreen({ onAgree, onDecline, whatYouWillDo }: Props) {
   const [read, setRead] = useState(false);
 
   return (
@@ -42,10 +53,14 @@ export function ConsentScreen({ onAgree, onDecline }: Props) {
           repeated choices when outcomes may change over time.
         </p>
         <p>
-          <strong>What you will do:</strong> You will play a game
-          (approximately 25-30 minutes total) in which you click panels to earn
-          points. There is a brief practice round followed by the main task,
-          which consists of several phases.
+          <strong>What you will do:</strong>{' '}
+          {whatYouWillDo ?? (
+            <>
+              You will play a game (approximately 25-30 minutes total) in which
+              you click panels to earn points. There is a brief practice round
+              followed by the main task, which consists of several phases.
+            </>
+          )}
         </p>
         <p>
           <strong>Risks:</strong> There are no known risks beyond those of

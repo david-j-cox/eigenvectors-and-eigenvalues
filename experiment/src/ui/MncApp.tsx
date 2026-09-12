@@ -10,10 +10,11 @@ import { useMncTask } from './useMncTask';
 import { MncTaskScreen } from './screens/MncTaskScreen';
 import { MncStimulus } from './screens/MncStimulus';
 import { EndScreen } from './screens/EndScreen';
+import { ConsentScreen } from './screens/ConsentScreen';
 import { hashString } from '../utils/rng';
 import { compoundFromIndex } from '../engine/mnc';
 
-type Phase = 'intro' | 'task' | 'end';
+type Phase = 'consent' | 'intro' | 'task' | 'end' | 'declined';
 
 /**
  * Arm assignment.
@@ -40,7 +41,7 @@ function resolveArm(participantId: string): Arm {
 }
 
 export function MncApp() {
-  const [phase, setPhase] = useState<Phase>('intro');
+  const [phase, setPhase] = useState<Phase>('consent');
 
   const isTestSession = useMemo(
     () => new URLSearchParams(window.location.search).get('test') === '1',
@@ -160,6 +161,35 @@ export function MncApp() {
     onFinish,
   });
 
+  if (phase === 'consent') {
+    return (
+      <ConsentScreen
+        onAgree={() => setPhase('intro')}
+        onDecline={() => setPhase('declined')}
+        // Only the duration and the description of the task differ from the
+        // approved text; every other paragraph is the shared wording.
+        whatYouWillDo={
+          <>
+            You will play a game (approximately 5 minutes total) in which you
+            click shapes to earn points. On each turn four shapes are shown and
+            one of them earns a point; which one changes from time to time, and
+            part of the task is working out which.
+          </>
+        }
+      />
+    );
+  }
+  if (phase === 'declined') {
+    return (
+      <main className="centered prose">
+        <h1>Thank you</h1>
+        <p>
+          You have declined to participate. You may close this window and return
+          the study on Prolific.
+        </p>
+      </main>
+    );
+  }
   if (phase === 'intro') {
     return <Intro onStart={() => setPhase('task')} />;
   }
