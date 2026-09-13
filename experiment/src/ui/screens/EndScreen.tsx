@@ -22,10 +22,11 @@ export function EndScreen({ points, completionCode, pending, onDownload }: Props
             {pending === 1
               ? 'One response is'
               : `${pending} responses are`}{' '}
-            still uploading. Please keep this page open for a few more moments
-            &mdash; this message will disappear on its own once it finishes. If
-            it is still here after a minute, use the button below and email the
-            file to the researcher.
+            still uploading. Keep this page open a few more moments; this
+            message goes away on its own when it finishes. Only if it is still
+            here after a couple of minutes, save a copy with the button below
+            and email it to the address in the consent form. Your completion
+            code above is valid either way, so you can be paid regardless.
           </p>
           <button onClick={onDownload}>Download my data</button>
         </>

@@ -151,9 +151,26 @@ export function MncApp() {
   );
 
   const onFinish = useCallback(() => {
-    void logger.flush();
     setPhase('end');
+    void logger.flush().then(() => setPending(logger.pendingCount));
   }, [logger]);
+
+  // Keep the end screen's count honest.
+  //
+  // `pending` was previously updated only when a trial was logged, so after the
+  // last trial it froze at whatever happened to be buffered -- and the end
+  // screen told every participant that responses were still uploading and to
+  // email the researcher if the message did not disappear. It could not
+  // disappear. One participant in the first live pilot did email, having
+  // downloaded a file whose contents were already safely stored.
+  useEffect(() => {
+    if (phase !== 'end') return;
+    const tick = window.setInterval(() => {
+      setPending(logger.pendingCount);
+      if (logger.pendingCount > 0) void logger.flush();
+    }, 1000);
+    return () => window.clearInterval(tick);
+  }, [phase, logger]);
 
   const { state, choose } = useMncTask({
     seed: identity.sessionId,
