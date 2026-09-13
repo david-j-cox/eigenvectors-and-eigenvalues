@@ -100,7 +100,9 @@ case "$cmd" in
   studies)     run GET /studies/ | jq '[.results[] | {id, name, status}]' ;;
   get)         run GET "/studies/$1/" ;;
   cost)        run GET "/studies/$1/cost/" ;;
-  submissions) run GET "/studies/?study=$1" ;;
+  # /studies/?study= returns the STUDY list, not submissions; the
+  # submissions endpoint is its own collection filtered by study.
+  submissions) run GET "/submissions/?study=$1" ;;
 
   create)
     [ -f "${1:-}" ] || { echo "usage: prolific.sh create <study.json>" >&2; exit 1; }

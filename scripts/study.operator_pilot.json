@@ -1,0 +1,41 @@
+{
+  "name": "Two-panel points game (about 20 minutes)",
+  "internal_name": "operator-pilot-1",
+  "description": "This study investigates how people adjust their choices when the payoffs of two options change over time.\n\nYou will play a game in which you click one of two panels to earn points. How often each panel pays changes during the game without warning, and occasionally a panel is marked to show it will pay especially well, or that clicking it will cost a point.\n\nThe task needs a desktop or laptop computer. There are no known risks beyond those of everyday computer use; you may experience mild boredom or fatigue. Full consent information is shown before the task begins.",
+  "external_study_url": "https://eigen-dynamics-task.vercel.app/?task=operator&PROLIFIC_PID={{%PROLIFIC_PID%}}&STUDY_ID={{%STUDY_ID%}}&SESSION_ID={{%SESSION_ID%}}",
+  "prolific_id_option": "url_parameters",
+  "completion_codes": [
+    {
+      "code": "C1JXPN7Q",
+      "code_type": "COMPLETED",
+      "actions": [
+        {
+          "action": "AUTOMATICALLY_APPROVE"
+        }
+      ]
+    }
+  ],
+  "estimated_completion_time": 18,
+  "reward": 300,
+  "maximum_allowed_time": 70,
+  "total_available_places": 5,
+  "device_compatibility": [
+    "desktop"
+  ],
+  "peripheral_requirements": [],
+  "project": "6aa3344d8cf12fee3bb3c48a",
+  "filters": [
+    {
+      "filter_id": "previous_studies_blocklist",
+      "selected_values": [
+        "6aa33c9f3f1373c6733bb498",
+        "6aa3e1434aa8dba5501ced9b",
+        "6aa41a5f4a9448cb6a4969e8",
+        "69ac76805a1f272032a2d892",
+        "69acc22050036493d9b18d4a",
+        "69b730b2cc5d7d1bcd797688",
+        "6aa43439dee61b0e85736685"
+      ]
+    }
+  ]
+}
