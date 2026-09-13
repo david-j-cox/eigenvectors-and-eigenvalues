@@ -13,7 +13,7 @@
  * That is a property of the statistic and the trial construction, decidable
  * without any claim about people.
  */
-import { contextSpecs, buildTrial, scoreChoice, type ContextSpec } from '../src/engine/mnc';
+import { contextSpecs, buildTrial, scoreChoice } from '../src/engine/mnc';
 import { createRng } from '../src/utils/rng';
 import { DIMENSIONS } from '../src/config/mnc';
 
