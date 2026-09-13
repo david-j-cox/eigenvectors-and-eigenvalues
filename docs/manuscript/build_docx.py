@@ -126,15 +126,49 @@ def main() -> None:
         r.font.name, r.font.size = FONT, SIZE
     doc.add_page_break()
 
+    # The source is hard-wrapped, so consecutive non-blank lines belong to one
+    # paragraph and a blank line ends it. Treating each line as a paragraph
+    # gives every wrapped line its own first-line indent, which is what the
+    # first build did.
     in_refs = False
     first_para_after_heading = True
+    buf: list[str] = []
+
+    def flush() -> None:
+        nonlocal buf, first_para_after_heading
+        if not buf:
+            return
+        text = " ".join(x.strip() for x in buf).strip()
+        buf = []
+        if not text:
+            return
+        if text.startswith("> "):
+            p = doc.add_paragraph()
+            pf = p.paragraph_format
+            pf.left_indent = Inches(0.5)
+            pf.line_spacing_rule = WD_LINE_SPACING.DOUBLE
+            add_runs(p, text[2:])
+            first_para_after_heading = True
+            return
+        p = doc.add_paragraph()
+        pf = p.paragraph_format
+        pf.line_spacing_rule = WD_LINE_SPACING.DOUBLE
+        if in_refs:
+            pf.left_indent = Inches(0.5)
+            pf.first_line_indent = Inches(-0.5)
+        else:
+            pf.first_line_indent = (Inches(0) if first_para_after_heading
+                                    else Inches(0.5))
+            first_para_after_heading = False
+        add_runs(p, text)
+
     for line in body:
         s = line.rstrip()
         if not s.strip():
+            flush()
             continue
         if s.startswith("#### "):
-            # APA level 4: indented, bold, title case, ends with a period, and
-            # the paragraph text continues on the same line.
+            flush()
             head, _, rest = s[5:].partition(". ")
             p = doc.add_paragraph()
             pf = p.paragraph_format
@@ -147,32 +181,18 @@ def main() -> None:
             first_para_after_heading = False
             continue
         if s.startswith("### "):
-            heading(doc, s[4:], 3); first_para_after_heading = True; continue
+            flush(); heading(doc, s[4:], 3); first_para_after_heading = True; continue
         if s.startswith("## "):
-            heading(doc, s[3:], 2); first_para_after_heading = True; continue
+            flush(); heading(doc, s[3:], 2); first_para_after_heading = True; continue
         if s.startswith("# "):
+            flush()
             txt = s[2:]
             in_refs = txt.strip().lower() == "references"
             heading(doc, txt, 1); first_para_after_heading = True; continue
         if s.startswith("> "):
-            p = doc.add_paragraph()
-            pf = p.paragraph_format
-            pf.left_indent = Inches(0.5)
-            pf.line_spacing_rule = WD_LINE_SPACING.DOUBLE
-            add_runs(p, s[2:])
-            first_para_after_heading = True
-            continue
-
-        p = doc.add_paragraph()
-        pf = p.paragraph_format
-        pf.line_spacing_rule = WD_LINE_SPACING.DOUBLE
-        if in_refs:
-            pf.left_indent = Inches(0.5)
-            pf.first_line_indent = Inches(-0.5)   # hanging indent
-        else:
-            pf.first_line_indent = Inches(0) if first_para_after_heading else Inches(0.5)
-            first_para_after_heading = False
-        add_runs(p, s)
+            flush(); buf = [s]; flush(); continue
+        buf.append(s)
+    flush()
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     doc.save(OUT)
