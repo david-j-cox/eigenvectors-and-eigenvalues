@@ -244,6 +244,40 @@ def role_contrast(d: pd.DataFrame, pid: str, n_null: int = 60,
             "controlled": (obs[0] - obs[1]) > p95}
 
 
+def spread_vs_null(d: pd.DataFrame, pid: str, n_null: int = 200,
+                   seed: int = 0) -> dict | None:
+    """Do a participant's dimensions differ in control beyond their own null?
+
+    Applies where relevance does NOT vary -- version 1.0.0 -- and so there is
+    no arranged contrast to draw and the only question left is whether the
+    participant weighted the dimensions differently of their own accord. This
+    is the evidence that decided whether that design could answer the
+    program's question at all, so it belongs in the library rather than in a
+    shell command.
+
+    The null permutes dimension columns within each trial, destroying which
+    dimension is which while leaving the choice sets and the actual choices
+    untouched.
+    """
+    g = d[d.pid == pid]
+    X, y = choice_design(g)
+    if len(y) < 40:
+        return None
+    rng = np.random.default_rng(seed)
+    obs = fit_conditional_logit(X, y)
+    spread = float(obs.max() - obs.min())
+    null = []
+    for _ in range(n_null):
+        Xp = X.copy()
+        for i in range(len(Xp)):
+            Xp[i] = Xp[i][:, rng.permutation(X.shape[2])]
+        b = fit_conditional_logit(Xp, y, iters=250)
+        null.append(float(b.max() - b.min()))
+    p95 = float(np.quantile(null, 0.95))
+    return {"betas": obs, "spread": spread, "null_p95": p95,
+            "differs": spread > p95}
+
+
 # ------------------------------------------------------------- descriptive --
 
 def session_summary(d: pd.DataFrame) -> pd.DataFrame:

@@ -203,26 +203,24 @@ export interface ContextSpec {
 
 export function contextSpecs(seed: string, n: number): ContextSpec[] {
   const rnd = createRng(seed);
-  const k = MNC_CONFIG.relevantPerContext;
+  const sets = MNC_CONFIG.relevantSets;
   const out: ContextSpec[] = [];
   let prev: number[] | null = null;
   for (let c = 0; c < n; c++) {
-    let rel: number[];
+    let rel: readonly number[];
     let guard = 0;
     do {
-      const idx = DIMENSIONS.map((_, i) => i);
-      for (let i = idx.length - 1; i > 0; i--) {
-        const j = Math.floor(rnd() * (i + 1));
-        [idx[i], idx[j]] = [idx[j], idx[i]];
-      }
-      rel = idx.slice(0, k).sort((a, b) => a - b);
+      rel = sets[Math.floor(rnd() * sets.length)];
       guard++;
+      // With only three sets to draw from, insisting on a different one each
+      // time is cheap and keeps a participant from meeting the same rule twice
+      // in a row, which would measure retention rather than acquisition.
     } while (prev && rel.join() === prev.join() && guard < 100);
     out.push({
-      relevant: rel,
+      relevant: [...rel].sort((a, b) => a - b),
       values: DIMENSIONS.map(() => (rnd() < 0.5 ? 0 : 1) as 0 | 1),
     });
-    prev = rel;
+    prev = [...rel];
   }
   return out;
 }

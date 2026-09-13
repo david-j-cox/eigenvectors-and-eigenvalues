@@ -227,6 +227,27 @@ describe('context specs', () => {
     }
   });
 
+  it('lets every dimension serve as its own control', () => {
+    // The paired comparison only exists if each dimension is relevant in some
+    // contexts and irrelevant in others. A dimension present in every allowed
+    // set would never be a control for itself, and one present in none would
+    // never be measured.
+    const sets = MNC_CONFIG.relevantSets;
+    for (let d = 0; d < 4; d++) {
+      const inSome = sets.some((s) => s.includes(d));
+      const outOfSome = sets.some((s) => !s.includes(d));
+      expect(inSome, `dimension ${d} is never relevant`).toBe(true);
+      expect(outOfSome, `dimension ${d} is always relevant`).toBe(true);
+    }
+  });
+
+  it('draws only from the allowed sets', () => {
+    const allowed = new Set(MNC_CONFIG.relevantSets.map((s) => [...s].sort().join()));
+    for (const s of contextSpecs('allowed', 60)) {
+      expect(allowed.has(s.relevant.join())).toBe(true);
+    }
+  });
+
   it('gives every dimension a turn at being relevant and irrelevant', () => {
     // This is what makes the comparison paired within a dimension instead of
     // confounded with which dimension it happens to be.

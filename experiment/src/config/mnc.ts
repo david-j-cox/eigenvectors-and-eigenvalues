@@ -97,6 +97,31 @@ export const MNC_CONFIG = {
   // into a paired within-dimension one against an arranged ground truth.
   relevantPerContext: 2,
 
+  /**
+   * Which relevant sets are allowed to occur.
+   *
+   * Four dimensions taken two at a time gives six possible sets, and the
+   * estimator has to be fitted within a set because relevance is what changes
+   * between contexts. Six sets divides a three-minute session six ways: at the
+   * pace the five collected participants set -- 92 to 147 trials -- that is 15
+   * to 24 trials per set against the 30 a fit needs, and not one of them would
+   * have produced an analysable session. 1.1.0 also runs faster than 1.0.0,
+   * two dimensions to find rather than four, so the split is worse still.
+   *
+   * Three sets gives 31 to 49 trials each, above the threshold for every
+   * participant observed. They are chosen so that every dimension is relevant
+   * in at least one and irrelevant in at least one, which is what makes the
+   * comparison paired within a dimension. No dimension appears in all three,
+   * which would leave it never serving as its own control.
+   *
+   * Indices are into DIMENSIONS: 0 shape, 1 size, 2 orientation, 3 hue.
+   */
+  relevantSets: [
+    [0, 1], // shape + size        (orientation, hue irrelevant)
+    [2, 3], // orientation + hue   (shape, size irrelevant)
+    [0, 2], // shape + orientation (size, hue irrelevant)
+  ] as readonly (readonly number[])[],
+
   /** Task duration, excluding consent and instructions. */
   taskMs: 3 * 60 * 1000,
 
