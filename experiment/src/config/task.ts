@@ -10,7 +10,11 @@
 import type { ColorSpec, ContingencySpec, EngineConfig } from '../engine/types';
 import { DEFAULT_ENGINE_CONFIG } from '../engine/types';
 
-export const EXPERIMENT_VERSION = 'eigen-dynamics-1.0.0';
+// 1.1.0 changes what the task arranges, not just how it looks: only some of
+// the four dimensions determine which compound pays, and which ones they are
+// changes with the context. Data from 1.0.0 answers a different question and
+// must not be pooled with it, so the version is part of every row.
+export const EXPERIMENT_VERSION = 'eigen-dynamics-1.1.0';
 
 /**
  * Colors are paired with a pattern so the discrimination never rests on hue

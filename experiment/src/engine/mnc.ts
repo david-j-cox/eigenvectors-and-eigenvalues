@@ -65,35 +65,40 @@ export interface Trial {
 }
 
 /**
- * Build one trial: the target plus three distinct distractors.
+ * Build one trial: exactly one compound that pays, and three that do not.
  *
- * Distractors are drawn uniformly from the 15 non-target compounds rather
- * than stratified by disparity. Stratifying would fix the chance baseline
- * per dimension at a constant, which reads as tidier, but it also makes the
- * distractor set predictable from the target -- and a participant who learns
- * the distractor rule can exclude alternatives without attending to the
- * dimensions at all. Uniform sampling keeps the baseline varying trial to
- * trial, which is why it is logged per trial rather than assumed.
+ * The paying compound takes the required values on the relevant dimensions and
+ * random values everywhere else -- which is the whole point. An irrelevant
+ * dimension's value on the winning alternative is a coin flip, so a
+ * participant who attends to it gains nothing, and the per-dimension match
+ * rate for it should sit at chance rather than above it.
+ *
+ * Distractors differ from the rule on at least one relevant dimension, so
+ * there is never more than one right answer, and their irrelevant values are
+ * drawn independently too.
  */
-export function buildTrial(target: Compound, rnd: () => number): Trial {
-  const targetIdx = compoundToIndex(target);
-  const pool = Array.from({ length: N_COMPOUNDS }, (_, i) => i).filter(
-    (i) => i !== targetIdx,
-  );
-  // partial Fisher-Yates: only as many draws as we need
-  const need = MNC_CONFIG.alternativesPerTrial - 1;
-  for (let i = 0; i < need; i++) {
-    const j = i + Math.floor(rnd() * (pool.length - i));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
-  }
-  const alts = [target, ...pool.slice(0, need).map(compoundFromIndex)];
+export function buildTrial(spec: ContextSpec, rnd: () => number): Trial {
+  const draw = (): Compound => DIMENSIONS.map(() => (rnd() < 0.5 ? 0 : 1) as 0 | 1);
 
-  // shuffle positions so the target is not always first
+  const winner = draw().map((v, d) =>
+    spec.relevant.includes(d) ? spec.values[d] : v,
+  ) as Compound;
+
+  const alts: Compound[] = [winner];
+  let guard = 0;
+  while (alts.length < MNC_CONFIG.alternativesPerTrial && guard < 1000) {
+    guard++;
+    const cand = draw();
+    if (paysUnder(spec, cand)) continue; // would be a second right answer
+    if (alts.some((a) => compoundToIndex(a) === compoundToIndex(cand))) continue;
+    alts.push(cand);
+  }
+
   for (let i = alts.length - 1; i > 0; i--) {
     const j = Math.floor(rnd() * (i + 1));
     [alts[i], alts[j]] = [alts[j], alts[i]];
   }
-  const targetPosition = alts.findIndex((a) => compoundToIndex(a) === targetIdx);
+  const targetPosition = alts.findIndex((a) => paysUnder(spec, a));
   return { alternatives: alts, targetPosition };
 }
 
@@ -122,22 +127,27 @@ export interface ChoiceRecord {
 
 export function scoreChoice(
   trial: Trial,
-  target: Compound,
+  spec: ContextSpec,
   chosenPosition: number,
   arm: Arm,
   rnd: () => number,
 ): ChoiceRecord {
   const chosen = trial.alternatives[chosenPosition];
   if (!chosen) throw new RangeError(`no alternative at position ${chosenPosition}`);
-  const correct = compoundToIndex(chosen) === compoundToIndex(target);
-  const spec = ARMS[arm];
-  const p = correct ? spec.pReinforceCorrect : spec.pReinforceError;
+  const winner = trial.alternatives[trial.targetPosition];
+  const correct = paysUnder(spec, chosen);
+  const p = ARMS[arm][correct ? 'pReinforceCorrect' : 'pReinforceError'];
   return {
     correct,
     rewarded: rnd() < p,
-    matched: DIMENSIONS.map((_, d) => chosen[d] === target[d]),
-    matchCounts: dimensionMatchCounts(trial, target),
-    errorDisparity: disparity(chosen, target),
+    // Matching is scored against the winning compound on every dimension,
+    // relevant or not. On an irrelevant dimension the winner's value was a
+    // coin flip, so matching it is chance by construction -- which is exactly
+    // the prediction being tested, and why this is not restricted to the
+    // relevant dimensions.
+    matched: DIMENSIONS.map((_, d) => chosen[d] === winner[d]),
+    matchCounts: dimensionMatchCounts(trial, winner),
+    errorDisparity: spec.relevant.filter((d) => chosen[d] !== spec.values[d]).length,
   };
 }
 
@@ -169,28 +179,57 @@ export function advanceDecision(
 }
 
 /**
- * The sequence of targets a participant will meet, one per context.
+ * What a participant meets in each context: which dimensions matter, and what
+ * values they have to take.
  *
- * Successive targets are forced to differ on at least two dimensions. A
- * one-dimension change would let a participant carry the previous rule almost
- * intact, so the new context would measure retention rather than acquisition,
- * and acquisition is the part that has any dynamics in it.
+ * Successive contexts are forced to differ in their relevant SET, not merely
+ * in the values. Changing only the values while keeping the same two
+ * dimensions relevant would let a participant carry most of the previous rule
+ * forward, and the next context would measure retention rather than
+ * acquisition.
+ *
+ * The relevant set is drawn so that every dimension takes a turn: across a run
+ * of contexts each of the four is relevant roughly half the time, which is
+ * what makes the relevant-versus-irrelevant comparison paired within a
+ * dimension rather than confounded with which dimension it is.
  */
-export function contextTargets(seed: string, n: number): Compound[] {
+export interface ContextSpec {
+  /** Indices into DIMENSIONS that determine which compound pays. */
+  relevant: number[];
+  /** Required value on each relevant dimension; entries for irrelevant
+   *  dimensions are present but carry nothing. */
+  values: (0 | 1)[];
+}
+
+export function contextSpecs(seed: string, n: number): ContextSpec[] {
   const rnd = createRng(seed);
-  const out: Compound[] = [];
-  let prev: Compound | null = null;
-  for (let k = 0; k < n; k++) {
-    let pick: Compound;
+  const k = MNC_CONFIG.relevantPerContext;
+  const out: ContextSpec[] = [];
+  let prev: number[] | null = null;
+  for (let c = 0; c < n; c++) {
+    let rel: number[];
     let guard = 0;
     do {
-      pick = compoundFromIndex(Math.floor(rnd() * N_COMPOUNDS));
+      const idx = DIMENSIONS.map((_, i) => i);
+      for (let i = idx.length - 1; i > 0; i--) {
+        const j = Math.floor(rnd() * (i + 1));
+        [idx[i], idx[j]] = [idx[j], idx[i]];
+      }
+      rel = idx.slice(0, k).sort((a, b) => a - b);
       guard++;
-    } while (prev && disparity(pick, prev) < 2 && guard < 100);
-    out.push(pick);
-    prev = pick;
+    } while (prev && rel.join() === prev.join() && guard < 100);
+    out.push({
+      relevant: rel,
+      values: DIMENSIONS.map(() => (rnd() < 0.5 ? 0 : 1) as 0 | 1),
+    });
+    prev = rel;
   }
   return out;
+}
+
+/** Does this compound satisfy the context's rule? */
+export function paysUnder(spec: ContextSpec, c: Compound): boolean {
+  return spec.relevant.every((d) => c[d] === spec.values[d]);
 }
 
 export { N_DIMENSIONS };

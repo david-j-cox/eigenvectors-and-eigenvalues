@@ -10,15 +10,15 @@
  */
 import { MNC_CONFIG, type Arm } from '../src/config/mnc';
 import {
-  advanceDecision, buildTrial, contextTargets, scoreChoice,
+  advanceDecision, buildTrial, contextSpecs, scoreChoice,
 } from '../src/engine/mnc';
 import { buildMncRow, type MncEventRow } from '../src/logging/mncSchema';
 import { createRng, deriveSeed } from '../src/utils/rng';
 
-type Player = 'oracle' | 'random';
+type Player = 'oracle' | 'random' | 'decoy';
 
 function run(seed: string, arm: Arm, player: Player, budgetTrials: number) {
-  const targets = contextTargets(deriveSeed(seed, 'mnc-targets'), 80);
+  const specs = contextSpecs(deriveSeed(seed, 'mnc-targets'), 80);
   const trialRng = createRng(deriveSeed(seed, 'mnc-trials'));
   const rewardRng = createRng(deriveSeed(seed, 'mnc-reward'));
   const choiceRng = createRng(deriveSeed(seed, 'player'));
@@ -27,13 +27,17 @@ function run(seed: string, arm: Arm, player: Player, budgetTrials: number) {
   let ctx = 0, inCtx = 0, points = 0, t = 0;
   let recent: boolean[] = [];
 
-  while (t < budgetTrials && ctx < targets.length) {
-    const target = targets[ctx];
-    const trial = buildTrial(target, trialRng);
-    const pos = player === 'oracle'
-      ? trial.targetPosition
+  while (t < budgetTrials && ctx < specs.length) {
+    const spec = specs[ctx];
+    const trial = buildTrial(spec, trialRng);
+    // 'decoy' attends only to a dimension the context made irrelevant, so it
+    // must score at chance; if it does not, the manipulation is broken.
+    const decoyDim = [0, 1, 2, 3].find((dd) => !spec.relevant.includes(dd)) ?? 0;
+    const pos =
+      player === 'oracle' ? trial.targetPosition
+      : player === 'decoy' ? Math.max(0, trial.alternatives.findIndex((a) => a[decoyDim] === 0))
       : Math.floor(choiceRng() * trial.alternatives.length);
-    const rec = scoreChoice(trial, target, pos, arm, rewardRng);
+    const rec = scoreChoice(trial, spec, pos, arm, rewardRng);
     points += rec.rewarded ? 1 : 0;
     inCtx += 1;
     recent = [...recent, rec.correct].slice(-MNC_CONFIG.criterionWindow);
@@ -45,7 +49,8 @@ function run(seed: string, arm: Arm, player: Player, budgetTrials: number) {
       isTest: true, arm, elapsedMs: t * 900, responseTimeMs: 900,
       trialIndex: t, contextIndex: ctx, trialInContext: inCtx,
       contextColor: MNC_CONFIG.contextColors[ctx % MNC_CONFIG.contextColors.length],
-      target, alternatives: trial.alternatives, targetPosition: trial.targetPosition,
+      target: trial.alternatives[trial.targetPosition], spec,
+      alternatives: trial.alternatives, targetPosition: trial.targetPosition,
       chosenPosition: pos, correct: rec.correct, rewarded: rec.rewarded,
       pointsTotal: points, errorDisparity: rec.errorDisparity,
       matched: rec.matched, matchCounts: rec.matchCounts,
@@ -67,14 +72,16 @@ function check(name: string, rows: MncEventRow[]) {
       problems.push(`${r.trial_index}: target_position does not point at the target`);
     if (r.alternatives[r.chosen_position] !== r.chosen_index)
       problems.push(`${r.trial_index}: chosen_position does not point at the choice`);
-    const nMatched = [r.match_shape, r.match_size, r.match_orientation, r.match_hue]
-      .filter((x) => x === 1).length;
-    if (r.correct === 1 && nMatched !== 4)
-      problems.push(`${r.trial_index}: marked correct with ${nMatched}/4 dimensions matched`);
-    if (r.correct === 0 && nMatched === 4)
-      problems.push(`${r.trial_index}: all dimensions matched but marked incorrect`);
-    if (4 - nMatched !== r.error_disparity)
-      problems.push(`${r.trial_index}: error_disparity disagrees with the match flags`);
+    const rel: number[] = [r.rel_shape, r.rel_size, r.rel_orientation, r.rel_hue];
+    const nRel = rel.reduce<number>((a, b) => a + b, 0);
+    if (nRel !== MNC_CONFIG.relevantPerContext)
+      problems.push(`${r.trial_index}: ${nRel} relevant dimensions, expected ${MNC_CONFIG.relevantPerContext}`);
+    const m: number[] = [r.match_shape, r.match_size, r.match_orientation, r.match_hue];
+    const relWrong = rel.reduce<number>((n, isRel, i) => n + (isRel === 1 && m[i] === 0 ? 1 : 0), 0);
+    if ((relWrong === 0) !== (r.correct === 1))
+      problems.push(`${r.trial_index}: correct flag disagrees with the relevant dimensions`);
+    if (relWrong !== r.error_disparity)
+      problems.push(`${r.trial_index}: error_disparity counts non-relevant dimensions`);
     for (const n of [r.navail_shape, r.navail_size, r.navail_orientation, r.navail_hue]) {
       if (n < 1 || n > MNC_CONFIG.alternativesPerTrial)
         problems.push(`${r.trial_index}: impossible availability count ${n}`);
@@ -108,5 +115,7 @@ bad += check('random player, deterministic   (floor: must hit the cap, not stall
              run('s3', 'deterministic', 'random', BUDGET));
 bad += check('random player, probabilistic',
              run('s4', 'probabilistic', 'random', BUDGET));
+bad += check('DECOY player: attends only an irrelevant dimension (must be ~25%)',
+             run('s5', 'deterministic', 'decoy', BUDGET));
 console.log(bad ? `\n${bad} PROBLEMS` : '\nall checks passed');
 process.exit(bad ? 1 : 0);

@@ -76,6 +76,27 @@ export const MNC_CONFIG = {
   /** Alternatives shown per trial. One is always the S+. */
   alternativesPerTrial: 4,
 
+  // --- which dimensions matter ---
+  //
+  // The first live pilot made all four dimensions necessary, so each was
+  // exactly as predictive as the others and four of five participants showed
+  // differential control no greater than their own permutation null. That is
+  // not a sample-size problem. Vyazovska, Teng and Wasserman report the same
+  // equality of control from the same arrangement: if every dimension must
+  // match, there is no reason to weight any of them differently, and nothing
+  // for a covariance structure to decompose.
+  //
+  // So only some dimensions determine which compound pays. The rest still
+  // vary, and still have to be looked at to be ruled out, but carry nothing.
+  // That is Reynolds's (1961) definition of attention used as a manipulation:
+  // control by an element is shown by independently varying it.
+  //
+  // Crucially, WHICH dimensions are relevant changes with the context. Every
+  // dimension is therefore relevant in some contexts and irrelevant in others
+  // within the same participant, turning a weak between-dimension comparison
+  // into a paired within-dimension one against an arranged ground truth.
+  relevantPerContext: 2,
+
   /** Task duration, excluding consent and instructions. */
   taskMs: 3 * 60 * 1000,
 

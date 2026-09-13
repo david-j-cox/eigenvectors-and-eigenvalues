@@ -131,7 +131,8 @@ export function MncApp() {
           contextIndex: r.contextIndex,
           trialInContext: r.trialInContext,
           contextColor: r.contextColor,
-          target: r.target,
+          target: r.trial.alternatives[r.trial.targetPosition],
+          spec: r.spec,
           alternatives: r.trial.alternatives,
           targetPosition: r.trial.targetPosition,
           chosenPosition: r.chosenPosition,
@@ -241,8 +242,9 @@ function Intro({ onStart }: { onStart: () => void }) {
         </p>
         <p>
           The shapes vary in four ways: round or square, large or small, blue or
-          orange, and the bar across them flat or upright. <b>All four matter.</b> The
-          shape that pays is one particular combination of them.
+          orange, and the bar across them flat or upright. <b>Working out which of
+          those matter is the task.</b> Some of them do and some of them do not, and
+          that changes along with the background.
         </p>
         <div style={{ display: 'flex', gap: 12, margin: '18px 0', flexWrap: 'wrap' }}>
           {[0b0000, 0b0011, 0b1101, 0b1010].map((i) => (

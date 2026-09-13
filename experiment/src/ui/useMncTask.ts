@@ -4,9 +4,10 @@ import { ARMS, MNC_CONFIG, type Arm } from '../config/mnc';
 import {
   advanceDecision,
   buildTrial,
-  contextTargets,
+  contextSpecs,
   scoreChoice,
-  type Compound,
+
+  type ContextSpec,
   type Trial,
 } from '../engine/mnc';
 import { createRng, deriveSeed } from '../utils/rng';
@@ -22,7 +23,7 @@ export interface MncState {
   running: boolean;
   finished: boolean;
   trial: Trial;
-  target: Compound;
+  spec: ContextSpec;
   contextIndex: number;
   contextColor: string;
   trialIndex: number;
@@ -44,7 +45,7 @@ export interface UseMncArgs {
   arm: Arm;
   onTrial: (row: {
     trial: Trial;
-    target: Compound;
+    spec: ContextSpec;
     contextIndex: number;
     contextColor: string;
     trialIndex: number;
@@ -64,8 +65,8 @@ export interface UseMncArgs {
 }
 
 export function useMncTask({ seed, arm, onTrial, onFinish }: UseMncArgs) {
-  const targets = useMemo(
-    () => contextTargets(deriveSeed(seed, 'mnc-targets'), MAX_CONTEXTS),
+  const specs = useMemo(
+    () => contextSpecs(deriveSeed(seed, 'mnc-targets'), MAX_CONTEXTS),
     [seed],
   );
   // One stream for trial construction, a separate one for reinforcement, so
@@ -88,9 +89,9 @@ export function useMncTask({ seed, arm, onTrial, onFinish }: UseMncArgs) {
   const shownAt = useRef<number>(performance.now());
   const lockRef = useRef(false);
 
-  const target = targets[Math.min(contextIndex, targets.length - 1)];
+  const spec = specs[Math.min(contextIndex, specs.length - 1)];
   const [trial, setTrial] = useState<Trial>(() =>
-    buildTrial(targets[0], trialRng.current),
+    buildTrial(specs[0], trialRng.current),
   );
   const contextColor =
     MNC_CONFIG.contextColors[contextIndex % MNC_CONFIG.contextColors.length];
@@ -110,7 +111,7 @@ export function useMncTask({ seed, arm, onTrial, onFinish }: UseMncArgs) {
       const elapsed = now - startedAt.current;
       const rt = now - shownAt.current;
 
-      const rec = scoreChoice(trial, target, position, arm, rewardRng.current);
+      const rec = scoreChoice(trial, spec, position, arm, rewardRng.current);
       const nextPoints = points + (rec.rewarded ? 1 : 0);
       const nextInContext = trialInContext + 1;
       recent.current = [...recent.current, rec.correct].slice(
@@ -128,7 +129,7 @@ export function useMncTask({ seed, arm, onTrial, onFinish }: UseMncArgs) {
 
       onTrial({
         trial,
-        target,
+        spec,
         contextIndex,
         contextColor,
         trialIndex,
@@ -156,7 +157,7 @@ export function useMncTask({ seed, arm, onTrial, onFinish }: UseMncArgs) {
         let nextContext = contextIndex;
         if (decision.advance) {
           nextContext = contextIndex + 1;
-          if (nextContext >= targets.length) {
+          if (nextContext >= specs.length) {
             setFeedback(null);
             finish();
             return;
@@ -168,7 +169,7 @@ export function useMncTask({ seed, arm, onTrial, onFinish }: UseMncArgs) {
           setTrialInContext(nextInContext);
         }
         setTrialIndex((t) => t + 1);
-        setTrial(buildTrial(targets[nextContext], trialRng.current));
+        setTrial(buildTrial(specs[nextContext], trialRng.current));
         setFeedback(null);
         shownAt.current = performance.now();
         lockRef.current = false;
@@ -176,7 +177,7 @@ export function useMncTask({ seed, arm, onTrial, onFinish }: UseMncArgs) {
     },
     [
       arm, contextColor, contextIndex, finish, finished, onTrial, points,
-      target, targets, trial, trialInContext, trialIndex,
+      spec, specs, trial, trialInContext, trialIndex,
     ],
   );
 
@@ -184,7 +185,7 @@ export function useMncTask({ seed, arm, onTrial, onFinish }: UseMncArgs) {
     running: !finished,
     finished,
     trial,
-    target,
+    spec,
     contextIndex,
     contextColor,
     trialIndex,

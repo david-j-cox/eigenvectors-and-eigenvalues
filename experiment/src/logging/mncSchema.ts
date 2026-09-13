@@ -11,7 +11,7 @@
 
 import type { Arm, DimId } from '../config/mnc';
 import { DIMENSIONS } from '../config/mnc';
-import type { Compound } from '../engine/mnc';
+import type { Compound, ContextSpec } from '../engine/mnc';
 import { compoundToIndex, describe } from '../engine/mnc';
 
 export interface MncEventRow {
@@ -32,8 +32,16 @@ export interface MncEventRow {
   trial_in_context: number;
 
   context_color: string;
-  target_index: number;         // 0..15
-  target_label: string;         // human-readable, e.g. "circle|large|horizontal|dark"
+  target_index: number;         // 0..15, the winning compound as shown
+  target_label: string;         // human-readable, e.g. "circle|large|horizontal|blue"
+
+  /** Which dimensions determined the answer in this context. The rest varied
+   *  and carried nothing, so a match on them is chance by construction. */
+  relevant_dims: string;        // e.g. "shape|hue"
+  rel_shape: 0 | 1;
+  rel_size: 0 | 1;
+  rel_orientation: 0 | 1;
+  rel_hue: 0 | 1;
 
   /** All alternatives as shown, left-to-right / top-to-bottom. */
   alternatives: number[];
@@ -86,6 +94,7 @@ export function buildMncRow(args: {
   trialInContext: number;
   contextColor: string;
   target: Compound;
+  spec: ContextSpec;
   alternatives: Compound[];
   targetPosition: number;
   chosenPosition: number;
@@ -116,6 +125,11 @@ export function buildMncRow(args: {
     context_color: args.contextColor,
     target_index: compoundToIndex(args.target),
     target_label: labelOf(args.target),
+    relevant_dims: args.spec.relevant.map((i) => DIMENSIONS[i].id).join('|'),
+    rel_shape: b(args.spec.relevant.includes(0)),
+    rel_size: b(args.spec.relevant.includes(1)),
+    rel_orientation: b(args.spec.relevant.includes(2)),
+    rel_hue: b(args.spec.relevant.includes(3)),
     alternatives: args.alternatives.map(compoundToIndex),
     target_position: args.targetPosition,
     chosen_position: args.chosenPosition,
@@ -146,6 +160,7 @@ export const MNC_COLUMNS: (keyof MncEventRow)[] = [
   'timestamp_utc', 'elapsed_ms', 'response_time_ms',
   'trial_index', 'context_index', 'trial_in_context',
   'context_color', 'target_index', 'target_label',
+  'relevant_dims', 'rel_shape', 'rel_size', 'rel_orientation', 'rel_hue',
   'alternatives', 'target_position', 'chosen_position', 'chosen_index',
   'chosen_label', 'correct', 'rewarded', 'points_total', 'error_disparity',
   'match_shape', 'match_size', 'match_orientation', 'match_hue',
