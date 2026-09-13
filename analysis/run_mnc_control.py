@@ -114,46 +114,95 @@ def main() -> None:
     print(f"{d.pid.nunique()} participants, {len(d)} trials, version(s) {list(ver)}")
     print(f"relevance recorded: {has_rel}\n")
 
-    print(f"  {'pid':<10}{'n':>5}{'acc':>6}   " + "".join(f"{x:>12}" for x in DIMS)
-          + f"{'spread':>9}{'null95':>9}  verdict")
-    print("  " + "-" * 100)
+    # A model must be fitted WITHIN a context, never pooled across them.
+    #
+    # Which dimensions are relevant changes from context to context, so a
+    # single fit per participant averages each dimension over contexts where it
+    # mattered and contexts where it did not, and every coefficient collapses
+    # toward the same middling value. Validated against choosers whose
+    # attention was fixed by construction, the pooled fit returned roughly
+    # equal betas for a chooser using exactly two of four dimensions; the
+    # per-context fit recovered the arranged pair every time.
+    print(f"  {'pid':<10}{'n':>5}{'acc':>6}{'ctx fits':>10}   "
+          + "".join(f"{x:>12}" for x in DIMS) + "   (mean of per-context fits)")
+    print("  " + "-" * 96)
     rows = []
     for pid, g in d.groupby("pid"):
-        X, y = design(g)
-        if len(y) < 40:
+        if len(g) < 40:
             continue
-        b, spread, p95 = spread_vs_null(X, y)
-        beats = spread > p95
-        rows.append(dict(pid=pid, n=len(y), acc=g.correct.mean(),
-                         spread=spread, null_p95=p95, beats_null=beats,
-                         **dict(zip(DIMS, b))))
-        print(f"  {pid:<10}{len(y):>5}{100*g.correct.mean():>5.0f}%   "
-              + "".join(f"{v:>12.2f}" for v in b)
-              + f"{spread:>9.2f}{p95:>9.2f}  {'DIFFERS' if beats else 'within null'}")
-
-    r = pd.DataFrame(rows)
-    if has_rel:
-        print("\n  beta by arranged role (the comparison this design exists for):")
-        rel, irr = [], []
-        for pid, g in d.groupby("pid"):
-            for rset, gg in g.groupby("relevant_dims"):
+        # Group only when relevance varies. In 1.0.0 every dimension was
+        # relevant in every context, so the role structure never changes and
+        # pooling is not merely safe but necessary -- those contexts run about
+        # a dozen trials each and no single one supports a fit.
+        per_ctx = []
+        if has_rel:
+            for _, gg in g.groupby("relevant_dims"):
                 if len(gg) < 30:
                     continue
                 X, y = design(gg)
-                b = fit_conditional_logit(X, y)
-                for i, dim in enumerate(DIMS):
-                    (rel if dim in str(rset).split("|") else irr).append(b[i])
-        if rel and irr:
-            print(f"    relevant   mean {np.mean(rel):+.2f}  (n={len(rel)})")
-            print(f"    irrelevant mean {np.mean(irr):+.2f}  (n={len(irr)})")
+                if len(y) >= 30:
+                    per_ctx.append(fit_conditional_logit(X, y))
+        else:
+            X, y = design(g)
+            if len(y) >= 40:
+                per_ctx.append(fit_conditional_logit(X, y))
+        if not per_ctx:
+            continue
+        b = np.mean(per_ctx, axis=0)
+        rows.append(dict(pid=pid, n=len(g), acc=g.correct.mean(),
+                         n_ctx_fits=len(per_ctx), **dict(zip(DIMS, b))))
+        print(f"  {pid:<10}{len(g):>5}{100*g.correct.mean():>5.0f}%{len(per_ctx):>10}   "
+              + "".join(f"{v:>12.2f}" for v in b))
+
+    r = pd.DataFrame(rows)
+    if has_rel:
+        print("\n  PER PARTICIPANT: control by arranged role, and whether the")
+        print("  difference exceeds that participant's own permutation null.")
+        print("  The null permutes dimension columns within each trial, so it")
+        print("  destroys which dimension is which while leaving the choice")
+        print("  sets and the actual choices alone.\n")
+        print(f"    {'pid':<12}{'relevant':>10}{'irrelevant':>12}"
+              f"{'difference':>12}{'null 95':>10}  verdict")
+        print("    " + "-" * 68)
+        rng = np.random.default_rng(0)
+        for pid, g in d.groupby("pid"):
+            def role_gap(choice_col=None, perm=False):
+                rel, irr = [], []
+                for rset, gg in g.groupby("relevant_dims"):
+                    if len(gg) < 30:
+                        continue
+                    X, y = design(gg)
+                    if len(y) < 30:
+                        continue
+                    if perm:
+                        X = X.copy()
+                        for i in range(len(X)):
+                            X[i] = X[i][:, rng.permutation(X.shape[2])]
+                    b = fit_conditional_logit(X, y, iters=250)
+                    names = str(rset).split("|")
+                    for i, dim in enumerate(DIMS):
+                        (rel if dim in names else irr).append(b[i])
+                if not rel or not irr:
+                    return None
+                return np.mean(rel), np.mean(irr)
+            obs = role_gap()
+            if obs is None:
+                continue
+            null = [role_gap(perm=True) for _ in range(60)]
+            null = [a - b for a, b in [x for x in null if x]]
+            p95 = float(np.quantile(null, 0.95)) if null else float("nan")
+            gap = obs[0] - obs[1]
+            print(f"    {pid:<12}{obs[0]:>10.2f}{obs[1]:>12.2f}{gap:>12.2f}"
+                  f"{p95:>10.2f}  {'CONTROLLED' if gap > p95 else 'not distinguished'}")
     else:
         print("\n  Version 1.0.0: every dimension was relevant, so there is no")
         print("  role contrast to draw. All four betas should be positive, and")
         print("  that is a check on the estimator, not a finding.")
         print(f"    betas positive: "
-              f"{int((r[DIMS] > 0).sum().sum())} of {len(r)*len(DIMS)}")
-    print(f"\n  participants whose dimensions differ beyond their own null: "
-          f"{int(r.beats_null.sum())} of {len(r)}")
+              f"{int((r[DIMS] > 0).sum().sum())} of {len(r) * len(DIMS)}")
+        print("    There is no relevant-versus-irrelevant contrast to draw for")
+        print("    1.0.0 data, which is exactly why 1.1.0 exists.")
+
 
     out = Path("analysis/outputs/final/mnc_control.csv")
     out.parent.mkdir(parents=True, exist_ok=True)
