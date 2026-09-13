@@ -1,0 +1,399 @@
+==========================================================================
+PARTICIPANT 5b94fffd   2360 responses, 17.2 min, 24 blocks
+==========================================================================
+
+  integrity: 2360 rows; all checks pass
+  overall P(left) 0.494   switch rate 0.153   reinforced 0.291
+
+  BLOCK TRANSITIONS (each an independent replication)
+    moved toward the newly rich panel: 15 of 23
+    median displacement +0.156   IQR [-0.016, +0.516]
+    time course, P(choose newly rich panel):
+       -32 to -25  0.473  -
+       -24 to -17  0.397  -----
+       -16 to -9   0.321  ---------
+        -8 to -1   0.245  -------------
+         0 to 7    0.283  -----------
+         8 to 15   0.429  ----
+        16 to 23   0.587  +++++
+        24 to 31   0.587  +++++
+        32 to 39   0.592  +++++
+
+  MOMENTARY STIMULI  (lag 0 is the marked response; later lags
+  are persistence, since the arrangement has already ended)
+    appetitive: 60 events, base rate 0.562
+      lag 0  n=60   P=0.667 dev=+0.105  +++++  <- arranged
+      lag 1  n=60   P=0.667 dev=+0.105  +++++
+      lag 2  n=60   P=0.733 dev=+0.171  +++++++++
+      lag 3  n=60   P=0.633 dev=+0.071  ++++
+      lag 4  n=60   P=0.767 dev=+0.205  +++++++++++
+      lag 5  n=60   P=0.717 dev=+0.155  ++++++++
+      lag 6  n=60   P=0.783 dev=+0.221  ++++++++++++
+      lag 7  n=60   P=0.750 dev=+0.188  ++++++++++
+      lag 8  n=60   P=0.750 dev=+0.188  ++++++++++
+      decays below a quarter of lag 0 by lag 14
+    aversive: 63 events, base rate 0.495
+      lag 0  n=63   P=0.444 dev=-0.051  ---  <- arranged
+      lag 1  n=63   P=0.413 dev=-0.083  ----
+      lag 2  n=63   P=0.444 dev=-0.051  ---
+      lag 3  n=63   P=0.397 dev=-0.099  -----
+      lag 4  n=63   P=0.460 dev=-0.035  --
+      lag 5  n=63   P=0.444 dev=-0.051  ---
+      lag 6  n=63   P=0.476 dev=-0.019  -
+      lag 7  n=63   P=0.413 dev=-0.083  ----
+      lag 8  n=63   P=0.460 dev=-0.035  --
+      decays below a quarter of lag 0 by lag >15
+
+  PERTURBATIONS (8 responses with the block state inverted)
+    P(choose the panel the BLOCK favours):
+       -16 to -9   0.569  ++++
+        -8 to -1   0.736  ++++++++++++
+         0 to 7    0.694  ++++++++++  DURING
+         8 to 15   0.479  -
+        16 to 23   0.507  
+        24 to 31   0.496  
+        32 to 39   0.529  ++
+        40 to 47   0.691  ++++++++++
+
+==========================================================================
+PARTICIPANT 5c549320   2360 responses, 27.4 min, 24 blocks
+==========================================================================
+
+  integrity: 2360 rows; all checks pass
+  overall P(left) 0.597   switch rate 0.415   reinforced 0.323
+
+  BLOCK TRANSITIONS (each an independent replication)
+    moved toward the newly rich panel: 19 of 23
+    median displacement +0.344   IQR [+0.172, +0.422]
+    time course, P(choose newly rich panel):
+       -32 to -25  0.353  --------
+       -24 to -17  0.353  --------
+       -16 to -9   0.315  ----------
+        -8 to -1   0.283  -----------
+         0 to 7    0.424  ----
+         8 to 15   0.609  ++++++
+        16 to 23   0.636  +++++++
+        24 to 31   0.571  ++++
+        32 to 39   0.614  ++++++
+
+  MOMENTARY STIMULI  (lag 0 is the marked response; later lags
+  are persistence, since the arrangement has already ended)
+    appetitive: 62 events, base rate 0.546
+      lag 0  n=62   P=0.629 dev=+0.083  ++++  <- arranged
+      lag 1  n=62   P=0.726 dev=+0.180  +++++++++
+      lag 2  n=62   P=0.597 dev=+0.051  +++
+      lag 3  n=62   P=0.581 dev=+0.035  ++
+      lag 4  n=62   P=0.597 dev=+0.051  +++
+      lag 5  n=62   P=0.548 dev=+0.003  
+      lag 6  n=62   P=0.629 dev=+0.083  ++++
+      lag 7  n=62   P=0.629 dev=+0.083  ++++
+      lag 8  n=62   P=0.548 dev=+0.003  
+      decays below a quarter of lag 0 by lag 5
+    aversive: 60 events, base rate 0.414
+      lag 0  n=60   P=0.250 dev=-0.164  ---------  <- arranged
+      lag 1  n=60   P=0.167 dev=-0.247  -------------
+      lag 2  n=60   P=0.517 dev=+0.103  +++++
+      lag 3  n=60   P=0.333 dev=-0.081  ----
+      lag 4  n=60   P=0.500 dev=+0.086  ++++
+      lag 5  n=60   P=0.333 dev=-0.081  ----
+      lag 6  n=60   P=0.433 dev=+0.019  +
+      lag 7  n=60   P=0.417 dev=+0.003  
+      lag 8  n=60   P=0.367 dev=-0.047  --
+      decays below a quarter of lag 0 by lag 6
+
+  PERTURBATIONS (8 responses with the block state inverted)
+    P(choose the panel the BLOCK favours):
+       -16 to -9   0.637  +++++++
+        -8 to -1   0.669  +++++++++
+         0 to 7    0.537  ++  DURING
+         8 to 15   0.601  +++++
+        16 to 23   0.658  ++++++++
+        24 to 31   0.638  +++++++
+        32 to 39   0.704  +++++++++++
+        40 to 47   0.704  +++++++++++
+
+==========================================================================
+PARTICIPANT 5f6cd5ce   1919 responses, 28.0 min, 20 blocks
+==========================================================================
+
+  integrity: 1919 rows; all checks pass
+  overall P(left) 0.643   switch rate 0.550   reinforced 0.280
+
+  BLOCK TRANSITIONS (each an independent replication)
+    moved toward the newly rich panel: 15 of 18
+    median displacement +0.125   IQR [+0.070, +0.180]
+    time course, P(choose newly rich panel):
+       -32 to -25  0.388  ------
+       -24 to -17  0.388  ------
+       -16 to -9   0.414  ----
+        -8 to -1   0.421  ----
+         0 to 7    0.513  +
+         8 to 15   0.579  ++++
+        16 to 23   0.551  +++
+        24 to 31   0.583  ++++
+        32 to 39   0.507  
+
+  MOMENTARY STIMULI  (lag 0 is the marked response; later lags
+  are persistence, since the arrangement has already ended)
+    appetitive: 56 events, base rate 0.491
+      lag 0  n=56   P=0.679 dev=+0.188  ++++++++++  <- arranged
+      lag 1  n=56   P=0.518 dev=+0.027  +
+      lag 2  n=55   P=0.600 dev=+0.109  ++++++
+      lag 3  n=55   P=0.400 dev=-0.091  -----
+      lag 4  n=55   P=0.564 dev=+0.073  ++++
+      lag 5  n=55   P=0.418 dev=-0.072  ----
+      lag 6  n=55   P=0.582 dev=+0.091  +++++
+      lag 7  n=55   P=0.436 dev=-0.054  ---
+      lag 8  n=55   P=0.509 dev=+0.018  +
+      decays below a quarter of lag 0 by lag 1
+    aversive: 50 events, base rate 0.498
+      lag 0  n=50   P=0.360 dev=-0.138  -------  <- arranged
+      lag 1  n=50   P=0.360 dev=-0.138  -------
+      lag 2  n=50   P=0.620 dev=+0.122  ++++++
+      lag 3  n=50   P=0.360 dev=-0.138  -------
+      lag 4  n=50   P=0.620 dev=+0.122  ++++++
+      lag 5  n=49   P=0.347 dev=-0.151  --------
+      lag 6  n=49   P=0.612 dev=+0.114  ++++++
+      lag 7  n=49   P=0.388 dev=-0.111  ------
+      lag 8  n=49   P=0.469 dev=-0.029  --
+      decays below a quarter of lag 0 by lag 8
+
+  PERTURBATIONS (8 responses with the block state inverted)
+    P(choose the panel the BLOCK favours):
+       -16 to -9   0.483  -
+        -8 to -1   0.508  
+         0 to 7    0.475  -  DURING
+         8 to 15   0.450  ---
+        16 to 23   0.583  ++++
+        24 to 31   0.608  ++++++
+        32 to 39   0.592  +++++
+        40 to 47   0.617  ++++++
+
+==========================================================================
+PARTICIPANT 629642bf   2360 responses, 21.9 min, 24 blocks
+==========================================================================
+
+  integrity: 2360 rows; all checks pass
+  overall P(left) 0.467   switch rate 0.079   reinforced 0.330
+
+  BLOCK TRANSITIONS (each an independent replication)
+    moved toward the newly rich panel: 19 of 23
+    median displacement +0.344   IQR [+0.203, +0.578]
+    time course, P(choose newly rich panel):
+       -32 to -25  0.353  --------
+       -24 to -17  0.310  ----------
+       -16 to -9   0.261  ------------
+        -8 to -1   0.207  ---------------
+         0 to 7    0.364  -------
+         8 to 15   0.793  +++++++++++++++
+        16 to 23   0.739  ++++++++++++
+        24 to 31   0.755  +++++++++++++
+        32 to 39   0.500  
+
+  MOMENTARY STIMULI  (lag 0 is the marked response; later lags
+  are persistence, since the arrangement has already ended)
+    appetitive: 61 events, base rate 0.542
+      lag 0  n=61   P=0.607 dev=+0.065  +++  <- arranged
+      lag 1  n=61   P=0.836 dev=+0.294  +++++++++++++++
+      lag 2  n=61   P=0.869 dev=+0.327  +++++++++++++++++
+      lag 3  n=61   P=0.836 dev=+0.294  +++++++++++++++
+      lag 4  n=61   P=0.754 dev=+0.212  +++++++++++
+      lag 5  n=61   P=0.721 dev=+0.179  +++++++++
+      lag 6  n=61   P=0.639 dev=+0.097  +++++
+      lag 7  n=61   P=0.590 dev=+0.048  +++
+      lag 8  n=61   P=0.590 dev=+0.048  +++
+      decays below a quarter of lag 0 by lag 9
+    aversive: 60 events, base rate 0.449
+      lag 0  n=60   P=0.317 dev=-0.133  -------  <- arranged
+      lag 1  n=60   P=0.033 dev=-0.416  ----------------------
+      lag 2  n=60   P=0.083 dev=-0.366  -------------------
+      lag 3  n=60   P=0.150 dev=-0.299  ----------------
+      lag 4  n=60   P=0.217 dev=-0.233  ------------
+      lag 5  n=60   P=0.317 dev=-0.133  -------
+      lag 6  n=60   P=0.350 dev=-0.099  -----
+      lag 7  n=60   P=0.367 dev=-0.083  ----
+      lag 8  n=60   P=0.433 dev=-0.016  -
+      decays below a quarter of lag 0 by lag 8
+
+  PERTURBATIONS (8 responses with the block state inverted)
+    P(choose the panel the BLOCK favours):
+       -16 to -9   0.739  ++++++++++++
+        -8 to -1   0.710  +++++++++++
+         0 to 7    0.619  ++++++  DURING
+         8 to 15   0.523  +
+        16 to 23   0.699  ++++++++++
+        24 to 31   0.716  +++++++++++
+        32 to 39   0.832  +++++++++++++++++
+        40 to 47   0.720  +++++++++++
+
+==========================================================================
+PARTICIPANT 69729ec1   1603 responses, 13.4 min, 17 blocks
+==========================================================================
+
+  integrity: 1603 rows; all checks pass
+  overall P(left) 0.472   switch rate 0.556   reinforced 0.291
+
+  BLOCK TRANSITIONS (each an independent replication)
+    moved toward the newly rich panel: 10 of 15
+    median displacement +0.125   IQR [-0.047, +0.266]
+    time course, P(choose newly rich panel):
+       -32 to -25  0.414  ----
+       -24 to -17  0.398  -----
+       -16 to -9   0.430  ----
+        -8 to -1   0.391  ------
+         0 to 7    0.398  -----
+         8 to 15   0.567  +++
+        16 to 23   0.667  +++++++++
+        24 to 31   0.600  +++++
+        32 to 39   0.517  +
+
+  MOMENTARY STIMULI  (lag 0 is the marked response; later lags
+  are persistence, since the arrangement has already ended)
+    appetitive: 45 events, base rate 0.539
+      lag 0  n=45   P=0.578 dev=+0.039  ++  <- arranged
+      lag 1  n=45   P=0.733 dev=+0.194  ++++++++++
+      lag 2  n=45   P=0.711 dev=+0.172  +++++++++
+      lag 3  n=45   P=0.711 dev=+0.172  +++++++++
+      lag 4  n=45   P=0.556 dev=+0.016  +
+      lag 5  n=45   P=0.578 dev=+0.039  ++
+      lag 6  n=44   P=0.477 dev=-0.062  ---
+      lag 7  n=44   P=0.636 dev=+0.097  +++++
+      lag 8  n=44   P=0.386 dev=-0.153  --------
+      decays below a quarter of lag 0 by lag 13
+    aversive: 40 events, base rate 0.464
+      lag 0  n=40   P=0.425 dev=-0.039  --  <- arranged
+      lag 1  n=40   P=0.275 dev=-0.189  ----------
+      lag 2  n=40   P=0.475 dev=+0.011  +
+      lag 3  n=40   P=0.600 dev=+0.136  +++++++
+      lag 4  n=40   P=0.425 dev=-0.039  --
+      lag 5  n=39   P=0.538 dev=+0.074  ++++
+      lag 6  n=39   P=0.564 dev=+0.100  +++++
+      lag 7  n=39   P=0.436 dev=-0.028  -
+      lag 8  n=39   P=0.487 dev=+0.023  +
+      decays below a quarter of lag 0 by lag >15
+
+  PERTURBATIONS (8 responses with the block state inverted)
+    P(choose the panel the BLOCK favours):
+       -16 to -9   0.538  ++
+        -8 to -1   0.692  ++++++++++
+         0 to 7    0.615  ++++++  DURING
+         8 to 15   0.587  +++++
+        16 to 23   0.567  +++
+        24 to 31   0.587  +++++
+        32 to 39   0.587  +++++
+        40 to 47   0.596  +++++
+
+==========================================================================
+PARTICIPANT 69f21ed1   2360 responses, 21.7 min, 24 blocks
+==========================================================================
+
+  integrity: 2360 rows; all checks pass
+  overall P(left) 0.370   switch rate 0.165   reinforced 0.318
+
+  BLOCK TRANSITIONS (each an independent replication)
+    moved toward the newly rich panel: 19 of 23
+    median displacement +0.406   IQR [+0.109, +0.547]
+    time course, P(choose newly rich panel):
+       -32 to -25  0.332  ---------
+       -24 to -17  0.250  -------------
+       -16 to -9   0.277  ------------
+        -8 to -1   0.321  ---------
+         0 to 7    0.440  ---
+         8 to 15   0.560  +++
+        16 to 23   0.549  +++
+        24 to 31   0.587  +++++
+        32 to 39   0.647  ++++++++
+
+  MOMENTARY STIMULI  (lag 0 is the marked response; later lags
+  are persistence, since the arrangement has already ended)
+    appetitive: 64 events, base rate 0.553
+      lag 0  n=64   P=0.672 dev=+0.119  ++++++  <- arranged
+      lag 1  n=64   P=0.641 dev=+0.088  +++++
+      lag 2  n=64   P=0.703 dev=+0.151  ++++++++
+      lag 3  n=64   P=0.703 dev=+0.151  ++++++++
+      lag 4  n=64   P=0.641 dev=+0.088  +++++
+      lag 5  n=64   P=0.594 dev=+0.041  ++
+      lag 6  n=64   P=0.641 dev=+0.088  +++++
+      lag 7  n=64   P=0.609 dev=+0.057  +++
+      lag 8  n=64   P=0.578 dev=+0.026  +
+      decays below a quarter of lag 0 by lag 8
+    aversive: 65 events, base rate 0.499
+      lag 0  n=65   P=0.462 dev=-0.037  --  <- arranged
+      lag 1  n=65   P=0.431 dev=-0.068  ----
+      lag 2  n=65   P=0.400 dev=-0.099  -----
+      lag 3  n=65   P=0.462 dev=-0.037  --
+      lag 4  n=65   P=0.477 dev=-0.022  -
+      lag 5  n=65   P=0.446 dev=-0.052  ---
+      lag 6  n=65   P=0.431 dev=-0.068  ----
+      lag 7  n=65   P=0.508 dev=+0.009  
+      lag 8  n=65   P=0.538 dev=+0.040  ++
+      decays below a quarter of lag 0 by lag 7
+
+  PERTURBATIONS (8 responses with the block state inverted)
+    P(choose the panel the BLOCK favours):
+       -16 to -9   0.521  +
+        -8 to -1   0.639  +++++++
+         0 to 7    0.611  ++++++  DURING
+         8 to 15   0.698  ++++++++++
+        16 to 23   0.735  ++++++++++++
+        24 to 31   0.735  ++++++++++++
+        32 to 39   0.566  +++
+        40 to 47   0.779  +++++++++++++++
+
+==========================================================================
+PARTICIPANT 6a2326ce   1029 responses, 10.1 min, 11 blocks
+==========================================================================
+
+  integrity: 1029 rows; all checks pass
+  overall P(left) 0.541   switch rate 0.287   reinforced 0.318
+
+  BLOCK TRANSITIONS (each an independent replication)
+    moved toward the newly rich panel: 8 of 9
+    median displacement +0.406   IQR [+0.156, +0.500]
+    time course, P(choose newly rich panel):
+       -32 to -25  0.250  -------------
+       -24 to -17  0.212  ---------------
+       -16 to -9   0.312  ----------
+        -8 to -1   0.338  --------
+         0 to 7    0.425  ----
+         8 to 15   0.562  +++
+        16 to 23   0.625  ++++++
+        24 to 31   0.584  ++++
+        32 to 39   0.653  ++++++++
+
+  MOMENTARY STIMULI  (lag 0 is the marked response; later lags
+  are persistence, since the arrangement has already ended)
+    appetitive: 29 events, base rate 0.591
+      lag 0  n=29   P=0.379 dev=-0.212  -----------  <- arranged
+      lag 1  n=29   P=0.690 dev=+0.098  +++++
+      lag 2  n=29   P=0.621 dev=+0.029  ++
+      lag 3  n=29   P=0.690 dev=+0.098  +++++
+      lag 4  n=29   P=0.655 dev=+0.064  +++
+      lag 5  n=29   P=0.690 dev=+0.098  +++++
+      lag 6  n=29   P=0.690 dev=+0.098  +++++
+      lag 7  n=29   P=0.655 dev=+0.064  +++
+      lag 8  n=29   P=0.724 dev=+0.133  +++++++
+      decays below a quarter of lag 0 by lag 2
+    aversive: 28 events, base rate 0.467
+      lag 0  n=28   P=0.393 dev=-0.074  ----  <- arranged
+      lag 1  n=28   P=0.179 dev=-0.288  ---------------
+      lag 2  n=28   P=0.250 dev=-0.217  -----------
+      lag 3  n=28   P=0.286 dev=-0.181  ---------
+      lag 4  n=28   P=0.286 dev=-0.181  ---------
+      lag 5  n=28   P=0.429 dev=-0.038  --
+      lag 6  n=28   P=0.464 dev=-0.002  
+      lag 7  n=28   P=0.464 dev=-0.002  
+      lag 8  n=28   P=0.571 dev=+0.105  +++++
+      decays below a quarter of lag 0 by lag 6
+
+  PERTURBATIONS (8 responses with the block state inverted)
+    P(choose the panel the BLOCK favours):
+       -16 to -9   0.750  +++++++++++++
+        -8 to -1   0.609  ++++++
+         0 to 7    0.500    DURING
+         8 to 15   0.375  ------
+        16 to 23   0.672  +++++++++
+        24 to 31   0.672  +++++++++
+        32 to 39   0.641  +++++++
+        40 to 47   0.766  ++++++++++++++
+
