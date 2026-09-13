@@ -1,0 +1,4 @@
+pid,arm,version,trials,contexts,accuracy,reinforced,errors,median_rt_ms,seconds,contiguous
+both-rel,probabilistic,eigen-dynamics-1.1.0,400,16,0.6925,0.6325,123,900.0,399.0,True
+one-irre,probabilistic,eigen-dynamics-1.1.0,400,16,0.3825,0.395,247,900.0,399.0,True
+one-rele,probabilistic,eigen-dynamics-1.1.0,400,16,0.455,0.4675,218,900.0,399.0,True
