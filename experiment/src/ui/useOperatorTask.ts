@@ -4,6 +4,11 @@ import { OPERATOR_CONFIG as C } from '../config/operator';
 import { buildSession, scoreResponse, type ResponseSlot } from '../engine/operator';
 import { createRng, deriveSeed } from '../utils/rng';
 
+/** A click is ignored only for this long after the previous one. Comfortably
+ *  longer than the feedback window, short enough that a stuck lock costs one
+ *  response rather than the session. */
+const STUCK_MS = 3000;
+
 export interface OperatorState {
   slot: ResponseSlot;
   points: number;
@@ -43,14 +48,21 @@ export function useOperatorTask({ seed, onResponse, onFinish }: UseOperatorArgs)
   // reads the instructions slowly must not lose task time to them.
   const startedAt = useRef<number | null>(null);
   const shownAt = useRef(performance.now());
-  const lock = useRef(false);
+  // Timestamp rather than a flag. The lock exists to ignore clicks during the
+  // feedback window, and the previous version released it only inside the
+  // callback scheduled after onResponse had run -- so anything that threw
+  // while logging left the lock set forever, with the page looking normal and
+  // every click ignored. A participant reported exactly that. A timestamped
+  // lock cannot outlive its own window whatever happens.
+  const lockedAt = useRef<number | null>(null);
 
   const respond = useCallback(
     (side: 'left' | 'right') => {
-      if (finished || lock.current) return;
-      lock.current = true;
-
       const now = performance.now();
+      if (finished) return;
+      if (lockedAt.current !== null && now - lockedAt.current < STUCK_MS) return;
+      lockedAt.current = now;
+
       if (startedAt.current === null) startedAt.current = now;
       const elapsed = now - startedAt.current;
       const slot = slots[i];
@@ -59,12 +71,19 @@ export function useOperatorTask({ seed, onResponse, onFinish }: UseOperatorArgs)
 
       setPoints(total);
       setFeedback({ side, delta: out.pointsDelta });
-      onResponse({
-        slot, chosen: side, previous: previous.current,
-        rewarded: out.rewarded, pointsDelta: out.pointsDelta,
-        pointsTotal: total, pUsed: out.pUsed,
-        responseTimeMs: now - shownAt.current, elapsedMs: elapsed,
-      });
+      // Logging must never be able to stop the task. A response that reaches
+      // the participant but not the database is a lost row; a response that
+      // stops the session is a lost participant.
+      try {
+        onResponse({
+          slot, chosen: side, previous: previous.current,
+          rewarded: out.rewarded, pointsDelta: out.pointsDelta,
+          pointsTotal: total, pUsed: out.pUsed,
+          responseTimeMs: now - shownAt.current, elapsedMs: elapsed,
+        });
+      } catch (err) {
+        console.error('logging failed for this response; continuing', err);
+      }
       previous.current = side;
 
       window.setTimeout(() => {
@@ -78,7 +97,7 @@ export function useOperatorTask({ seed, onResponse, onFinish }: UseOperatorArgs)
         }
         setI(next);
         shownAt.current = performance.now();
-        lock.current = false;
+        lockedAt.current = null;
       }, C.feedbackMs);
     },
     [finished, i, onFinish, onResponse, points, slots],
