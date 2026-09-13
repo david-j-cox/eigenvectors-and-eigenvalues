@@ -6,7 +6,7 @@
  * trials the task builds; what varies in the check is the statistic, not an
  * invented participant. No design decision rests on it.
  */
-import { contextSpecs, buildTrial, type ContextSpec } from '../src/engine/mnc';
+import { contextSpecs, buildTrial } from '../src/engine/mnc';
 import { createRng } from '../src/utils/rng';
 
 const rnd = createRng('dump');

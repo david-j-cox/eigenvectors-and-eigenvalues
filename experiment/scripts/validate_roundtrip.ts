@@ -70,7 +70,7 @@ for (const ch of CHOOSERS) {
       chosenPosition: pos, correct: rec.correct, rewarded: rec.rewarded,
       pointsTotal: pts, errorDisparity: rec.errorDisparity,
       matched: rec.matched, matchCounts: rec.matchCounts, advancedAfter: null,
-    }) as Record<string, unknown>;
+    }) as unknown as Record<string, unknown>;
 
     rows.push(MNC_COLUMNS.map((c) => {
       const v = row[c as string];
