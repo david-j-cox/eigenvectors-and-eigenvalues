@@ -24,6 +24,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Transport } from './logger';
 import type { EventRow } from './schema';
 import type { MncEventRow } from './mncSchema';
+import type { OperatorEventRow } from './operatorSchema';
 
 export interface SupabaseConfig {
   url: string;
@@ -149,5 +150,41 @@ export function mncTransportFromEnv(): MncSupabaseTransport | null {
   return new MncSupabaseTransport({
     url: env.VITE_SUPABASE_URL,
     anonKey: env.VITE_SUPABASE_ANON_KEY,
+  });
+}
+
+// ----------------------------------------------------------- operator --
+
+/** Transport for the operator-estimation procedure. Same resilience contract
+ *  as the others against its own function and table. */
+export class OperatorSupabaseTransport implements Transport<OperatorEventRow> {
+  private readonly client: SupabaseClient;
+  private readonly timeoutMs: number;
+
+  constructor(cfg: { url: string; anonKey: string; timeoutMs?: number }) {
+    if (!cfg.url || !cfg.anonKey) throw new Error('Supabase URL and anon key required');
+    this.client = createClient(cfg.url, cfg.anonKey, { auth: { persistSession: false } });
+    this.timeoutMs = cfg.timeoutMs ?? 30_000;
+  }
+
+  async upsertEvents(rows: OperatorEventRow[]): Promise<void> {
+    if (rows.length === 0) return;
+    const { error } = await withTimeout<{ error: { message: string } | null }>(
+      (signal) => this.client.rpc('log_operator_events', { p_rows: rows }).abortSignal(signal),
+      this.timeoutMs,
+    );
+    if (error) throw new Error(`operator event write failed: ${error.message}`);
+  }
+
+  async upsertSession(): Promise<void> {
+    /* everything needed is on the event rows */
+  }
+}
+
+export function operatorTransportFromEnv(): OperatorSupabaseTransport | null {
+  const env = (import.meta as { env?: Record<string, string> }).env ?? {};
+  if (!env.VITE_SUPABASE_URL || !env.VITE_SUPABASE_ANON_KEY) return null;
+  return new OperatorSupabaseTransport({
+    url: env.VITE_SUPABASE_URL, anonKey: env.VITE_SUPABASE_ANON_KEY,
   });
 }
