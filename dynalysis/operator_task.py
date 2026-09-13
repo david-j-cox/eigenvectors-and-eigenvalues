@@ -278,3 +278,249 @@ def _base_rate(g: pd.DataFrame, kind: str) -> float:
     if not rates:
         return float("nan")
     return float(np.average(rates, weights=weights))
+
+
+# ------------------------------------ separating stimulus from its payoff --
+
+def stimulus_effect_by_outcome(g: pd.DataFrame, kind: str,
+                               lags: int = 12) -> pd.DataFrame:
+    """Split the post-stimulus profile by whether the marked response paid.
+
+    A response to the gold panel is reinforced with p = .60, so a participant
+    may stay there because they were PAID rather than because the stimulus
+    still exerts control. The two are separable: if what persists is the
+    stimulus, the profile should look the same whether or not that response
+    paid; if it is the reinforcement, only the paid branch stays elevated.
+
+    Returns one row per lag per branch, with the branch labelled `paid`.
+    """
+    g = g.sort_values("trial_index").reset_index(drop=True)
+    hits = g.index[g.stimulus == kind]
+    rows = []
+    for h in hits:
+        side = g.loc[h, "stimulus_side"]
+        took = g.loc[h, "chosen_side"] == side
+        if not took:
+            continue          # they did not go there; nothing to persist
+        paid = bool(g.loc[h, "rewarded"])
+        for k in range(1, lags + 1):
+            j = h + k
+            if j >= len(g) or g.loc[j, "stimulus"] == kind:
+                break
+            rows.append({"k": k, "paid": paid,
+                         "chose_marked": int(g.loc[j, "chosen_side"] == side)})
+    d = pd.DataFrame(rows)
+    if d.empty:
+        return d
+    return (d.groupby(["paid", "k"]).chose_marked.agg(["mean", "size"])
+             .rename(columns={"mean": "p", "size": "n"}).reset_index())
+
+
+# ------------------------------------------------- operator estimation --
+
+def design(g: pd.DataFrame, k: int = 6) -> tuple[np.ndarray, np.ndarray, list[str]]:
+    """Lag embedding of choice, plus the three manipulated variables.
+
+    The state is the last k choices coded -1/+1, so A is a companion-style
+    operator whose eigenvalues are the roots of the fitted autoregression --
+    the persistence the organism carries independent of the environment. The
+    inputs are the block state and each momentary stimulus, coded by side, so
+    that a column of B is that variable's influence with the carryover already
+    accounted for.
+    """
+    g = g.sort_values("trial_index").reset_index(drop=True)
+    c = np.where(g.chosen_side.to_numpy() == "left", 1.0, -1.0)
+    blk = np.where(g.block_rich.to_numpy() == "left", 1.0, -1.0)
+    side = g.stimulus_side.fillna("none").to_numpy()
+    kind = g.stimulus.to_numpy()
+    app = np.where(kind == "appetitive", np.where(side == "left", 1.0, -1.0), 0.0)
+    avr = np.where(kind == "aversive", np.where(side == "left", 1.0, -1.0), 0.0)
+
+    n = len(c)
+    rows, y = [], []
+    for t in range(k, n):
+        lags = c[t - k:t][::-1]
+        rows.append(np.concatenate([lags, [blk[t], app[t], avr[t], 1.0]]))
+        y.append(c[t])
+    names = [f"choice_lag{i+1}" for i in range(k)] + [
+        "block_rich", "appetitive", "aversive", "const"]
+    return np.array(rows), np.array(y), names
+
+
+def fit_operator(g: pd.DataFrame, k: int = 6, ridge: float = 1.0,
+                 train_frac: float = 0.7) -> dict | None:
+    """Linear autoregression of choice on its own lags plus the manipulated
+    variables, scored on a scale the comparison is fair on.
+
+    The model must be LINEAR in the lagged choices for the companion roots to
+    be decay rates. A logistic version was tried and abandoned: its
+    coefficients live on an unbounded logit scale where the sigmoid supplies
+    the saturation, so the companion matrix came out with spectral radius above
+    one for five of seven participants -- explosive operators, which a bounded
+    choice process cannot have. The eigenvalues were describing the link
+    function rather than the behaviour.
+
+    Scoring is the part that needed fixing, not the model. Squared error on a
+    +/-1 target flatters a baseline that predicts exactly +/-1 and punishes a
+    ridge fit that shrinks toward zero; an earlier version reported skill of
+    -0.65 against "repeat the last choice" for that reason alone. The linear
+    prediction is therefore mapped to a probability and scored as a Brier skill
+    against both the participant's own base rate and the persistence baseline.
+    """
+    X, y_pm, names = design(g, k)
+    if len(y_pm) < 200:
+        return None
+    n_tr = int(len(y_pm) * train_frac)
+    Xtr, ytr, Xte, yte = X[:n_tr], y_pm[:n_tr], X[n_tr:], y_pm[n_tr:]
+    R = ridge * np.eye(X.shape[1])
+    R[-1, -1] = 0.0
+    beta = np.linalg.solve(Xtr.T @ Xtr + R, Xtr.T @ ytr)
+
+    to_p = lambda v: np.clip((v + 1) / 2, 0.02, 0.98)
+    y01 = (yte > 0).astype(float)
+    brier = float(np.mean((y01 - to_p(Xte @ beta)) ** 2))
+    brier_persist = float(np.mean((y01 - to_p(Xte[:, 0])) ** 2))
+    brier_rate = float(np.mean((y01 - (ytr > 0).mean()) ** 2))
+
+    phi = beta[:k]
+    companion = np.zeros((k, k))
+    companion[0, :] = phi
+    if k > 1:
+        companion[1:, :-1] = np.eye(k - 1)
+    lam = np.linalg.eigvals(companion)
+    lam = lam[np.argsort(-np.abs(lam))]
+    rho = float(np.abs(lam[0]))
+    return {
+        "beta": dict(zip(names, beta)), "k": k,
+        "skill_vs_base_rate": float(1 - brier / brier_rate),
+        "skill_vs_persistence": float(1 - brier / brier_persist),
+        "brier": brier,
+        "eigenvalues": lam, "spectral_radius": rho,
+        "half_life": float(np.log(0.5) / np.log(rho)) if 0 < rho < 1 else np.inf,
+        "complex_dominant": bool(abs(np.imag(lam[0])) > 1e-9),
+        "stable": bool(rho < 1),
+        "B": {"block_rich": float(beta[k]), "appetitive": float(beta[k + 1]),
+              "aversive": float(beta[k + 2])},
+    }
+
+
+def select_order(g: pd.DataFrame, orders=(2, 3, 4, 6, 8, 12)) -> tuple[int, float]:
+    """Embedding order by held-out skill, per participant. Not assumed."""
+    best, best_s = orders[0], -np.inf
+    for k in orders:
+        r = fit_operator(g, k)
+        if r and r["skill_vs_base_rate"] > best_s:
+            best, best_s = k, r["skill_vs_base_rate"]
+    return best, float(best_s)
+
+
+def stimulus_persistence(g: pd.DataFrame, kind: str, lags: int = 12) -> pd.DataFrame:
+    """Persistence of a momentary stimulus against a matched control.
+
+    Deviation from a same-block base rate corrects for the block state but not
+    for the fact that the participant has just responded somewhere. A
+    participant who switches on 15% of responses stays on whatever they last
+    chose about 85% of the time, so "stayed on the marked panel" is mostly
+    their own stickiness and only partly the stimulus.
+
+    The control is an UNMARKED response in the same block on which the
+    participant made the SAME choice: identical in the two respects that
+    otherwise dominate -- the block state, and where the participant just
+    was -- differing only in whether a stimulus was shown. `added` is what the
+    stimulus contributes beyond those, and is the only quantity here that
+    measures persistence of the stimulus rather than persistence of the
+    participant.
+
+    Matching on the lag-0 choice matters most for the aversive stimulus. An
+    earlier version followed only events where the marked panel was chosen,
+    which for a red border is the rare case of taking the loss, and the
+    resulting group was both small and selected for inattention.
+    """
+    g = g.sort_values("trial_index").reset_index(drop=True)
+    rows = []
+
+    def follow(start: int, marked_side: str, chosen: str, is_marked: bool,
+               block: int) -> None:
+        for k in range(1, lags + 1):
+            j = start + k
+            if j >= len(g) or g.loc[j, "stimulus"] == kind:
+                return
+            rows.append({"k": k, "marked": is_marked, "chosen0": chosen,
+                         "side": marked_side, "block": block,
+                         "on_marked": int(g.loc[j, "chosen_side"] == marked_side)})
+
+    events = g.index[g.stimulus == kind]
+    for h in events:
+        follow(h, g.loc[h, "stimulus_side"], g.loc[h, "chosen_side"], True,
+               int(g.loc[h, "block_index"]))
+
+    # One control set per marked side, so P(choose that side) is comparable.
+    for side in ("left", "right"):
+        for h in g.index[g.stimulus == "none"]:
+            follow(h, side, g.loc[h, "chosen_side"], False,
+                   int(g.loc[h, "block_index"]))
+
+    d = pd.DataFrame(rows)
+    if d.empty:
+        return pd.DataFrame()
+
+    # Match controls to the marked events on (lag-0 choice, block), then
+    # weight the control mean by how the marked events are distributed across
+    # those cells, so the comparison is like for like.
+    out = []
+    mk = d[d.marked]
+    ct = d[~d.marked]
+    # Cells must include which side is "marked": control rows are generated
+    # for both sides from the same plain responses, so grouping without it
+    # averages P(choose left) with P(choose right) and the control comes out at
+    # exactly .5 for every participant at every lag -- chance, not a matched
+    # estimate, and the stickiness correction it exists for does nothing.
+    KEY = ["side", "chosen0", "block"]
+    for k, mk_k in mk.groupby("k"):
+        w = mk_k.groupby(KEY).size()
+        ct_k = ct[ct.k == k]
+        cell = ct_k.groupby(KEY).on_marked.agg(["mean", "size"])
+        cell = cell[cell["size"] >= 5]
+        common = w.index.intersection(cell.index)
+        if len(common) == 0:
+            continue
+        ww = w.loc[common].to_numpy(dtype=float)
+        control = float(np.average(cell.loc[common, "mean"], weights=ww))
+        out.append({"k": int(k), "p_marked": float(mk_k.on_marked.mean()),
+                    "p_control": control,
+                    "added": float(mk_k.on_marked.mean()) - control,
+                    "n_marked": int(len(mk_k)),
+                    "n_control": int(cell.loc[common, "size"].sum())})
+    return pd.DataFrame(out)
+
+
+def decay_fit(prof: pd.DataFrame, col: str = "added") -> dict | None:
+    """Exponential decay fitted to a matched-control profile.
+
+    added(k) = a * exp(-k / tau), fitted on the log of the absolute deviation
+    where that deviation keeps the sign it had at lag 1. Points that have
+    crossed zero carry no information about the rate and are dropped rather
+    than folded in with the wrong sign.
+
+    Returns the magnitude at lag 1, the half-life in responses, and the
+    proportion of variance the exponential accounts for, so a rate fitted to
+    noise can be recognised as such instead of quoted.
+    """
+    if prof is None or prof.empty or len(prof) < 4:
+        return None
+    v = prof[col].to_numpy(dtype=float)
+    k = prof["k"].to_numpy(dtype=float)
+    sign = np.sign(v[0]) if v[0] != 0 else 1.0
+    keep = (np.sign(v) == sign) & (np.abs(v) > 1e-6)
+    if keep.sum() < 4:
+        return None
+    kk, vv = k[keep], np.abs(v[keep])
+    A = np.column_stack([np.ones_like(kk), -kk])
+    coef, *_ = np.linalg.lstsq(A, np.log(vv), rcond=None)
+    a, inv_tau = float(np.exp(coef[0])), float(coef[1])
+    pred = a * np.exp(-inv_tau * kk)
+    ss = 1 - np.sum((vv - pred) ** 2) / max(np.sum((vv - vv.mean()) ** 2), 1e-12)
+    half = float(np.log(2) / inv_tau) if inv_tau > 1e-6 else np.inf
+    return {"magnitude": float(v[0]), "half_life": half,
+            "r2": float(ss), "n_points": int(keep.sum()),
+            "decays": bool(inv_tau > 1e-6)}

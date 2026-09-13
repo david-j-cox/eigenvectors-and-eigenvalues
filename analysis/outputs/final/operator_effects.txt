@@ -1,0 +1,13 @@
+PER PARTICIPANT — each analysed independently
+
+     pid    n  switch transitions  op_half_life  app_mag  app_t½  app_r2  avr_mag  avr_t½  avr_r2
+5b94fffd 2360    0.15       15/23           8.8    0.063      --   -0.03   -0.043      --    0.15
+5c549320 2360    0.41       19/23           3.6    0.217      --   -0.15   -0.267     2.2    0.50
+5f6cd5ce 1919    0.55       15/18           4.5    0.087    12.0    0.23   -0.175     3.6    0.59
+629642bf 2360    0.08       19/23           1.9    0.238      --   -1.38   -0.308     4.3    0.85
+69729ec1 1675    0.56       10/15           2.8    0.186      --   -0.16   -0.226      --   -0.14
+69f21ed1 2360    0.16       19/23           4.5    0.025      --    0.13   -0.063      --    0.01
+6a2326ce 1029    0.29         8/9           3.5    0.179      --    0.14   -0.270     1.2    0.63
+
+  t½ is blank where the exponential does not describe the profile (r2 < .2);
+  a rate fitted to noise is not a measurement.
