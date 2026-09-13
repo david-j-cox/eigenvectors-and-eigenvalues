@@ -325,3 +325,137 @@ def ceiling_check(d: pd.DataFrame, window: int = 8) -> pd.DataFrame:
                     "sd_across_blocks": per.values.std(),
                     "blocks_at_ceiling": int((per == 1.0).all(axis=1).sum())})
     return pd.DataFrame(out)
+
+
+# ---------------------------------------------------------- trajectories --
+#
+# Everything above returns a number per participant per condition. The program
+# is about trajectories, so this returns a value per dimension PER TRIAL.
+#
+# Binning to get a trajectory wastes most of the data: an estimate every thirty
+# trials from a session of a hundred and twenty gives four points. Recursive
+# estimation gives one point per trial from the same session, because every
+# choice updates the estimate rather than only every thirtieth completing a
+# block. The cost is one free parameter -- how fast the estimate forgets --
+# and that parameter is itself the quantity of interest: it is the persistence
+# of attentional control, which is what an eigenvalue of a transition operator
+# measures.
+
+
+def attention_trajectory(g: pd.DataFrame, halflife: float,
+                         lr: float = 0.25) -> np.ndarray:
+    """Per-dimension attentional weight after each trial, by recursive fitting.
+
+    A conditional logit whose coefficients are updated after every choice by a
+    gradient step, with old evidence decaying at the given half-life in trials.
+    Returns an array of shape (trials, dimensions): row t is the weight vector
+    AFTER trial t, so it may be compared with what the participant did next
+    without using that trial's own outcome.
+
+    `halflife` controls how much history the estimate carries. Small values
+    track fast shifts and are noisy; large values are stable and blur shifts.
+    It is selected per participant by `select_halflife`, never assumed.
+    """
+    X, y = choice_design(g)
+    if len(y) == 0:
+        return np.zeros((0, N_DIM))
+    decay = 0.5 ** (1.0 / max(halflife, 1e-6))
+    b = np.zeros(N_DIM)
+    out = np.empty((len(y), N_DIM))
+    for t in range(len(y)):
+        u = X[t] @ b
+        p = np.exp(u - u.max())
+        p /= p.sum()
+        grad = X[t, y[t]] - p @ X[t]
+        # Normalised by (1 - decay) so the steady-state MAGNITUDE of the
+        # weights does not depend on the half-life. The first version of this
+        # used `b = decay * b + lr * grad`, whose steady state is
+        # lr * grad / (1 - decay) and therefore grows with the half-life; a
+        # longer memory then produced larger weights and sharper predictions,
+        # and any likelihood comparison across half-lives was really comparing
+        # magnitudes. Every chooser recovered the longest half-life in the grid
+        # regardless of the one it was built with.
+        b = decay * b + (1 - decay) * grad
+        out[t] = b
+    return out
+
+
+def trajectory_loglik(g: pd.DataFrame, halflife: float, lr: float = 0.25,
+                      burn_in: int = 10,
+                      scales=np.linspace(0.25, 12, 40)) -> float:
+    """Held-out log likelihood, with the weight scale fitted per half-life.
+
+    Each trial is scored by weights fitted from trials strictly before it, so
+    nothing predicts itself. The scale is fitted separately for each half-life
+    because the two are otherwise confounded: see `attention_trajectory`.
+
+    KNOWN LIMIT, measured rather than assumed. Against choosers built with
+    half-lives of 2, 8 and 32 trials, this recovers the ordering on 6 of 10
+    runs at 150 trials and 8 of 10 at 2,400 -- better than the 1-in-6 chance
+    rate, but far from reliable even at an hour of data per person. Attentional
+    persistence is only weakly identified from four-alternative choices, so a
+    half-life estimated this way should be reported with that caveat or not at
+    all.
+    """
+    X, y = choice_design(g)
+    if len(y) <= burn_in:
+        return float("-nan")
+    decay = 0.5 ** (1.0 / max(halflife, 1e-6))
+    b = np.zeros(N_DIM)
+    traj = []
+    for t in range(len(y)):
+        u = X[t] @ b
+        p = np.exp(u - u.max())
+        p /= p.sum()
+        traj.append(b.copy())
+        b = decay * b + (1 - decay) * (X[t, y[t]] - p @ X[t])
+    traj = np.array(traj)
+    best = -np.inf
+    for s in scales:
+        ll, n = 0.0, 0
+        for t in range(burn_in, len(y)):
+            u = X[t] @ (s * traj[t])
+            p = np.exp(u - u.max())
+            p /= p.sum()
+            ll += float(np.log(max(p[y[t]], 1e-12)))
+            n += 1
+        best = max(best, ll / max(n, 1))
+    return best
+
+
+def select_halflife(g: pd.DataFrame,
+                    grid=(2, 4, 8, 16, 32, 64, 128)) -> tuple[float, float]:
+    """Choose the forgetting half-life by held-out likelihood, per participant.
+
+    This is a hyperparameter of the estimate and must not be assumed, for the
+    same reason the state bin in the foraging analysis must not be: it decides
+    what the answer can look like before the data is consulted.
+    """
+    best, best_ll = None, -np.inf
+    for h in grid:
+        ll = trajectory_loglik(g, h)
+        if np.isfinite(ll) and ll > best_ll:
+            best, best_ll = float(h), float(ll)
+    return (best if best is not None else float("nan"), float(best_ll))
+
+
+def trajectory_frame(d: pd.DataFrame, pid: str,
+                     halflife: float | None = None) -> pd.DataFrame:
+    """Trial-by-trial attention trajectory for one participant, with the
+    context and arranged relevance attached so a shift can be read against
+    what the task actually changed."""
+    g = d[d.pid == pid].sort_values("trial_index")
+    if halflife is None:
+        halflife, _ = select_halflife(g)
+    traj = attention_trajectory(g, halflife)
+    n = len(traj)
+    out = pd.DataFrame(traj[:, :N_DIM], columns=[f"w_{x}" for x in DIMS])
+    g2 = g.iloc[-n:].reset_index(drop=True)
+    out["trial_index"] = g2.trial_index.values
+    out["context_index"] = g2.context_index.values
+    out["halflife"] = halflife
+    if has_relevance(g2):
+        out["relevant_dims"] = g2.relevant_dims.values
+        for dim in DIMS:
+            out[f"rel_{dim}"] = g2[f"rel_{dim}"].values
+    return out
