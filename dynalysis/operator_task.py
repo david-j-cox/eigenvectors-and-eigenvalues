@@ -524,3 +524,63 @@ def decay_fit(prof: pd.DataFrame, col: str = "added") -> dict | None:
     return {"magnitude": float(v[0]), "half_life": half,
             "r2": float(ss), "n_points": int(keep.sum()),
             "decays": bool(inv_tau > 1e-6)}
+
+
+# ------------------------------------------------- incumbent measures --
+
+def log_d(g: pd.DataFrame, kind: str) -> dict | None:
+    """Discriminability of a signalled stimulus, after Davison and Tustin (1978).
+
+        log d = 0.5 * log( (B11 * B22) / (B12 * B21) )
+
+    Rows of the matrix are which panel the stimulus marked, columns are which
+    panel was chosen, and only the responses the stimulus was shown for enter
+    it. That restriction is the point of computing it here: log d is a count
+    statistic over a set of responses and has no lag argument, so it can report
+    how strongly a stimulus separated responding but nothing about how long the
+    separation lasted.
+    """
+    hits = g[g.stimulus == kind]
+    if len(hits) < 20:
+        return None
+    B = np.zeros((2, 2))
+    for i, marked in enumerate(("left", "right")):
+        for j, chosen in enumerate(("left", "right")):
+            B[i, j] = ((hits.stimulus_side == marked)
+                       & (hits.chosen_side == chosen)).sum()
+    B = B + 0.25          # conventional correction for empty cells
+    val = 0.5 * np.log((B[0, 0] * B[1, 1]) / (B[0, 1] * B[1, 0]))
+    se = 0.5 * np.sqrt(np.sum(1.0 / B))
+    return {"log_d": float(val), "se": float(se), "n": int(len(hits)),
+            "matrix": B}
+
+
+def matching_sensitivity(g: pd.DataFrame, min_block: int = 40) -> dict | None:
+    """Sensitivity in the generalized matching law, fitted across blocks.
+
+        log(B_left / B_right) = a * log(R_left / R_right) + log b
+
+    One point per block, using obtained reinforcers rather than arranged
+    probabilities. Like log d this is a count statistic: it summarises a block
+    and carries no information about how quickly allocation got there.
+    """
+    pts = []
+    for b, sub in g.groupby("block_index"):
+        if len(sub) < min_block:
+            continue
+        bl = (sub.chosen_side == "left").sum()
+        br = (sub.chosen_side == "right").sum()
+        rl = ((sub.chosen_side == "left") & (sub.rewarded == 1)).sum()
+        rr = ((sub.chosen_side == "right") & (sub.rewarded == 1)).sum()
+        if min(bl, br, rl, rr) == 0:
+            continue
+        pts.append((np.log(rl / rr), np.log(bl / br)))
+    if len(pts) < 5:
+        return None
+    x, y = np.array(pts).T
+    A = np.column_stack([x, np.ones_like(x)])
+    coef, *_ = np.linalg.lstsq(A, y, rcond=None)
+    pred = A @ coef
+    r2 = 1 - np.sum((y - pred) ** 2) / max(np.sum((y - y.mean()) ** 2), 1e-12)
+    return {"sensitivity": float(coef[0]), "log_bias": float(coef[1]),
+            "r2": float(r2), "n_blocks": int(len(pts))}
